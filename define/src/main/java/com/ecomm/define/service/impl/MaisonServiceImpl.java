@@ -5,7 +5,6 @@ import com.ecomm.define.repository.MaisonProductRepository;
 import com.ecomm.define.service.MaisonService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,12 +13,10 @@ import java.util.List;
  * Created by vamshikirangullapelly on 19/04/2020.
  */
 @Service
-@Component
 public class MaisonServiceImpl implements MaisonService {
 
     @Autowired
     MaisonProductRepository repository;
-    //private static final Logger LOGGER = Logger.getLogger(MaisonServiceImpl.class);
 
     @Override
     public MaisonProducts create(MaisonProducts maisonProduct) {

@@ -8,7 +8,9 @@ import com.ecomm.define.domain.BigCommerceProducts;
 import com.ecomm.define.domain.MaisonProducts;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface BigCommerceProductRepository extends MongoRepository<BigCommerceProducts, String> {
     MaisonProducts findBy_id(ObjectId _id);
 }
