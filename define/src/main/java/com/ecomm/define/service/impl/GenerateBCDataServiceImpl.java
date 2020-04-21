@@ -37,7 +37,26 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
             if(maisonProd.getStockQuantity() > 0) {
                 bigCommerceProduct.setAllowPurchases("Y");
             }
-            bigCommerceProduct.setProductWeight("100");
+
+           // double price_ = Double.valueOf(maisonProd.getMspPrice());
+           // NumberFormat nf = NumberFormat.getNumberInstance();
+          //  nf.setRoundingMode(RoundingMode.CEILING);
+          //  nf.setMaximumFractionDigits(0);
+         //   String rounded = nf.format(price_);
+            //nf.setMaximumFractionDigits(0);
+
+           // BigDecimal price = new BigDecimal(maisonProd.getMspPrice());
+            //int roundedPrice = price.ROUND_CEILING;
+           // String roundedPrice = nf.format(price_);
+            bigCommerceProduct.setMspPrice(maisonProd.getMspPrice());
+
+           // BigDecimal tradePrice = new BigDecimal(maisonProd.getTradePrice());
+            //int roundedTradePrice = tradePrice.ROUND_CEILING;
+           // double tradePrice_ = Double.valueOf(maisonProd.getTradePrice());
+           // String roundedTradePrice = nf.format(tradePrice_);
+            bigCommerceProduct.setTradePrice(maisonProd.getTradePrice());
+
+            bigCommerceProduct.setProductWeight("0");
             bigCommerceProduct.setTrackInventory("by product");
             bigCommerceProduct.setProductType("P");
             bigCommerceProductsList.add(bigCommerceProduct);

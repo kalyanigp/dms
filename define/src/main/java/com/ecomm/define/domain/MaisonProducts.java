@@ -37,6 +37,7 @@ public class MaisonProducts {
     private List<Image> imageLinks;*/
     @CsvBindByName(column = "Images")
     private String images;
+    //private String
 
 
     public MaisonProducts() {
