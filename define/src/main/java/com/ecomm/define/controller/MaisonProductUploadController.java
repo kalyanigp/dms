@@ -67,9 +67,10 @@ public class MaisonProductUploadController {
                 for(MaisonProducts product:maisonProducts) {
                     MaisonProducts sku = maisonService.findByProductSku(product.getProductCode());
                     if(sku != null) {
+                        sku.setStockQuantity(product.getStockQuantity());
                         maisonService.update(sku);
                     } else {
-                        maisonService.create(sku);
+                        maisonService.create(product);
                     }
                 }
 
