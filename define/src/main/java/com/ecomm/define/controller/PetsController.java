@@ -8,6 +8,8 @@ package com.ecomm.define.controller;
 import com.ecomm.define.domain.Pets;
 import com.ecomm.define.repository.PetsRepository;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,16 +26,20 @@ import java.util.List;
 @RestController
 @RequestMapping("/pets")
 public class PetsController {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PetsController.class);
+
     @Autowired
     private PetsRepository repository;
 
     @GetMapping(value = "/")
     public List<Pets> getAllPets() {
+        LOGGER.info("in getMapping findAll()");
         return repository.findAll();
     }
 
     @GetMapping(value = "/{id}")
     public Pets getPetById(@PathVariable("id") ObjectId id) {
+        LOGGER.info("findById {}",id.toString());
         return repository.findBy_id(id);
     }
 

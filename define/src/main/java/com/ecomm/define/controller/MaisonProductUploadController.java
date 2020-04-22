@@ -6,6 +6,8 @@ import com.ecomm.define.service.MaisonService;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +30,8 @@ import java.util.List;
 @RequestMapping("/maison")
 public class MaisonProductUploadController {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MaisonProductUploadController.class);
+
     @Autowired
     private MaisonService maisonService;
 
@@ -46,6 +50,8 @@ public class MaisonProductUploadController {
 
     @PutMapping("/upload-csv-file")
     public String uploadCSVFile(@RequestParam("file") MultipartFile file, Model model) {
+
+        LOGGER.info("started uploading from file - {}", file.getOriginalFilename());
 
         // validate file
         if (file.isEmpty()) {

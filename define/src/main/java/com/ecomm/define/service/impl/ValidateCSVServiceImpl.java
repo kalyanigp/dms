@@ -6,6 +6,7 @@ import com.ecomm.define.service.ValidateCSVService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.List;
@@ -24,25 +25,18 @@ public class ValidateCSVServiceImpl implements ValidateCSVService {
     public void validate(List<BigCommerceProducts> bigCommerceProductsList) {
         NumberFormat nf = NumberFormat.getNumberInstance();
         nf.setRoundingMode(RoundingMode.CEILING);
+        nf.setGroupingUsed(false);
         nf.setMaximumFractionDigits(0);
         for (BigCommerceProducts bdProduct : bigCommerceProductsList) {
-            System.out.println("Trade Price Removed **********"+bdProduct.getTitle());
-
 
             if(bdProduct.getMspPrice()!= null && !bdProduct.getMspPrice().isEmpty() &&  !(bdProduct.getMspPrice().equals("N/A")) )
             {
-                double price_ = Double.valueOf(bdProduct.getMspPrice());
+                BigDecimal price_ = new BigDecimal(bdProduct.getMspPrice());
                 String roundedPrice = nf.format(price_);
                 bdProduct.setMspPrice(roundedPrice);
             }
 
-          /*  if (bdProduct.getTradePrice() != null && !bdProduct.getTradePrice().isEmpty()) {
-                double tradePrice_ = Double.valueOf(bdProduct.getTradePrice());
-                String roundedTradePrice = nf.format(tradePrice_);
-                bdProduct.setTradePrice(roundedTradePrice);
-            } */
         }
-        System.out.println("Trade Price not required *******Validating End*******");
 
     }
 }
