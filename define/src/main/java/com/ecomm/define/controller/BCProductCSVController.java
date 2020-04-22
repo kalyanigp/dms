@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -34,16 +35,19 @@ public class BCProductCSVController {
     @GetMapping("/generate-csv-file")
     public String uploadCSVFile( Model model) {
 
-        try (Writer writer = Files.newBufferedWriter(Paths.get(BIG_COMMERCE_CSV))) {
+        try (Writer writer = Files.newBufferedWriter(Paths.get(BIG_COMMERCE_CSV),StandardCharsets.UTF_8)) {
                 StatefulBeanToCsv<BigCommerceProducts> beanToCsv = new StatefulBeanToCsvBuilder(writer)
                         .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
+                        .withSeparator(CSVWriter.DEFAULT_SEPARATOR)
+                        .withLineEnd(CSVWriter.DEFAULT_LINE_END)
+                        .withEscapechar(CSVWriter.NO_ESCAPE_CHARACTER)
                         .build();
 
                 List<BigCommerceProducts> commerceProductsList = repository.findAll();
 
             buildCSVService.validate(commerceProductsList);
-                beanToCsv.write(commerceProductsList);
-                System.out.print("Validated file Exported");
+
+            beanToCsv.write(commerceProductsList);
 
             } catch (Exception ex) {
                 model.addAttribute("status", false);

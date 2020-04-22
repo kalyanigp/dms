@@ -89,6 +89,73 @@ public class BigCommerceProducts {
     private String productImageIsThumbnail_1;
     @CsvBindByName(column = "Product Image Sort - 1")
     private String productImageSort_1;
+
+    @CsvBindByName(column = "Product Image ID - 2")
+    private String productImageID_2;
+    @CsvBindByName(column = "Product Image File - 2")
+    private String productImageFile_2;
+    @CsvBindByName(column = "Product Image Description - 2")
+    private String productImageDescription_2;
+    @CsvBindByName(column = "Product Image Is Thumbnail - 2")
+    private String productImageIsThumbnail_2;
+    @CsvBindByName(column = "Product Image Sort - 2")
+    private String productImageSort_2;
+
+    @CsvBindByName(column = "Product Image ID - 3")
+    private String productImageID_3;
+    @CsvBindByName(column = "Product Image File - 3")
+    private String productImageFile_3;
+    @CsvBindByName(column = "Product Image Description - 3")
+    private String productImageDescription_3;
+    @CsvBindByName(column = "Product Image Is Thumbnail - 3")
+    private String productImageIsThumbnail_3;
+    @CsvBindByName(column = "Product Image Sort - 3")
+    private String productImageSort_3;
+
+    @CsvBindByName(column = "Product Image ID - 4")
+    private String productImageID_4;
+    @CsvBindByName(column = "Product Image File - 4")
+    private String productImageFile_4;
+    @CsvBindByName(column = "Product Image Description - 4")
+    private String productImageDescription_4;
+    @CsvBindByName(column = "Product Image Is Thumbnail - 4")
+    private String productImageIsThumbnail_4;
+    @CsvBindByName(column = "Product Image Sort - 4")
+    private String productImageSort_4;
+
+    @CsvBindByName(column = "Product Image ID - 5")
+    private String productImageID_5;
+    @CsvBindByName(column = "Product Image File - 5")
+    private String productImageFile_5;
+    @CsvBindByName(column = "Product Image Description - 5")
+    private String productImageDescription_5;
+    @CsvBindByName(column = "Product Image Is Thumbnail - 5")
+    private String productImageIsThumbnail_5;
+    @CsvBindByName(column = "Product Image Sort - 5")
+    private String productImageSort_5;
+
+    @CsvBindByName(column = "Product Image ID - 6")
+    private String productImageID_6;
+    @CsvBindByName(column = "Product Image File - 6")
+    private String productImageFile_6;
+    @CsvBindByName(column = "Product Image Description - 6")
+    private String productImageDescription_6;
+    @CsvBindByName(column = "Product Image Is Thumbnail - 6")
+    private String productImageIsThumbnail_6;
+    @CsvBindByName(column = "Product Image Sort - 6")
+    private String productImageSort_6;
+
+    @CsvBindByName(column = "Product Image ID - 7")
+    private String productImageID_7;
+    @CsvBindByName(column = "Product Image File - 7")
+    private String productImageFile_7;
+    @CsvBindByName(column = "Product Image Description - 7")
+    private String productImageDescription_7;
+    @CsvBindByName(column = "Product Image Is Thumbnail - 7")
+    private String productImageIsThumbnail_7;
+    @CsvBindByName(column = "Product Image Sort - 7")
+    private String productImageSort_7;
+
     @CsvBindByName(column = "Search Keywords")
     private String searchKeywords;
     @CsvBindByName(column = "Page Title")
@@ -680,5 +747,245 @@ public class BigCommerceProducts {
 
     public void setProductUPC_EAN(String productUPC_EAN) {
         this.productUPC_EAN = productUPC_EAN;
+    }
+
+    public String getProductImageID_2() {
+        return productImageID_2;
+    }
+
+    public String getProductImageFile_2() {
+        return productImageFile_2;
+    }
+
+    public String getProductImageDescription_2() {
+        return productImageDescription_2;
+    }
+
+    public String getProductImageIsThumbnail_2() {
+        return productImageIsThumbnail_2;
+    }
+
+    public String getProductImageSort_2() {
+        return productImageSort_2;
+    }
+
+    public String getProductImageID_3() {
+        return productImageID_3;
+    }
+
+    public String getProductImageFile_3() {
+        return productImageFile_3;
+    }
+
+    public String getProductImageDescription_3() {
+        return productImageDescription_3;
+    }
+
+    public String getProductImageIsThumbnail_3() {
+        return productImageIsThumbnail_3;
+    }
+
+    public String getProductImageSort_3() {
+        return productImageSort_3;
+    }
+
+    public String getProductImageID_4() {
+        return productImageID_4;
+    }
+
+    public String getProductImageFile_4() {
+        return productImageFile_4;
+    }
+
+    public String getProductImageDescription_4() {
+        return productImageDescription_4;
+    }
+
+    public String getProductImageIsThumbnail_4() {
+        return productImageIsThumbnail_4;
+    }
+
+    public String getProductImageSort_4() {
+        return productImageSort_4;
+    }
+
+    public String getProductImageID_5() {
+        return productImageID_5;
+    }
+
+    public String getProductImageFile_5() {
+        return productImageFile_5;
+    }
+
+    public String getProductImageDescription_5() {
+        return productImageDescription_5;
+    }
+
+    public String getProductImageIsThumbnail_5() {
+        return productImageIsThumbnail_5;
+    }
+
+    public String getProductImageSort_5() {
+        return productImageSort_5;
+    }
+
+    public void setProductImageID_2(String productImageID_2) {
+        this.productImageID_2 = productImageID_2;
+    }
+
+    public void setProductImageFile_2(String productImageFile_2) {
+        this.productImageFile_2 = productImageFile_2;
+    }
+
+    public void setProductImageDescription_2(String productImageDescription_2) {
+        this.productImageDescription_2 = productImageDescription_2;
+    }
+
+    public void setProductImageIsThumbnail_2(String productImageIsThumbnail_2) {
+        this.productImageIsThumbnail_2 = productImageIsThumbnail_2;
+    }
+
+    public void setProductImageSort_2(String productImageSort_2) {
+        this.productImageSort_2 = productImageSort_2;
+    }
+
+    public void setProductImageID_3(String productImageID_3) {
+        this.productImageID_3 = productImageID_3;
+    }
+
+    public void setProductImageFile_3(String productImageFile_3) {
+        this.productImageFile_3 = productImageFile_3;
+    }
+
+    public void setProductImageDescription_3(String productImageDescription_3) {
+        this.productImageDescription_3 = productImageDescription_3;
+    }
+
+    public void setProductImageIsThumbnail_3(String productImageIsThumbnail_3) {
+        this.productImageIsThumbnail_3 = productImageIsThumbnail_3;
+    }
+
+    public void setProductImageSort_3(String productImageSort_3) {
+        this.productImageSort_3 = productImageSort_3;
+    }
+
+    public void setProductImageID_4(String productImageID_4) {
+        this.productImageID_4 = productImageID_4;
+    }
+
+    public void setProductImageFile_4(String productImageFile_4) {
+        this.productImageFile_4 = productImageFile_4;
+    }
+
+    public void setProductImageDescription_4(String productImageDescription_4) {
+        this.productImageDescription_4 = productImageDescription_4;
+    }
+
+    public void setProductImageIsThumbnail_4(String productImageIsThumbnail_4) {
+        this.productImageIsThumbnail_4 = productImageIsThumbnail_4;
+    }
+
+    public void setProductImageSort_4(String productImageSort_4) {
+        this.productImageSort_4 = productImageSort_4;
+    }
+
+    public void setProductImageID_5(String productImageID_5) {
+        this.productImageID_5 = productImageID_5;
+    }
+
+    public void setProductImageFile_5(String productImageFile_5) {
+        this.productImageFile_5 = productImageFile_5;
+    }
+
+    public void setProductImageDescription_5(String productImageDescription_5) {
+        this.productImageDescription_5 = productImageDescription_5;
+    }
+
+    public void setProductImageIsThumbnail_5(String productImageIsThumbnail_5) {
+        this.productImageIsThumbnail_5 = productImageIsThumbnail_5;
+    }
+
+    public void setProductImageSort_5(String productImageSort_5) {
+        this.productImageSort_5 = productImageSort_5;
+    }
+
+    public String getProductImageID_6() {
+        return productImageID_6;
+    }
+
+    public void setProductImageID_6(String productImageID_6) {
+        this.productImageID_6 = productImageID_6;
+    }
+
+    public String getProductImageFile_6() {
+        return productImageFile_6;
+    }
+
+    public void setProductImageFile_6(String productImageFile_6) {
+        this.productImageFile_6 = productImageFile_6;
+    }
+
+    public String getProductImageDescription_6() {
+        return productImageDescription_6;
+    }
+
+    public void setProductImageDescription_6(String productImageDescription_6) {
+        this.productImageDescription_6 = productImageDescription_6;
+    }
+
+    public String getProductImageIsThumbnail_6() {
+        return productImageIsThumbnail_6;
+    }
+
+    public void setProductImageIsThumbnail_6(String productImageIsThumbnail_6) {
+        this.productImageIsThumbnail_6 = productImageIsThumbnail_6;
+    }
+
+    public String getProductImageSort_6() {
+        return productImageSort_6;
+    }
+
+    public void setProductImageSort_6(String productImageSort_6) {
+        this.productImageSort_6 = productImageSort_6;
+    }
+
+    public String getProductImageID_7() {
+        return productImageID_7;
+    }
+
+    public void setProductImageID_7(String productImageID_7) {
+        this.productImageID_7 = productImageID_7;
+    }
+
+    public String getProductImageFile_7() {
+        return productImageFile_7;
+    }
+
+    public void setProductImageFile_7(String productImageFile_7) {
+        this.productImageFile_7 = productImageFile_7;
+    }
+
+    public String getProductImageDescription_7() {
+        return productImageDescription_7;
+    }
+
+    public void setProductImageDescription_7(String productImageDescription_7) {
+        this.productImageDescription_7 = productImageDescription_7;
+    }
+
+    public String getProductImageIsThumbnail_7() {
+        return productImageIsThumbnail_7;
+    }
+
+    public void setProductImageIsThumbnail_7(String productImageIsThumbnail_7) {
+        this.productImageIsThumbnail_7 = productImageIsThumbnail_7;
+    }
+
+    public String getProductImageSort_7() {
+        return productImageSort_7;
+    }
+
+    public void setProductImageSort_7(String productImageSort_7) {
+        this.productImageSort_7 = productImageSort_7;
     }
 }
