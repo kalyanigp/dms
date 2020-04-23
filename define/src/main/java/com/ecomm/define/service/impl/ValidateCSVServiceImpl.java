@@ -1,6 +1,6 @@
 package com.ecomm.define.service.impl;
 
-import com.ecomm.define.domain.BigCommerceProducts;
+import com.ecomm.define.domain.BigCommerceProduct;
 import com.ecomm.define.repository.BigCommerceProductRepository;
 import com.ecomm.define.service.ValidateCSVService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +22,12 @@ public class ValidateCSVServiceImpl implements ValidateCSVService {
     private BigCommerceProductRepository repository;
 
     @Override
-    public void validate(List<BigCommerceProducts> bigCommerceProductsList) {
+    public void validate(List<BigCommerceProduct> bigCommerceProductList) {
         NumberFormat nf = NumberFormat.getNumberInstance();
         nf.setRoundingMode(RoundingMode.CEILING);
         nf.setGroupingUsed(false);
         nf.setMaximumFractionDigits(0);
-        for (BigCommerceProducts bdProduct : bigCommerceProductsList) {
+        for (BigCommerceProduct bdProduct : bigCommerceProductList) {
 
             if(bdProduct.getMspPrice()!= null && !bdProduct.getMspPrice().isEmpty() &&  !(bdProduct.getMspPrice().equals("N/A")) )
             {

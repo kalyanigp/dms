@@ -1,7 +1,8 @@
 package com.ecomm.define.controller;
 
-import com.ecomm.define.domain.BigCommerceProducts;
+import com.ecomm.define.domain.BigCommerceProduct;
 import com.ecomm.define.repository.BigCommerceProductRepository;
+import com.ecomm.define.service.BigCommerceService;
 import com.ecomm.define.service.ValidateCSVService;
 import com.opencsv.CSVWriter;
 import com.opencsv.bean.StatefulBeanToCsv;
@@ -23,27 +24,28 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/bcproduct")
-public class BCProductCSVController {
+public class BigCommerceProductCSVController {
 
     @Autowired
-    private BigCommerceProductRepository repository;
+    private BigCommerceService bcService;
     @Autowired
     private ValidateCSVService buildCSVService;
+    private static final String PATH = "./dms/define/";
     private static final String BIG_COMMERCE_CSV = "big-commerce.csv";
 
 
     @GetMapping("/generate-csv-file")
     public String uploadCSVFile( Model model) {
 
-        try (Writer writer = Files.newBufferedWriter(Paths.get(BIG_COMMERCE_CSV),StandardCharsets.UTF_8)) {
-                StatefulBeanToCsv<BigCommerceProducts> beanToCsv = new StatefulBeanToCsvBuilder(writer)
+        try (Writer writer = Files.newBufferedWriter(Paths.get(PATH+BIG_COMMERCE_CSV),StandardCharsets.UTF_8)) {
+                StatefulBeanToCsv<BigCommerceProduct> beanToCsv = new StatefulBeanToCsvBuilder(writer)
                         .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
                         .withSeparator(CSVWriter.DEFAULT_SEPARATOR)
                         .withLineEnd(CSVWriter.DEFAULT_LINE_END)
                         .withEscapechar(CSVWriter.NO_ESCAPE_CHARACTER)
                         .build();
 
-                List<BigCommerceProducts> commerceProductsList = repository.findAll();
+                List<BigCommerceProduct> commerceProductsList = bcService.findAll();
 
             buildCSVService.validate(commerceProductsList);
 

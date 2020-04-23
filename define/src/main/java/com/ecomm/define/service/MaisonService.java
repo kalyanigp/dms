@@ -1,20 +1,21 @@
 package com.ecomm.define.service;
 
-import com.ecomm.define.domain.MaisonProducts;
+import com.ecomm.define.domain.MaisonProduct;
 import org.bson.types.ObjectId;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
  */
 public interface MaisonService {
-
-    MaisonProducts create(final MaisonProducts maisonProduct);
-    MaisonProducts findById(final ObjectId id);
-    MaisonProducts findByProductSku(final String sku);
-    List<MaisonProducts> findAll();
-    MaisonProducts update(MaisonProducts maisonProduct);
+    MaisonProduct create(final MaisonProduct maisonProduct);
+    MaisonProduct findBy_Id(final ObjectId id);
+    Optional<MaisonProduct> findById(String id);
+    MaisonProduct findByProductSku(final String sku);
+    List<MaisonProduct> findAll();
+    MaisonProduct update(MaisonProduct maisonProduct);
+    void saveAll(List<MaisonProduct> bcProductList);
     void delete(final ObjectId id);
-
 }

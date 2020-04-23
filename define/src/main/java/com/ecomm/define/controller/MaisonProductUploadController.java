@@ -1,6 +1,6 @@
 package com.ecomm.define.controller;
 
-import com.ecomm.define.domain.MaisonProducts;
+import com.ecomm.define.domain.MaisonProduct;
 import com.ecomm.define.service.GenerateBCDataService;
 import com.ecomm.define.service.MaisonService;
 import com.opencsv.bean.CsvToBean;
@@ -39,13 +39,13 @@ public class MaisonProductUploadController {
     private GenerateBCDataService generateBCDataService;
 
     @GetMapping(value = "/")
-    public List<MaisonProducts> getAllProducts() {
+    public List<MaisonProduct> getAllProducts() {
         return maisonService.findAll();
     }
 
     @GetMapping(value = "/{id}")
-    public MaisonProducts getProductById(@PathVariable("id") ObjectId id) {
-        return maisonService.findById(id);
+    public MaisonProduct getProductById(@PathVariable("id") ObjectId id) {
+        return maisonService.findBy_Id(id);
     }
 
     @PutMapping("/upload-csv-file")
@@ -63,15 +63,15 @@ public class MaisonProductUploadController {
             try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
 
                 // create csv bean reader
-                CsvToBean<MaisonProducts> csvToBean = new CsvToBeanBuilder(reader)
-                        .withType(MaisonProducts.class)
+                CsvToBean<MaisonProduct> csvToBean = new CsvToBeanBuilder(reader)
+                        .withType(MaisonProduct.class)
                         .withIgnoreLeadingWhiteSpace(true)
                         .build();
 
                 // convert `CsvToBean` object to list of users
-                List<MaisonProducts> maisonProducts = csvToBean.parse();
-                for(MaisonProducts product:maisonProducts) {
-                    MaisonProducts sku = maisonService.findByProductSku(product.getProductCode());
+                List<MaisonProduct> maisonProducts = csvToBean.parse();
+                for(MaisonProduct product:maisonProducts) {
+                    MaisonProduct sku = maisonService.findByProductSku(product.getProductCode());
                     if(sku != null) {
                         sku.setStockQuantity(product.getStockQuantity());
                         maisonService.update(sku);
