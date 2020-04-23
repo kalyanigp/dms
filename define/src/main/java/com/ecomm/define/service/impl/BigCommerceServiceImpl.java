@@ -1,7 +1,10 @@
 package com.ecomm.define.service.impl;
 
+import com.ecomm.define.domain.BigCommerceProduct;
 import com.ecomm.define.domain.MaisonProduct;
+import com.ecomm.define.repository.BigCommerceProductRepository;
 import com.ecomm.define.repository.MaisonProductRepository;
+import com.ecomm.define.service.BigCommerceService;
 import com.ecomm.define.service.MaisonService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,44 +17,44 @@ import java.util.Optional;
  * Created by vamshikirangullapelly on 19/04/2020.
  */
 @Service
-public class MaisonServiceImpl implements MaisonService {
+public class BigCommerceServiceImpl implements BigCommerceService {
 
     @Autowired
-    MaisonProductRepository repository;
+    BigCommerceProductRepository repository;
 
     @Override
-    public MaisonProduct create(MaisonProduct maisonProduct) {
-        return repository.save(maisonProduct);
+    public BigCommerceProduct create(BigCommerceProduct bcProduct) {
+        return repository.save(bcProduct);
     }
 
     @Override
-    public MaisonProduct findBy_Id(ObjectId id) {
+    public BigCommerceProduct findBy_Id(ObjectId id) {
         return repository.findBy_id(id);
     }
 
     @Override
-    public Optional<MaisonProduct> findById(String id) {
+    public Optional<BigCommerceProduct> findById(String id) {
         return repository.findById(id);
     }
 
     @Override
-    public MaisonProduct findByProductSku(String sku) {
+    public BigCommerceProduct findByProductSku(String sku) {
         return repository.findByProductSku(sku);
     }
 
     @Override
-    public List<MaisonProduct> findAll() {
+    public List<BigCommerceProduct> findAll() {
         return repository.findAll();
     }
 
     @Override
-    public MaisonProduct update(MaisonProduct maisonProduct) {
-        return repository.save(maisonProduct);
+    public BigCommerceProduct update(BigCommerceProduct bcProduct) {
+        return repository.save(bcProduct);
     }
 
     @Override
-    public void saveAll(List<MaisonProduct> maisonProductList) {
-        repository.saveAll(maisonProductList);
+    public void saveAll(List<BigCommerceProduct> bcProductList) {
+        repository.saveAll(bcProductList);
     }
 
 

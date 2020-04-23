@@ -1,10 +1,10 @@
 package com.ecomm.define.service.impl;
 
-import com.ecomm.define.domain.BigCommerceProducts;
-import com.ecomm.define.domain.MaisonProducts;
-import com.ecomm.define.repository.BigCommerceProductRepository;
-import com.ecomm.define.repository.MaisonProductRepository;
+import com.ecomm.define.domain.BigCommerceProduct;
+import com.ecomm.define.domain.MaisonProduct;
+import com.ecomm.define.service.BigCommerceService;
 import com.ecomm.define.service.GenerateBCDataService;
+import com.ecomm.define.service.MaisonService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,19 +20,19 @@ import java.util.StringTokenizer;
 public class GenerateBCDataServiceImpl implements GenerateBCDataService {
 
     @Autowired
-    MaisonProductRepository maisonRepository;
+    MaisonService maisonService;
 
     @Autowired
-    BigCommerceProductRepository bcRepository;
+    BigCommerceService bigCommerceService;
 
     @Override
     public void generateBcData() {
-        List<MaisonProducts> maisonProductList = maisonRepository.findAll();
-        List<BigCommerceProducts> bigCommerceProductsList = new ArrayList<>();
+        List<MaisonProduct> maisonProductList = maisonService.findAll();
+        List<BigCommerceProduct> bigCommerceProductList = new ArrayList<>();
         ModelMapper modelMapper = new ModelMapper();
-        for(MaisonProducts maisonProd : maisonProductList) {
+        for(MaisonProduct maisonProd : maisonProductList) {
 
-            BigCommerceProducts bigCommerceProduct = modelMapper.map(maisonProd, BigCommerceProducts.class);
+            BigCommerceProduct bigCommerceProduct = modelMapper.map(maisonProd, BigCommerceProduct.class);
             bigCommerceProduct.setCategory("Furniture");
             bigCommerceProduct.setAllowPurchases("N");
             if(maisonProd.getStockQuantity() > 0) {
@@ -46,7 +46,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
             bigCommerceProduct.setTrackInventory("by product");
             bigCommerceProduct.setProductType("P");
             bigCommerceProduct.setProductDescription(maisonProd.getMaterial().replaceAll(",",""));
-            bigCommerceProductsList.add(bigCommerceProduct);
+            bigCommerceProductList.add(bigCommerceProduct);
             if(maisonProd.getImages() != null  && !maisonProd.getImages().isEmpty()){
                 StringTokenizer st = new StringTokenizer(maisonProd.getImages(),",");
                 if(st.hasMoreTokens()) {
@@ -92,6 +92,6 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
             }
         }
 
-        bcRepository.saveAll(bigCommerceProductsList);
+        bigCommerceService.saveAll(bigCommerceProductList);
     }
 }
