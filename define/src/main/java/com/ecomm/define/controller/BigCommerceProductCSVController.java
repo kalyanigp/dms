@@ -37,7 +37,6 @@ public class BigCommerceProductCSVController {
     private BigCommerceService bcService;
     @Autowired
     private ValidateCSVService validateCSVService;
-    private static final String PATH = "./dms/define/";
     private static final String BIG_COMMERCE_CSV = "big-commerce.csv";
 
 
@@ -51,7 +50,7 @@ public class BigCommerceProductCSVController {
     )
     @GetMapping("/bcproduct/generate-csv-file")
     public String generateBigCommerceCSVFile() throws IOException, CsvDataTypeMismatchException, CsvRequiredFieldEmptyException {
-        try (Writer writer = Files.newBufferedWriter(Paths.get(PATH + BIG_COMMERCE_CSV), StandardCharsets.UTF_8)) {
+        try (Writer writer = Files.newBufferedWriter(Paths.get(BIG_COMMERCE_CSV), StandardCharsets.UTF_8)) {
             StatefulBeanToCsv<BigCommerceProduct> beanToCsv = new StatefulBeanToCsvBuilder(writer)
                     .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
                     .withSeparator(CSVWriter.DEFAULT_SEPARATOR)

@@ -86,8 +86,8 @@ public class BigCommerceProduct {
     private String productFileExpiresAfter_1;
     @CsvBindByName(column = "Product Image ID - 1")
     private String productImageID_1;
-    @CsvBindByName(column = "Product Image File - 1")
-    private String productImageFile_1;
+    @CsvBindByName(column = "Product Image - 1")
+    private String productImage_1;
     @CsvBindByName(column = "Product Image Description - 1")
     private String productImageDescription_1;
     @CsvBindByName(column = "Product Image Is Thumbnail - 1")
@@ -105,8 +105,8 @@ public class BigCommerceProduct {
     private String productImageIsThumbnail_2;
     @CsvBindByName(column = "Product Image Sort - 2")
     private String productImageSort_2;
-    @CsvBindByName(column = "Product Image File - 2")
-    private String productImageFile_2;
+    @CsvBindByName(column = "Product Image - 2")
+    private String productImage_2;
 
     @CsvBindByName(column = "Product Image ID - 3")
     private String productImageID_3;
@@ -119,7 +119,7 @@ public class BigCommerceProduct {
     @CsvBindByName(column = "Product Image Sort - 3")
     private String productImageSort_3;
     @CsvBindByName(column = "Product Image File - 3")
-    private String productImageFile_3;
+    private String productImage_3;
 
     @CsvBindByName(column = "Product Image ID - 4")
     private String productImageID_4;
@@ -131,8 +131,8 @@ public class BigCommerceProduct {
     private String productImageIsThumbnail_4;
     @CsvBindByName(column = "Product Image Sort - 4")
     private String productImageSort_4;
-    @CsvBindByName(column = "Product Image File - 4")
-    private String productImageFile_4;
+    @CsvBindByName(column = "Product Image - 4")
+    private String productImage_4;
 
     @CsvBindByName(column = "Product Image ID - 5")
     private String productImageID_5;
@@ -144,8 +144,8 @@ public class BigCommerceProduct {
     private String productImageIsThumbnail_5;
     @CsvBindByName(column = "Product Image Sort - 5")
     private String productImageSort_5;
-    @CsvBindByName(column = "Product Image File - 5")
-    private String productImageFile_5;
+    @CsvBindByName(column = "Product Image - 5")
+    private String productImage_5;
 
     @CsvBindByName(column = "Product Image ID - 6")
     private String productImageID_6;
@@ -157,8 +157,8 @@ public class BigCommerceProduct {
     private String productImageIsThumbnail_6;
     @CsvBindByName(column = "Product Image Sort - 6")
     private String productImageSort_6;
-    @CsvBindByName(column = "Product Image File - 6")
-    private String productImageFile_6;
+    @CsvBindByName(column = "Product Image - 6")
+    private String productImage_6;
 
     @CsvBindByName(column = "Product Image ID - 7")
     private String productImageID_7;
@@ -170,8 +170,8 @@ public class BigCommerceProduct {
     private String productImageIsThumbnail_7;
     @CsvBindByName(column = "Product Image Sort - 7")
     private String productImageSort_7;
-    @CsvBindByName(column = "Product Image File - 7")
-    private String productImageFile_7;
+    @CsvBindByName(column = "Product Image - 7")
+    private String productImage_7;
 
     @CsvBindByName(column = "Search Keywords")
     private String searchKeywords;
