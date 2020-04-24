@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
  */
 @Service
 public class ValidateCSVServiceImpl implements ValidateCSVService {
-    public static final String NOT_APPLICABLE = "N/A";
     private final NumberFormat FORMAT = NumberFormat.getNumberInstance();
 
     @Override
@@ -25,19 +24,28 @@ public class ValidateCSVServiceImpl implements ValidateCSVService {
         FORMAT.setMaximumFractionDigits(0);
 
         List<BigCommerceProduct> updatedProductList = bigCommerceProductList.stream()
-                .parallel()
-                .filter(product -> product.getMspPrice() != null && !product.getMspPrice().isEmpty() && !(product.getMspPrice().equals(NOT_APPLICABLE)))
-                .map(product -> setMspTradePrice(product))
+                .map(product -> setPrices(product))
                 .collect(Collectors.toList());
         return updatedProductList;
 
     }
 
-    private BigCommerceProduct setMspTradePrice(BigCommerceProduct product) {
-        BigDecimal mspPrice = new BigDecimal(product.getMspPrice());
-        String roundedMspPrice = FORMAT.format(mspPrice);
-        product.setMspPrice(roundedMspPrice);
+    private BigCommerceProduct setPrices(BigCommerceProduct product) {
+        final String tradePrice = product.getTradePrice();
+        final String mspPrice = product.getMspPrice();
+
+        if (tradePrice != null && !tradePrice.isEmpty()) {
+            BigDecimal tradePrice_ = new BigDecimal(product.getTradePrice());
+            String roundedTradePrice = FORMAT.format(tradePrice_);
+            product.setTradePrice(roundedTradePrice);
+            product.setMspPrice(String.valueOf(Integer.parseInt(roundedTradePrice) * 3));
+        }
+
+        if (mspPrice != null && !mspPrice.isEmpty() && !mspPrice.equals("N/A") && !mspPrice.equals("0")) {
+            BigDecimal mspPrice_ = new BigDecimal(mspPrice);
+            String roundedMspPrice = FORMAT.format(mspPrice_);
+            product.setMspPrice(roundedMspPrice);
+        }
         return product;
     }
-
 }
