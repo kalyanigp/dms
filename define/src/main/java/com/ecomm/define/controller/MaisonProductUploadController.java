@@ -1,7 +1,9 @@
 package com.ecomm.define.controller;
 
 import com.ecomm.define.domain.MaisonProduct;
+import com.ecomm.define.exception.CSVProcessException;
 import com.ecomm.define.exception.CustomExceptionHandler;
+import com.ecomm.define.exception.FileNotFoundException;
 import com.ecomm.define.exception.RecordNotFoundException;
 import com.ecomm.define.service.GenerateBCDataService;
 import com.ecomm.define.service.MaisonService;
@@ -20,6 +22,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -87,15 +90,14 @@ public class MaisonProductUploadController {
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     }
     )
-    @PutMapping("/maison/upload-csv-file")
-    public ResponseEntity<String> uploadCSVFile(@RequestParam("file") MultipartFile file, Model model) throws IOException {
+    @PostMapping("/maison/upload-csv-file")
+    public ResponseEntity<String> uploadCSVFile(@RequestParam("file") MultipartFile file) {
 
         LOGGER.info("started uploading from file - {}", file.getOriginalFilename());
 
         // validate file
         if (file.isEmpty()) {
-            model.addAttribute("message", "Please select a CSV file to upload.");
-            model.addAttribute("status", false);
+            throw new FileNotFoundException("Please select a valid CSV file to upload.");
         } else {
 
             // parse CSV file to create a list of `User` objects
@@ -118,18 +120,12 @@ public class MaisonProductUploadController {
                         maisonService.create(product);
                     }
                 }
-
-                // save products list on model
-                model.addAttribute("products", maisonProducts);
-                model.addAttribute("status", true);
                 generateBCDataService.generateBcData();
 
-            }/* catch (Exception ex) {
-                model.addAttribute("message", "An error occurred while processing the CSV file.");
-                model.addAttribute("status", false);
-            }*/
+            } catch (Exception ex) {
+                throw new CSVProcessException("Error while processing CSV File");
+            }
         }
-
-        return ResponseEntity.ok().body("Successfully uploaded");
+        return ResponseEntity.ok().body("Successfully uploaded CSV File");
     }
 }

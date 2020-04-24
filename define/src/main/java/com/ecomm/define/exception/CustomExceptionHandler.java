@@ -28,7 +28,16 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler
     }
 
     @ExceptionHandler(RecordNotFoundException.class)
-    public final ResponseEntity<Object> handleUserNotFoundException(RecordNotFoundException ex, WebRequest request) {
+    public final ResponseEntity<Object> handleProductNotFoundException(RecordNotFoundException ex, WebRequest request) {
+        List<String> details = new ArrayList<>();
+        details.add(ex.getLocalizedMessage());
+        ErrorResponse error = new ErrorResponse(new Date(), ex.getMessage(),
+                request.getDescription(false));
+        return new ResponseEntity(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(FileNotFoundException.class)
+    public final ResponseEntity<Object> handleFileNotFoundException(FileNotFoundException ex, WebRequest request) {
         List<String> details = new ArrayList<>();
         details.add(ex.getLocalizedMessage());
         ErrorResponse error = new ErrorResponse(new Date(), ex.getMessage(),
