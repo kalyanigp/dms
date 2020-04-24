@@ -2,7 +2,6 @@ package com.ecomm.define.controller;
 
 import com.ecomm.define.domain.MaisonProduct;
 import com.ecomm.define.exception.CSVProcessException;
-import com.ecomm.define.exception.CustomExceptionHandler;
 import com.ecomm.define.exception.FileNotFoundException;
 import com.ecomm.define.exception.RecordNotFoundException;
 import com.ecomm.define.service.GenerateBCDataService;
@@ -18,19 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.List;
