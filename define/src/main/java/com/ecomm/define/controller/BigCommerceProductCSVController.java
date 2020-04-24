@@ -13,7 +13,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,23 +24,24 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 
+
 /**
  * Created by vamshikirangullapelly on 18/04/2020.
  */
 @RestController
 @RequestMapping("/define")
-@Api(value="BigCommerceCSVGenerator", description="Operation to generate Big Commerce CSV")
+@Api(value = "BigCommerceCSVGenerator", description = "Operation to generate Big Commerce CSV")
 public class BigCommerceProductCSVController {
 
     @Autowired
     private BigCommerceService bcService;
     @Autowired
-    private ValidateCSVService buildCSVService;
+    private ValidateCSVService validateCSVService;
     private static final String PATH = "./dms/define/";
     private static final String BIG_COMMERCE_CSV = "big-commerce.csv";
 
 
-    @ApiOperation(value = "Generate CSV File",response = Iterable.class)
+    @ApiOperation(value = "Generate CSV File", response = Iterable.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully generates csv"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -51,24 +51,17 @@ public class BigCommerceProductCSVController {
     )
     @GetMapping("/bcproduct/generate-csv-file")
     public String generateBigCommerceCSVFile() throws IOException, CsvDataTypeMismatchException, CsvRequiredFieldEmptyException {
-
-        try (Writer writer = Files.newBufferedWriter(Paths.get(PATH+BIG_COMMERCE_CSV),StandardCharsets.UTF_8)) {
-                StatefulBeanToCsv<BigCommerceProduct> beanToCsv = new StatefulBeanToCsvBuilder(writer)
-                        .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
-                        .withSeparator(CSVWriter.DEFAULT_SEPARATOR)
-                        .withLineEnd(CSVWriter.DEFAULT_LINE_END)
-                        .withEscapechar(CSVWriter.NO_ESCAPE_CHARACTER)
-                        .build();
-
-                List<BigCommerceProduct> commerceProductsList = bcService.findAll();
-
-            buildCSVService.validate(commerceProductsList);
-
+        try (Writer writer = Files.newBufferedWriter(Paths.get(PATH + BIG_COMMERCE_CSV), StandardCharsets.UTF_8)) {
+            StatefulBeanToCsv<BigCommerceProduct> beanToCsv = new StatefulBeanToCsvBuilder(writer)
+                    .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
+                    .withSeparator(CSVWriter.DEFAULT_SEPARATOR)
+                    .withLineEnd(CSVWriter.DEFAULT_LINE_END)
+                    .withEscapechar(CSVWriter.NO_ESCAPE_CHARACTER)
+                    .build();
+            List<BigCommerceProduct> commerceProductsList = bcService.findAll();
+            commerceProductsList = validateCSVService.validate(commerceProductsList);
             beanToCsv.write(commerceProductsList);
-
-            } /*catch (Exception ex) {
-                model.addAttribute("status", false);
-            }*/
+        }
         return "Successfully Generated CSV File";
     }
 }

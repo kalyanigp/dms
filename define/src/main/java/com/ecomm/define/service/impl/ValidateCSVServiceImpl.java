@@ -1,42 +1,43 @@
 package com.ecomm.define.service.impl;
 
 import com.ecomm.define.domain.BigCommerceProduct;
-import com.ecomm.define.repository.BigCommerceProductRepository;
 import com.ecomm.define.service.ValidateCSVService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by vamshikirangullapelly on 21/04/2020.
  */
 @Service
 public class ValidateCSVServiceImpl implements ValidateCSVService {
-
-    private static final String BIG_COMMERCE_CSV = "big-commerce.csv";
-    @Autowired
-    private BigCommerceProductRepository repository;
+    public static final String NOT_APPLICABLE = "N/A";
+    private final NumberFormat FORMAT = NumberFormat.getNumberInstance();
 
     @Override
-    public void validate(List<BigCommerceProduct> bigCommerceProductList) {
-        NumberFormat nf = NumberFormat.getNumberInstance();
-        nf.setRoundingMode(RoundingMode.CEILING);
-        nf.setGroupingUsed(false);
-        nf.setMaximumFractionDigits(0);
-        for (BigCommerceProduct bdProduct : bigCommerceProductList) {
+    public List<BigCommerceProduct> validate(List<BigCommerceProduct> bigCommerceProductList) {
+        FORMAT.setRoundingMode(RoundingMode.CEILING);
+        FORMAT.setGroupingUsed(false);
+        FORMAT.setMaximumFractionDigits(0);
 
-            if(bdProduct.getMspPrice()!= null && !bdProduct.getMspPrice().isEmpty() &&  !(bdProduct.getMspPrice().equals("N/A")) )
-            {
-                BigDecimal price_ = new BigDecimal(bdProduct.getMspPrice());
-                String roundedPrice = nf.format(price_);
-                bdProduct.setMspPrice(roundedPrice);
-            }
-
-        }
+        List<BigCommerceProduct> updatedProductList = bigCommerceProductList.stream()
+                .parallel()
+                .filter(product -> product.getMspPrice() != null && !product.getMspPrice().isEmpty() && !(product.getMspPrice().equals(NOT_APPLICABLE)))
+                .map(product -> setMspTradePrice(product))
+                .collect(Collectors.toList());
+        return updatedProductList;
 
     }
+
+    private BigCommerceProduct setMspTradePrice(BigCommerceProduct product) {
+        BigDecimal mspPrice = new BigDecimal(product.getMspPrice());
+        String roundedMspPrice = FORMAT.format(mspPrice);
+        product.setMspPrice(roundedMspPrice);
+        return product;
+    }
+
 }

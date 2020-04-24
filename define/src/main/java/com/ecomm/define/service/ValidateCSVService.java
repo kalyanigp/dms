@@ -8,5 +8,5 @@ import java.util.List;
  * Created by vamshikirangullapelly on 21/04/2020.
  */
 public interface ValidateCSVService {
-   void validate(List<BigCommerceProduct> bigCommerceProductList);
+   List<BigCommerceProduct> validate(List<BigCommerceProduct> bigCommerceProductList);
 }

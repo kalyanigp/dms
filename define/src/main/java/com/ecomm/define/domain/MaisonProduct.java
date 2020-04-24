@@ -2,8 +2,7 @@ package com.ecomm.define.domain;
 
 import com.opencsv.bean.CsvBindByName;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -12,8 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
  * Created by vamshikirangullapelly on 18/04/2020.
  */
 @AllArgsConstructor
-@Getter
-@Setter
+@Data
 @Document(collection="maisonProduct")
 public class MaisonProduct {
 
