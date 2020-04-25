@@ -1,4 +1,4 @@
-package com.ecomm.define.domain;
+package com.ecomm.define.domain.supplier.maison;
 
 import com.opencsv.bean.CsvBindByName;
 import lombok.AllArgsConstructor;

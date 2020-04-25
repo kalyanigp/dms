@@ -5,7 +5,6 @@ package com.ecomm.define.repository;
  */
 
 import com.ecomm.define.domain.BigCommerceProduct;
-import com.ecomm.define.domain.MaisonProduct;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;

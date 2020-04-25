@@ -1,8 +1,8 @@
-package com.ecomm.define.service.impl;
+package com.ecomm.define.service.supplier.maison.impl;
 
-import com.ecomm.define.domain.MaisonProduct;
-import com.ecomm.define.repository.MaisonProductRepository;
-import com.ecomm.define.service.MaisonService;
+import com.ecomm.define.domain.supplier.maison.MaisonProduct;
+import com.ecomm.define.repository.supplier.maison.MaisonProductRepository;
+import com.ecomm.define.service.supplier.maison.MaisonService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

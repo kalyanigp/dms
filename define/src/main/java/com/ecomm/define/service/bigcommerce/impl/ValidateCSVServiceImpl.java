@@ -1,7 +1,7 @@
-package com.ecomm.define.service.impl;
+package com.ecomm.define.service.bigcommerce.impl;
 
 import com.ecomm.define.domain.BigCommerceProduct;
-import com.ecomm.define.service.ValidateCSVService;
+import com.ecomm.define.service.bigcommerce.ValidateCSVService;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;

@@ -1,6 +1,6 @@
-package com.ecomm.define.service;
+package com.ecomm.define.service.supplier.maison;
 
-import com.ecomm.define.domain.MaisonProduct;
+import com.ecomm.define.domain.supplier.maison.MaisonProduct;
 import org.bson.types.ObjectId;
 
 import java.util.List;

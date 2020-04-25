@@ -1,10 +1,10 @@
-package com.ecomm.define.repository;
+package com.ecomm.define.repository.supplier.maison;
 
 /**
  * Created by vamshikirangullapelly on 18/04/2020.
  */
 
-import com.ecomm.define.domain.MaisonProduct;
+import com.ecomm.define.domain.supplier.maison.MaisonProduct;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
