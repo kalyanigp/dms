@@ -1,4 +1,4 @@
-package com.ecomm.define.service;
+package com.ecomm.define.service.bigcommerce;
 
 import com.ecomm.define.domain.BigCommerceProduct;
 

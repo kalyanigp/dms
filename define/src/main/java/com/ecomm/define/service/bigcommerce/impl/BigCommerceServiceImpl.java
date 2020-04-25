@@ -1,11 +1,8 @@
-package com.ecomm.define.service.impl;
+package com.ecomm.define.service.bigcommerce.impl;
 
 import com.ecomm.define.domain.BigCommerceProduct;
-import com.ecomm.define.domain.MaisonProduct;
 import com.ecomm.define.repository.BigCommerceProductRepository;
-import com.ecomm.define.repository.MaisonProductRepository;
-import com.ecomm.define.service.BigCommerceService;
-import com.ecomm.define.service.MaisonService;
+import com.ecomm.define.service.bigcommerce.BigCommerceService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

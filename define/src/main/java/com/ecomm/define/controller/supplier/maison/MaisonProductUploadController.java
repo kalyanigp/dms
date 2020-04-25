@@ -1,11 +1,11 @@
-package com.ecomm.define.controller;
+package com.ecomm.define.controller.supplier.maison;
 
-import com.ecomm.define.domain.MaisonProduct;
+import com.ecomm.define.domain.supplier.maison.MaisonProduct;
 import com.ecomm.define.exception.CSVProcessException;
 import com.ecomm.define.exception.FileNotFoundException;
 import com.ecomm.define.exception.RecordNotFoundException;
-import com.ecomm.define.service.GenerateBCDataService;
-import com.ecomm.define.service.MaisonService;
+import com.ecomm.define.service.bigcommerce.GenerateBCDataService;
+import com.ecomm.define.service.supplier.maison.MaisonService;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import io.swagger.annotations.Api;

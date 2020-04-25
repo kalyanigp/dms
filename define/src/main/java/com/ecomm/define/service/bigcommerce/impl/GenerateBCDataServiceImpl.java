@@ -1,10 +1,10 @@
-package com.ecomm.define.service.impl;
+package com.ecomm.define.service.bigcommerce.impl;
 
 import com.ecomm.define.domain.BigCommerceProduct;
-import com.ecomm.define.domain.MaisonProduct;
-import com.ecomm.define.service.BigCommerceService;
-import com.ecomm.define.service.GenerateBCDataService;
-import com.ecomm.define.service.MaisonService;
+import com.ecomm.define.domain.supplier.maison.MaisonProduct;
+import com.ecomm.define.service.bigcommerce.BigCommerceService;
+import com.ecomm.define.service.bigcommerce.GenerateBCDataService;
+import com.ecomm.define.service.supplier.maison.MaisonService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

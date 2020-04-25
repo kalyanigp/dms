@@ -1,4 +1,4 @@
-package com.ecomm.define.service;
+package com.ecomm.define.service.bigcommerce;
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.

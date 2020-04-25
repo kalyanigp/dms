@@ -1,8 +1,8 @@
 package com.ecomm.define.controller;
 
 import com.ecomm.define.domain.BigCommerceProduct;
-import com.ecomm.define.service.BigCommerceService;
-import com.ecomm.define.service.ValidateCSVService;
+import com.ecomm.define.service.bigcommerce.BigCommerceService;
+import com.ecomm.define.service.bigcommerce.ValidateCSVService;
 import com.opencsv.CSVWriter;
 import com.opencsv.bean.StatefulBeanToCsv;
 import com.opencsv.bean.StatefulBeanToCsvBuilder;
