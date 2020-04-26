@@ -68,7 +68,7 @@ public class BigCommerceProduct {
     @CsvBindByName(column = "Track Inventory")
     private String trackInventory;
     @CsvBindByName(column = "Current Stock Level")
-    private String currentStockLevel;
+    private String stockQuantity;
     @CsvBindByName(column = "Low Stock Level")
     private String lowStockLevel;
     @CsvBindByName(column = "Category")
@@ -206,7 +206,7 @@ public class BigCommerceProduct {
     @CsvBindByName(column = "Product Tax Class")
     private String productTaxClass;
     @CsvBindByName(column = "Product UPC/EAN")
-    private String productUPC_EAN;
+    private String ean;
     @CsvBindByName(column = "Stop Processing Rules")
     private String stopProcessingRules;
     @CsvBindByName(column = "Product URL")
