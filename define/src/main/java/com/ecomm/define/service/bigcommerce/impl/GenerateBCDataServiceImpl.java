@@ -53,65 +53,72 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
 
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductFile_1(fileURL);
-                    bigCommerceProduct.setProductImageSort_1("1");
+                    bigCommerceProduct.setProductImageFile_1(fileURL);
+                    bigCommerceProduct.setProductImageSort_1("0");
                     bigCommerceProduct.setProductImageIsThumbnail_1("Y");
-                    bigCommerceProduct.setProductImage_1(fileURL);
                     bigCommerceProduct.setProductImageDescription_1(bigCommerceProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductFile_2(fileURL);
-                    bigCommerceProduct.setProductImageSort_2("2");
+                    bigCommerceProduct.setProductImageFile_2(fileURL);
+                    bigCommerceProduct.setProductImageSort_2("1");
                     bigCommerceProduct.setProductImageIsThumbnail_2("N");
-                    bigCommerceProduct.setProductImage_2(fileURL);
                     bigCommerceProduct.setProductImageDescription_2(bigCommerceProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductFile_3(fileURL);
-                    bigCommerceProduct.setProductImageSort_3("3");
+                    bigCommerceProduct.setProductImageFile_3(fileURL);
+                    bigCommerceProduct.setProductImageSort_3("2");
                     bigCommerceProduct.setProductImageIsThumbnail_3("N");
-                    bigCommerceProduct.setProductImage_3(fileURL);
                     bigCommerceProduct.setProductImageDescription_3(bigCommerceProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductFile_4(fileURL);
-                    bigCommerceProduct.setProductImageSort_4("4");
+                    bigCommerceProduct.setProductImageFile_4(fileURL);
+                    bigCommerceProduct.setProductImageSort_4("3");
                     bigCommerceProduct.setProductImageIsThumbnail_4("N");
-                    bigCommerceProduct.setProductImage_4(fileURL);
                     bigCommerceProduct.setProductImageDescription_4(bigCommerceProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductFile_5(fileURL);
-                    bigCommerceProduct.setProductImageSort_5("5");
+                    bigCommerceProduct.setProductImageFile_5(fileURL);
+                    bigCommerceProduct.setProductImageSort_5("4");
                     bigCommerceProduct.setProductImageIsThumbnail_5("N");
-                    bigCommerceProduct.setProductImage_5(fileURL);
                     bigCommerceProduct.setProductImageDescription_5(bigCommerceProduct.getTitle());
                 }
 
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductFile_6(fileURL);
-                    bigCommerceProduct.setProductImageSort_6("6");
+                    bigCommerceProduct.setProductImageFile_6(fileURL);
+                    bigCommerceProduct.setProductImageSort_6("5");
                     bigCommerceProduct.setProductImageIsThumbnail_6("N");
-                    bigCommerceProduct.setProductImage_6(fileURL);
                     bigCommerceProduct.setProductImageDescription_6(bigCommerceProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductFile_7(fileURL);
-                    bigCommerceProduct.setProductImageSort_7("7");
+                    bigCommerceProduct.setProductImageFile_7(fileURL);
+                    bigCommerceProduct.setProductImageSort_7("6");
                     bigCommerceProduct.setProductImageIsThumbnail_7("N");
-                    bigCommerceProduct.setProductImage_7(fileURL);
                     bigCommerceProduct.setProductImageDescription_7(bigCommerceProduct.getTitle());
+                }
+                if (st.hasMoreTokens()) {
+                    String fileURL = st.nextToken();
+                    bigCommerceProduct.setProductImageFile_8(fileURL);
+                    bigCommerceProduct.setProductImageSort_8("7");
+                    bigCommerceProduct.setProductImageIsThumbnail_8("N");
+                    bigCommerceProduct.setProductImageDescription_8(bigCommerceProduct.getTitle());
+                }
+                if (st.hasMoreTokens()) {
+                    String fileURL = st.nextToken();
+                    bigCommerceProduct.setProductImageFile_9(fileURL);
+                    bigCommerceProduct.setProductImageSort_9("8");
+                    bigCommerceProduct.setProductImageIsThumbnail_9("N");
+                    bigCommerceProduct.setProductImageDescription_9(bigCommerceProduct.getTitle());
                 }
             }
             bigCommerceProduct.setProductCondition("New");
             bigCommerceProduct.setShowProductCondition("Y");
-            bigCommerceProduct.setCurrentStockLevel(String.valueOf(maisonProd.getStockQuantity()));
+            bigCommerceProduct.setStockQuantity(String.valueOf(maisonProd.getStockQuantity()));
             bigCommerceProduct.setProductAvailability(getProductAvailability(Double.parseDouble(bigCommerceProduct.getTradePrice()), maisonProd.getStockQuantity()));
         }
         bigCommerceService.saveAll(bigCommerceProductList);
