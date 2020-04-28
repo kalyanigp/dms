@@ -56,6 +56,7 @@ public class BigCommerceProductCSVController {
                     .withSeparator(CSVWriter.DEFAULT_SEPARATOR)
                     .withLineEnd(CSVWriter.DEFAULT_LINE_END)
                     .withEscapechar(CSVWriter.NO_ESCAPE_CHARACTER)
+                    .withMappingStrategy(new AnnotationStrategy(BigCommerceProduct.class))
                     .build();
             List<BigCommerceProduct> commerceProductsList = bcService.findAll();
             commerceProductsList = validateCSVService.validate(commerceProductsList);
