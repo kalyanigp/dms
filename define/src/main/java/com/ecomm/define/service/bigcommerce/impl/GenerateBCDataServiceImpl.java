@@ -39,14 +39,38 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
             if (maisonProd.getStockQuantity() > 0) {
                 bigCommerceProduct.setAllowPurchases("Y");
             }
-            bigCommerceProduct.setTitle("Define "+bigCommerceProduct.getTitle());
+            bigCommerceProduct.setTitle("Define " + bigCommerceProduct.getTitle());
             bigCommerceProduct.setMspPrice(maisonProd.getMspPrice());
             bigCommerceProduct.setTradePrice(maisonProd.getTradePrice());
             bigCommerceProduct.setProductWeight("0");
             bigCommerceProduct.setFixedShippingCost("");
             bigCommerceProduct.setTrackInventory("by product");
             bigCommerceProduct.setProductType("P");
-            bigCommerceProduct.setProductDescription(maisonProd.getMaterial().replaceAll(",", ""));
+            if (maisonProd.getPackingSpec() != null)
+            {
+                int index = 0;
+                if (maisonProd.getPackingSpec().contains("Kg")){
+                     index = maisonProd.getPackingSpec().indexOf("Kg");
+                } else if (maisonProd.getPackingSpec().contains("KG")){
+                    index = maisonProd.getPackingSpec().indexOf("KG");
+                }
+                if (index>0) {
+                    bigCommerceProduct.setProductWeight(maisonProd.getPackingSpec().substring(index - 3, index));
+                }
+                String productWeight = bigCommerceProduct.getProductWeight();
+                if (productWeight != null) {
+                    if (productWeight.contains("Weight")) {
+                        bigCommerceProduct.setProductWeight(productWeight.replaceAll("Weight", ""));
+                    } else if (productWeight.contains("WEIGHT")) {
+                        bigCommerceProduct.setProductWeight(productWeight.replaceAll("WEIGHT", ""));
+                    }
+                }
+            }
+            if (maisonProd.getMaterial() != null) {
+                bigCommerceProduct.setProductDescription(maisonProd.getMaterial().replaceAll(",", ""));
+            }
+            bigCommerceProduct.setProductDescription(bigCommerceProduct.getProductDescription() + " " + maisonProd.getSize() + " " + maisonProd.getPackingSpec());
+
             bigCommerceProductList.add(bigCommerceProduct);
             if (maisonProd.getImages() != null && !maisonProd.getImages().isEmpty()) {
                 StringTokenizer st = new StringTokenizer(maisonProd.getImages(), ",");
@@ -120,8 +144,23 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
             bigCommerceProduct.setShowProductCondition("Y");
             bigCommerceProduct.setStockQuantity(String.valueOf(maisonProd.getStockQuantity()));
             bigCommerceProduct.setProductAvailability(getProductAvailability(Double.parseDouble(bigCommerceProduct.getTradePrice()), maisonProd.getStockQuantity()));
+            setDimensions(bigCommerceProduct, maisonProd.getSize());
         }
         bigCommerceService.saveAll(bigCommerceProductList);
+    }
+
+    private void setDimensions(BigCommerceProduct bigCommerceProduct, String size) {
+        StringTokenizer st = new StringTokenizer(size, "x");
+        while (st.hasMoreTokens()) {
+            String nextString = st.nextToken();
+            if (nextString.contains("H")) {
+                bigCommerceProduct.setProductHeight(nextString.replaceAll("H", "") + "cm");
+            } else if (nextString.contains("W")) {
+                bigCommerceProduct.setProductWidth(nextString.replaceAll("W", "") + "cm");
+            } else if (nextString.contains("D")) {
+                bigCommerceProduct.setProductDepth(nextString.replaceAll("D", "") + "cm");
+            }
+        }
     }
 
     private String getProductAvailability(double tradePrice, int stockQty) {
@@ -138,7 +177,6 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
 
             } else if (tradePrice > 700) {
                 return "Usually dispatches in 25 days";
-
             }
         }
         return "Your Order will be considered as Back Order. Kindly contact us for delivery timelines";

@@ -37,9 +37,9 @@ public class BigCommerceProduct {
     @CsvBindByName(column = "Product Description")
     private String productDescription;
     @CsvBindByName(column = "Price")
-    private String mspPrice;
-    @CsvBindByName(column = "Cost Price")
     private String tradePrice;
+    @CsvBindByName(column = "Cost Price")
+    private String mspPrice;
     private String productType;
     @CsvBindByName(column = "Retail Price")
     private String retailPrice;
@@ -244,3 +244,4 @@ public class BigCommerceProduct {
     }
 
 }
+
