@@ -1,6 +1,6 @@
 package com.ecomm.define.service.bigcommerce;
 
-import com.ecomm.define.domain.BigCommerceProduct;
+import com.ecomm.define.domain.bigcommerce.BigCommerceCsvProduct;
 
 import java.util.List;
 
@@ -8,5 +8,5 @@ import java.util.List;
  * Created by vamshikirangullapelly on 21/04/2020.
  */
 public interface ValidateCSVService {
-   List<BigCommerceProduct> validate(List<BigCommerceProduct> bigCommerceProductList);
+   List<BigCommerceCsvProduct> validate(List<BigCommerceCsvProduct> bigCommerceCsvProductList);
 }
