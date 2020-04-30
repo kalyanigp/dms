@@ -1,6 +1,7 @@
-package com.ecomm.define.controller;
+package com.ecomm.define.controller.bigcommerce;
 
-import com.ecomm.define.domain.BigCommerceProduct;
+import com.ecomm.define.controller.AnnotationStrategy;
+import com.ecomm.define.domain.bigcommerce.BigCommerceCsvProduct;
 import com.ecomm.define.service.bigcommerce.BigCommerceService;
 import com.ecomm.define.service.bigcommerce.ValidateCSVService;
 import com.opencsv.CSVWriter;
@@ -51,14 +52,14 @@ public class BigCommerceProductCSVController {
     @GetMapping("/bcproduct/generate-csv-file")
     public String generateBigCommerceCSVFile() throws IOException, CsvDataTypeMismatchException, CsvRequiredFieldEmptyException {
         try (Writer writer = Files.newBufferedWriter(Paths.get(BIG_COMMERCE_CSV), StandardCharsets.UTF_8)) {
-            StatefulBeanToCsv<BigCommerceProduct> beanToCsv = new StatefulBeanToCsvBuilder(writer)
+            StatefulBeanToCsv<BigCommerceCsvProduct> beanToCsv = new StatefulBeanToCsvBuilder(writer)
                     .withQuotechar(CSVWriter.NO_QUOTE_CHARACTER)
                     .withSeparator(CSVWriter.DEFAULT_SEPARATOR)
                     .withLineEnd(CSVWriter.DEFAULT_LINE_END)
                     .withEscapechar(CSVWriter.NO_ESCAPE_CHARACTER)
-                    .withMappingStrategy(new AnnotationStrategy(BigCommerceProduct.class))
+                    .withMappingStrategy(new AnnotationStrategy(BigCommerceCsvProduct.class))
                     .build();
-            List<BigCommerceProduct> commerceProductsList = bcService.findAll();
+            List<BigCommerceCsvProduct> commerceProductsList = bcService.findAll();
             commerceProductsList = validateCSVService.validate(commerceProductsList);
             beanToCsv.write(commerceProductsList);
         }

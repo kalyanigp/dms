@@ -1,6 +1,6 @@
 package com.ecomm.define.service.bigcommerce.impl;
 
-import com.ecomm.define.domain.BigCommerceProduct;
+import com.ecomm.define.domain.bigcommerce.BigCommerceCsvProduct;
 import com.ecomm.define.service.bigcommerce.ValidateCSVService;
 import org.springframework.stereotype.Service;
 
@@ -18,19 +18,19 @@ public class ValidateCSVServiceImpl implements ValidateCSVService {
     private final NumberFormat FORMAT = NumberFormat.getNumberInstance();
 
     @Override
-    public List<BigCommerceProduct> validate(List<BigCommerceProduct> bigCommerceProductList) {
+    public List<BigCommerceCsvProduct> validate(List<BigCommerceCsvProduct> bigCommerceCsvProductList) {
         FORMAT.setRoundingMode(RoundingMode.CEILING);
         FORMAT.setGroupingUsed(false);
         FORMAT.setMaximumFractionDigits(0);
 
-        List<BigCommerceProduct> updatedProductList = bigCommerceProductList.stream()
+        List<BigCommerceCsvProduct> updatedProductList = bigCommerceCsvProductList.stream()
                 .map(product -> setPrices(product))
                 .collect(Collectors.toList());
         return updatedProductList;
 
     }
 
-    private BigCommerceProduct setPrices(BigCommerceProduct product) {
+    private BigCommerceCsvProduct setPrices(BigCommerceCsvProduct product) {
         final String tradePrice = product.getTradePrice();
         final String mspPrice = product.getMspPrice();
 

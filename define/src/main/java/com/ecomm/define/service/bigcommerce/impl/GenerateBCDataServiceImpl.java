@@ -1,14 +1,18 @@
 package com.ecomm.define.service.bigcommerce.impl;
 
-import com.ecomm.define.domain.BigCommerceProduct;
+import com.ecomm.define.domain.bigcommerce.BigCommerceApiProduct;
+import com.ecomm.define.domain.bigcommerce.BigCommerceCsvProduct;
+import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.supplier.maison.MaisonProduct;
 import com.ecomm.define.service.bigcommerce.BigCommerceService;
 import com.ecomm.define.service.bigcommerce.GenerateBCDataService;
 import com.ecomm.define.service.supplier.maison.MaisonService;
+import org.apache.commons.lang3.StringUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -28,24 +32,24 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
     @Override
     public void generateBcData() {
         List<MaisonProduct> maisonProductList = maisonService.findAll();
-        List<BigCommerceProduct> bigCommerceProductList = new ArrayList<>();
+        List<BigCommerceCsvProduct> bigCommerceCsvProductList = new ArrayList<>();
         ModelMapper modelMapper = new ModelMapper();
         for (MaisonProduct maisonProd : maisonProductList) {
 
-            BigCommerceProduct bigCommerceProduct = modelMapper.map(maisonProd, BigCommerceProduct.class);
-            bigCommerceProduct.setCategory("Furniture");
-            bigCommerceProduct.setAllowPurchases("N");
-            bigCommerceProduct.setBrandName("Define");
+            BigCommerceCsvProduct bigCommerceCsvProduct = modelMapper.map(maisonProd, BigCommerceCsvProduct.class);
+            bigCommerceCsvProduct.setCategory("Furniture");
+            bigCommerceCsvProduct.setAllowPurchases("N");
+            bigCommerceCsvProduct.setBrandName("Define");
             if (maisonProd.getStockQuantity() > 0) {
-                bigCommerceProduct.setAllowPurchases("Y");
+                bigCommerceCsvProduct.setAllowPurchases("Y");
             }
-            bigCommerceProduct.setTitle("Define " + bigCommerceProduct.getTitle());
-            bigCommerceProduct.setMspPrice(maisonProd.getMspPrice());
-            bigCommerceProduct.setTradePrice(maisonProd.getTradePrice());
-            bigCommerceProduct.setProductWeight("0");
-            bigCommerceProduct.setFixedShippingCost("");
-            bigCommerceProduct.setTrackInventory("by product");
-            bigCommerceProduct.setProductType("P");
+            bigCommerceCsvProduct.setTitle("Define " + bigCommerceCsvProduct.getTitle());
+            bigCommerceCsvProduct.setMspPrice(maisonProd.getMspPrice());
+            bigCommerceCsvProduct.setTradePrice(maisonProd.getTradePrice());
+            bigCommerceCsvProduct.setProductWeight("0");
+            bigCommerceCsvProduct.setFixedShippingCost("");
+            bigCommerceCsvProduct.setTrackInventory("by product");
+            bigCommerceCsvProduct.setProductType("P");
             if (maisonProd.getPackingSpec() != null)
             {
                 int index = 0;
@@ -55,110 +59,154 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                     index = maisonProd.getPackingSpec().indexOf("KG");
                 }
                 if (index>0) {
-                    bigCommerceProduct.setProductWeight(maisonProd.getPackingSpec().substring(index - 3, index));
+                    bigCommerceCsvProduct.setProductWeight(maisonProd.getPackingSpec().substring(index - 3, index));
                 }
-                String productWeight = bigCommerceProduct.getProductWeight();
+                String productWeight = bigCommerceCsvProduct.getProductWeight();
                 if (productWeight != null) {
                     if (productWeight.contains("Weight")) {
-                        bigCommerceProduct.setProductWeight(productWeight.replaceAll("Weight", ""));
+                        bigCommerceCsvProduct.setProductWeight(productWeight.replaceAll("Weight", ""));
                     } else if (productWeight.contains("WEIGHT")) {
-                        bigCommerceProduct.setProductWeight(productWeight.replaceAll("WEIGHT", ""));
+                        bigCommerceCsvProduct.setProductWeight(productWeight.replaceAll("WEIGHT", ""));
                     }
                 }
             }
             if (maisonProd.getMaterial() != null) {
-                bigCommerceProduct.setProductDescription(maisonProd.getMaterial().replaceAll(",", ""));
+                bigCommerceCsvProduct.setProductDescription(maisonProd.getMaterial().replaceAll(",", ""));
             }
-            bigCommerceProduct.setProductDescription(bigCommerceProduct.getProductDescription() + " " + maisonProd.getSize() + " " + maisonProd.getPackingSpec());
+            bigCommerceCsvProduct.setProductDescription(bigCommerceCsvProduct.getProductDescription() + " " + maisonProd.getSize() + " " + maisonProd.getPackingSpec());
 
-            bigCommerceProductList.add(bigCommerceProduct);
+            bigCommerceCsvProductList.add(bigCommerceCsvProduct);
             if (maisonProd.getImages() != null && !maisonProd.getImages().isEmpty()) {
                 StringTokenizer st = new StringTokenizer(maisonProd.getImages(), ",");
 
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductImageFile_1(fileURL);
-                    bigCommerceProduct.setProductImageSort_1("0");
-                    bigCommerceProduct.setProductImageIsThumbnail_1("Y");
-                    bigCommerceProduct.setProductImageDescription_1(bigCommerceProduct.getTitle());
+                    bigCommerceCsvProduct.setProductImageFile_1(fileURL);
+                    bigCommerceCsvProduct.setProductImageSort_1("0");
+                    bigCommerceCsvProduct.setProductImageIsThumbnail_1("Y");
+                    bigCommerceCsvProduct.setProductImageDescription_1(bigCommerceCsvProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductImageFile_2(fileURL);
-                    bigCommerceProduct.setProductImageSort_2("1");
-                    bigCommerceProduct.setProductImageIsThumbnail_2("N");
-                    bigCommerceProduct.setProductImageDescription_2(bigCommerceProduct.getTitle());
+                    bigCommerceCsvProduct.setProductImageFile_2(fileURL);
+                    bigCommerceCsvProduct.setProductImageSort_2("1");
+                    bigCommerceCsvProduct.setProductImageIsThumbnail_2("N");
+                    bigCommerceCsvProduct.setProductImageDescription_2(bigCommerceCsvProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductImageFile_3(fileURL);
-                    bigCommerceProduct.setProductImageSort_3("2");
-                    bigCommerceProduct.setProductImageIsThumbnail_3("N");
-                    bigCommerceProduct.setProductImageDescription_3(bigCommerceProduct.getTitle());
+                    bigCommerceCsvProduct.setProductImageFile_3(fileURL);
+                    bigCommerceCsvProduct.setProductImageSort_3("2");
+                    bigCommerceCsvProduct.setProductImageIsThumbnail_3("N");
+                    bigCommerceCsvProduct.setProductImageDescription_3(bigCommerceCsvProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductImageFile_4(fileURL);
-                    bigCommerceProduct.setProductImageSort_4("3");
-                    bigCommerceProduct.setProductImageIsThumbnail_4("N");
-                    bigCommerceProduct.setProductImageDescription_4(bigCommerceProduct.getTitle());
+                    bigCommerceCsvProduct.setProductImageFile_4(fileURL);
+                    bigCommerceCsvProduct.setProductImageSort_4("3");
+                    bigCommerceCsvProduct.setProductImageIsThumbnail_4("N");
+                    bigCommerceCsvProduct.setProductImageDescription_4(bigCommerceCsvProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductImageFile_5(fileURL);
-                    bigCommerceProduct.setProductImageSort_5("4");
-                    bigCommerceProduct.setProductImageIsThumbnail_5("N");
-                    bigCommerceProduct.setProductImageDescription_5(bigCommerceProduct.getTitle());
+                    bigCommerceCsvProduct.setProductImageFile_5(fileURL);
+                    bigCommerceCsvProduct.setProductImageSort_5("4");
+                    bigCommerceCsvProduct.setProductImageIsThumbnail_5("N");
+                    bigCommerceCsvProduct.setProductImageDescription_5(bigCommerceCsvProduct.getTitle());
                 }
 
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductImageFile_6(fileURL);
-                    bigCommerceProduct.setProductImageSort_6("5");
-                    bigCommerceProduct.setProductImageIsThumbnail_6("N");
-                    bigCommerceProduct.setProductImageDescription_6(bigCommerceProduct.getTitle());
+                    bigCommerceCsvProduct.setProductImageFile_6(fileURL);
+                    bigCommerceCsvProduct.setProductImageSort_6("5");
+                    bigCommerceCsvProduct.setProductImageIsThumbnail_6("N");
+                    bigCommerceCsvProduct.setProductImageDescription_6(bigCommerceCsvProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductImageFile_7(fileURL);
-                    bigCommerceProduct.setProductImageSort_7("6");
-                    bigCommerceProduct.setProductImageIsThumbnail_7("N");
-                    bigCommerceProduct.setProductImageDescription_7(bigCommerceProduct.getTitle());
+                    bigCommerceCsvProduct.setProductImageFile_7(fileURL);
+                    bigCommerceCsvProduct.setProductImageSort_7("6");
+                    bigCommerceCsvProduct.setProductImageIsThumbnail_7("N");
+                    bigCommerceCsvProduct.setProductImageDescription_7(bigCommerceCsvProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductImageFile_8(fileURL);
-                    bigCommerceProduct.setProductImageSort_8("7");
-                    bigCommerceProduct.setProductImageIsThumbnail_8("N");
-                    bigCommerceProduct.setProductImageDescription_8(bigCommerceProduct.getTitle());
+                    bigCommerceCsvProduct.setProductImageFile_8(fileURL);
+                    bigCommerceCsvProduct.setProductImageSort_8("7");
+                    bigCommerceCsvProduct.setProductImageIsThumbnail_8("N");
+                    bigCommerceCsvProduct.setProductImageDescription_8(bigCommerceCsvProduct.getTitle());
                 }
                 if (st.hasMoreTokens()) {
                     String fileURL = st.nextToken();
-                    bigCommerceProduct.setProductImageFile_9(fileURL);
-                    bigCommerceProduct.setProductImageSort_9("8");
-                    bigCommerceProduct.setProductImageIsThumbnail_9("N");
-                    bigCommerceProduct.setProductImageDescription_9(bigCommerceProduct.getTitle());
+                    bigCommerceCsvProduct.setProductImageFile_9(fileURL);
+                    bigCommerceCsvProduct.setProductImageSort_9("8");
+                    bigCommerceCsvProduct.setProductImageIsThumbnail_9("N");
+                    bigCommerceCsvProduct.setProductImageDescription_9(bigCommerceCsvProduct.getTitle());
                 }
             }
-            bigCommerceProduct.setProductCondition("New");
-            bigCommerceProduct.setShowProductCondition("Y");
-            bigCommerceProduct.setStockQuantity(String.valueOf(maisonProd.getStockQuantity()));
-            bigCommerceProduct.setProductAvailability(getProductAvailability(Double.parseDouble(bigCommerceProduct.getTradePrice()), maisonProd.getStockQuantity()));
-            setDimensions(bigCommerceProduct, maisonProd.getSize());
+            bigCommerceCsvProduct.setProductCondition("New");
+            bigCommerceCsvProduct.setShowProductCondition("Y");
+            bigCommerceCsvProduct.setStockQuantity(String.valueOf(maisonProd.getStockQuantity()));
+            bigCommerceCsvProduct.setProductAvailability(getProductAvailability(Double.parseDouble(bigCommerceCsvProduct.getTradePrice()), maisonProd.getStockQuantity()));
+            setDimensions(bigCommerceCsvProduct, maisonProd.getSize());
         }
-        bigCommerceService.saveAll(bigCommerceProductList);
+        bigCommerceService.saveAll(bigCommerceCsvProductList);
     }
 
-    private void setDimensions(BigCommerceProduct bigCommerceProduct, String size) {
+
+
+    @Override
+    public List<BigCommerceApiProduct> generateBcProductsFromMaison() {
+        List<MaisonProduct> maisonProductList = maisonService.findAll();
+        List<BigCommerceApiProduct> bigCommerceApiProductList = new ArrayList<>();
+        BigCommerceApiProduct bigCommerceApiProduct = null;
+        for (MaisonProduct maisonProd : maisonProductList) {
+            bigCommerceApiProduct = new BigCommerceApiProduct();
+            BcProductData data = bigCommerceApiProduct.getData();
+            if(data == null) {
+                data = new BcProductData();
+            }
+            data.setName(maisonProd.getTitle());
+            data.setSku(maisonProd.getProductCode());
+
+            BigDecimal decimalPrice = null;
+            if(StringUtils.isEmpty(maisonProd.getMspPrice()) || "N/A".equals(maisonProd.getMspPrice())) {
+                if (!StringUtils.isEmpty(maisonProd.getTradePrice())) {
+                    decimalPrice = new BigDecimal(maisonProd.getTradePrice());
+                    decimalPrice = decimalPrice.multiply(BigDecimal.valueOf(2));
+                }
+            } else {
+                decimalPrice = new BigDecimal(maisonProd.getMspPrice());
+            }
+            decimalPrice = decimalPrice.add(new BigDecimal(1));
+            int priceIntValue = decimalPrice.intValue();
+            data.setPrice(priceIntValue);
+
+            List<Integer> categories = new ArrayList<>();
+            categories.add(69);
+            data.setCategories(categories);
+            data.setType("physical");
+            data.setName("Define " + data.getName());
+            data.setSalePrice(priceIntValue);
+            data.setWeight(20);
+            data.setInventoryLevel(maisonProd.getStockQuantity() < 0? 0 : maisonProd.getStockQuantity());
+            data.setInventoryTracking("product");
+            bigCommerceApiProduct.setData(data);
+            bigCommerceApiProductList.add(bigCommerceApiProduct);
+        }
+        return bigCommerceApiProductList;
+    }
+
+    private void setDimensions(BigCommerceCsvProduct bigCommerceCsvProduct, String size) {
         StringTokenizer st = new StringTokenizer(size, "x");
         while (st.hasMoreTokens()) {
             String nextString = st.nextToken();
             if (nextString.contains("H")) {
-                bigCommerceProduct.setProductHeight(nextString.replaceAll("H", "") + "cm");
+                bigCommerceCsvProduct.setProductHeight(nextString.replaceAll("H", "") + "cm");
             } else if (nextString.contains("W")) {
-                bigCommerceProduct.setProductWidth(nextString.replaceAll("W", "") + "cm");
+                bigCommerceCsvProduct.setProductWidth(nextString.replaceAll("W", "") + "cm");
             } else if (nextString.contains("D")) {
-                bigCommerceProduct.setProductDepth(nextString.replaceAll("D", "") + "cm");
+                bigCommerceCsvProduct.setProductDepth(nextString.replaceAll("D", "") + "cm");
             }
         }
     }

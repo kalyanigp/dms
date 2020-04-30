@@ -1,4 +1,4 @@
-package com.ecomm.define.domain;
+package com.ecomm.define.domain.bigcommerce;
 
 import com.opencsv.bean.CsvBindByName;
 import lombok.AllArgsConstructor;
@@ -14,10 +14,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor
 @Data
 @Document(collection="bcProduct")
-public class BigCommerceProduct {
+public class BigCommerceCsvProduct {
 
     @Id
     public ObjectId _id;
+
+
     @CsvBindByName(column = "Item Type")
     private String itemType;
     @CsvBindByName(column = "Product ID")
@@ -241,7 +243,7 @@ public class BigCommerceProduct {
     @CsvBindByName(column = "Product Custom Fields")
     private String productCustomFields;
 
-    public BigCommerceProduct() {
+    public BigCommerceCsvProduct() {
     }
 
 }

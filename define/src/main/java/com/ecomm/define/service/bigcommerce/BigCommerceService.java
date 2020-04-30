@@ -1,6 +1,6 @@
 package com.ecomm.define.service.bigcommerce;
 
-import com.ecomm.define.domain.BigCommerceProduct;
+import com.ecomm.define.domain.bigcommerce.BigCommerceCsvProduct;
 import org.bson.types.ObjectId;
 
 import java.util.List;
@@ -11,13 +11,13 @@ import java.util.Optional;
  */
 public interface BigCommerceService {
 
-    BigCommerceProduct create(final BigCommerceProduct bcProduct);
-    BigCommerceProduct findBy_Id(final ObjectId id);
-    Optional<BigCommerceProduct> findById(final String id);
-    BigCommerceProduct findByProductSku(final String sku);
-    List<BigCommerceProduct> findAll();
-    BigCommerceProduct update(BigCommerceProduct bcProduct);
-    void saveAll(List<BigCommerceProduct> bcProductList);
+    BigCommerceCsvProduct create(final BigCommerceCsvProduct bcProduct);
+    BigCommerceCsvProduct findBy_Id(final ObjectId id);
+    Optional<BigCommerceCsvProduct> findById(final String id);
+    BigCommerceCsvProduct findByProductSku(final String sku);
+    List<BigCommerceCsvProduct> findAll();
+    BigCommerceCsvProduct update(BigCommerceCsvProduct bcProduct);
+    void saveAll(List<BigCommerceCsvProduct> bcProductList);
     void delete(final ObjectId id);
 
 }

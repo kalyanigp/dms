@@ -1,7 +1,7 @@
 package com.ecomm.define.service.bigcommerce.impl;
 
-import com.ecomm.define.domain.BigCommerceProduct;
-import com.ecomm.define.repository.BigCommerceProductRepository;
+import com.ecomm.define.domain.bigcommerce.BigCommerceCsvProduct;
+import com.ecomm.define.repository.bigcommerce.BigCommerceProductRepository;
 import com.ecomm.define.service.bigcommerce.BigCommerceService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,37 +20,37 @@ public class BigCommerceServiceImpl implements BigCommerceService {
     BigCommerceProductRepository repository;
 
     @Override
-    public BigCommerceProduct create(BigCommerceProduct bcProduct) {
+    public BigCommerceCsvProduct create(BigCommerceCsvProduct bcProduct) {
         return repository.save(bcProduct);
     }
 
     @Override
-    public BigCommerceProduct findBy_Id(ObjectId id) {
+    public BigCommerceCsvProduct findBy_Id(ObjectId id) {
         return repository.findBy_id(id);
     }
 
     @Override
-    public Optional<BigCommerceProduct> findById(String id) {
+    public Optional<BigCommerceCsvProduct> findById(String id) {
         return repository.findById(id);
     }
 
     @Override
-    public BigCommerceProduct findByProductSku(String sku) {
+    public BigCommerceCsvProduct findByProductSku(String sku) {
         return repository.findByProductSku(sku);
     }
 
     @Override
-    public List<BigCommerceProduct> findAll() {
+    public List<BigCommerceCsvProduct> findAll() {
         return repository.findAll();
     }
 
     @Override
-    public BigCommerceProduct update(BigCommerceProduct bcProduct) {
+    public BigCommerceCsvProduct update(BigCommerceCsvProduct bcProduct) {
         return repository.save(bcProduct);
     }
 
     @Override
-    public void saveAll(List<BigCommerceProduct> bcProductList) {
+    public void saveAll(List<BigCommerceCsvProduct> bcProductList) {
         repository.saveAll(bcProductList);
     }
 
