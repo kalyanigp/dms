@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -98,6 +99,8 @@ public class BcProductData {
 
     @Id
     public ObjectId _id;
+    @JsonIgnore
+    public String supplier;
 
     @JsonProperty("id")
     private Integer id;
@@ -105,6 +108,7 @@ public class BcProductData {
     private String name;
     @JsonProperty("type")
     private String type;
+    @Indexed(unique = true)
     @JsonProperty("sku")
     private String sku;
     @JsonProperty("description")
@@ -271,6 +275,14 @@ public class BcProductData {
     public BcProductData withId(Integer id) {
         this.id = id;
         return this;
+    }
+
+    public String getSupplier() {
+        return supplier;
+    }
+
+    public void setSupplier(String supplier) {
+        this.supplier = supplier;
     }
 
     @JsonProperty("name")

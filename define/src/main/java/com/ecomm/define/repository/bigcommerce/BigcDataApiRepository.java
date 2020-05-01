@@ -17,6 +17,6 @@ public interface BigcDataApiRepository extends MongoRepository<BcProductData, St
     @Override
     Optional<BcProductData> findById(String s);
 
-    @Query("{productCode : ?0}")
+    @Query("{sku : ?0}")
     BcProductData findByProductSku(String productName);
 }
