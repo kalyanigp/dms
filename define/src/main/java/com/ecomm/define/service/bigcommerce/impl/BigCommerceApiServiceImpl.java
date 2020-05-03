@@ -6,6 +6,7 @@ import com.ecomm.define.service.bigcommerce.BigCommerceApiService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +40,11 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
     @Override
     public List<BcProductData> findAll() {
         return repository.findAll();
+    }
+
+    @Override
+    public List<BcProductData> findBySupplier(String supplier) {
+        return repository.findBySupplier(supplier);
     }
 
     @Override

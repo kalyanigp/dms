@@ -4,7 +4,6 @@ package com.ecomm.define.repository.bigcommerce;
  * Created by vamshikirangullapelly on 18/04/2020.
  */
 
-import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.bigcommerce.BcProductImageData;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -17,4 +16,5 @@ public interface BigcImageDataApiRepository extends MongoRepository<BcProductIma
     BcProductImageData findBy_id(ObjectId _id);
     @Query("{id : ?0}")
     Optional<BcProductImageData> findById(int id);
+
 }
