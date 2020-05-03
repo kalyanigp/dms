@@ -3,10 +3,7 @@ package com.ecomm.define.controller.bigcommerce;
 import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.bigcommerce.BcProductImageData;
 import com.ecomm.define.domain.bigcommerce.BcProductImageDataList;
-import com.ecomm.define.domain.bigcommerce.BigCommerceApiImage;
-import com.ecomm.define.domain.bigcommerce.BigCommerceApiProduct;
 import com.ecomm.define.domain.bigcommerce.BigCommerceApiProductList;
-import com.ecomm.define.domain.supplier.maison.MaisonProduct;
 import com.ecomm.define.service.bigcommerce.BigCommerceApiService;
 import com.ecomm.define.service.bigcommerce.BigCommerceImageApiService;
 import com.ecomm.define.service.bigcommerce.GenerateBCDataService;
@@ -15,7 +12,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,17 +21,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 /**
@@ -69,7 +61,7 @@ public class BigCommerceProductApiController {
 
 
 
-    @ApiOperation(value = "Rest call to upload all Maison Products to Big Commerce", response = Iterable.class)
+    /*@ApiOperation(value = "Rest call to upload all Maison Products to Big Commerce", response = Iterable.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Products successfully uploaded to BigCommerce from Maison"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -83,19 +75,19 @@ public class BigCommerceProductApiController {
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT);
         List<BcProductData> duplicateRecords = new ArrayList<>();
-        List<BigCommerceApiProduct> bigCommerceApiProducts = bcDataService.generateBcProductsFromMaison();
+        List<BcProductData> bigCommerceApiProducts = bcDataService.generateBcProductsFromMaison("Maison");
         HttpEntity<BcProductData> request = null;
         BigCommerceApiProduct result = null;
-        for (BigCommerceApiProduct product : bigCommerceApiProducts) {
+        for (BcProductData product : bigCommerceApiProducts) {
             try {
-                request = new HttpEntity<>(product.getData(), getHttpHeaders());
+                request = new HttpEntity<>(product, getHttpHeaders());
                 logger.info(request.getBody().getName());
                 result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
                 BcProductData data = bigCommerceApiService.create(result.getData());
                 updateImage(data, restTemplate);
             } catch (Exception duplicateRecordException) {
                 logger.error("Duplicate record found with the name {}", request.getBody().getName());
-                duplicateRecords.add(product.getData());
+                duplicateRecords.add(product);
                 continue;
             }
         }
@@ -104,8 +96,7 @@ public class BigCommerceProductApiController {
             processDuplicateRecords(duplicateRecords);
         }
         return "Successfully Generated CSV File";
-    }
-
+    }*/
 
 
     @ApiOperation(value = "Rest call to pull the BigCommerce Products and save them to db, if the product is not present in the db", response = Iterable.class)
@@ -120,15 +111,15 @@ public class BigCommerceProductApiController {
     @GetMapping("/maison/products")
     public String getAllProducts() throws Exception {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT+"/?limit=300");
+        URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT + "/?limit=300");
 
         try {
-            HttpEntity<BigCommerceApiProductList> request = new HttpEntity<>(null,getHttpHeaders());
+            HttpEntity<BigCommerceApiProductList> request = new HttpEntity<>(null, getHttpHeaders());
             ResponseEntity<BigCommerceApiProductList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiProductList.class);
             List<BcProductData> bcCategoryDataList = responseEntity.getBody().getData();
-            for(BcProductData bcProductData : bcCategoryDataList) {
+            for (BcProductData bcProductData : bcCategoryDataList) {
                 BcProductData byProductSku = bigCommerceApiService.findByProductSku(bcProductData.getSku());
-                if(byProductSku != null) {
+                if (byProductSku != null) {
                     byProductSku.setSupplier("Maison");
                     bigCommerceApiService.update(byProductSku);
                 } else {
@@ -163,14 +154,14 @@ public class BigCommerceProductApiController {
         URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT);
 
         try {
-            HttpEntity<BcProductImageDataList> request = new HttpEntity<>(null,getHttpHeaders());
+            HttpEntity<BcProductImageDataList> request = new HttpEntity<>(null, getHttpHeaders());
             List<BcProductData> bigCommerceProducts = bigCommerceApiService.findAll();
-            for(BcProductData bcProduct : bigCommerceProducts) {
-                ResponseEntity<BcProductImageDataList> responseEntity = restTemplate.exchange(uri+"/"+bcProduct.getId()+"/images", HttpMethod.GET, request, BcProductImageDataList.class);
+            for (BcProductData bcProduct : bigCommerceProducts) {
+                ResponseEntity<BcProductImageDataList> responseEntity = restTemplate.exchange(uri + "/" + bcProduct.getId() + "/images", HttpMethod.GET, request, BcProductImageDataList.class);
                 List<BcProductImageData> bcCategoryDataList = responseEntity.getBody().getData();
-                for(BcProductImageData imageData: bcCategoryDataList) {
+                for (BcProductImageData imageData : bcCategoryDataList) {
                     Optional<BcProductImageData> byId = bigCommerceImageApiService.findById(imageData.getId());
-                    if(byId.get() == null) {
+                    if (byId.get() == null) {
                         bigCommerceImageApiService.create(imageData);
                     } else {
                         bigCommerceImageApiService.update(byId.get());
@@ -185,7 +176,7 @@ public class BigCommerceProductApiController {
     }
 
 
-    private void updateImage(BcProductData data, RestTemplate restTemplate) throws Exception {
+    /*private void updateImage(BcProductData data, RestTemplate restTemplate) throws Exception {
         MaisonProduct maisonProduct = maisonService.findByProductSku(data.getSku());
         List<String> images = Arrays.asList(maisonProduct.getImages().split(","));
         URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT + "/" + data.getId() + "/images");
@@ -213,10 +204,10 @@ public class BigCommerceProductApiController {
                 continue;
             }
         }
-    }
+    }*/
 
 
-    private void processDuplicateRecords(List<BcProductData> duplicateRecords) throws Exception {
+   /* private void processDuplicateRecords(List<BcProductData> duplicateRecords) throws Exception {
         logger.info("Started processing duplicate records for Maison");
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT);
@@ -246,7 +237,7 @@ public class BigCommerceProductApiController {
             processDuplicateRecords(duplicateRecords1);
         }
         logger.info("Successfully finished processing the duplicate records for Maison");
-    }
+    }*/
 
 
     private HttpHeaders getHttpHeaders() {

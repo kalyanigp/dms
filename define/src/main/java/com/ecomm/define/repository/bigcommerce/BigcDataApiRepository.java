@@ -5,10 +5,12 @@ package com.ecomm.define.repository.bigcommerce;
  */
 
 import com.ecomm.define.domain.bigcommerce.BcProductData;
+import com.ecomm.define.domain.bigcommerce.BcProductImageData;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface BigcDataApiRepository extends MongoRepository<BcProductData, String> {
@@ -19,4 +21,8 @@ public interface BigcDataApiRepository extends MongoRepository<BcProductData, St
 
     @Query("{sku : ?0}")
     BcProductData findByProductSku(String productName);
+
+
+    @Query("{supplier : ?0}")
+    List<BcProductData> findBySupplier(String supplier);
 }

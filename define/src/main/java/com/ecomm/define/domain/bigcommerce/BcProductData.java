@@ -277,6 +277,14 @@ public class BcProductData {
         return this;
     }
 
+    public ObjectId get_id() {
+        return _id;
+    }
+
+    public void set_id(ObjectId _id) {
+        this._id = _id;
+    }
+
     public String getSupplier() {
         return supplier;
     }
