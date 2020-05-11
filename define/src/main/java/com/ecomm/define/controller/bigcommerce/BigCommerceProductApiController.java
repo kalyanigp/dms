@@ -161,10 +161,10 @@ public class BigCommerceProductApiController {
                 List<BcProductImageData> bcCategoryDataList = responseEntity.getBody().getData();
                 for (BcProductImageData imageData : bcCategoryDataList) {
                     Optional<BcProductImageData> byId = bigCommerceImageApiService.findById(imageData.getId());
-                    if (byId.get() == null) {
-                        bigCommerceImageApiService.create(imageData);
-                    } else {
+                    if (byId.isPresent()) {
                         bigCommerceImageApiService.update(byId.get());
+                    } else {
+                        bigCommerceImageApiService.create(imageData);
                     }
                 }
             }
@@ -240,7 +240,7 @@ public class BigCommerceProductApiController {
     }*/
 
 
-    private HttpHeaders getHttpHeaders() {
+    public HttpHeaders getHttpHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Auth-Token", accessToken);
         headers.set("X-Auth-Client", clientId);

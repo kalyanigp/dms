@@ -1,5 +1,7 @@
 package com.ecomm.define.service.bigcommerce.impl;
 
+import com.ecomm.define.bcenum.Category;
+import com.ecomm.define.bcenum.Supplier;
 import com.ecomm.define.controller.bigcommerce.BigCommerceProductApiController;
 import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.bigcommerce.BcProductImageData;
@@ -13,7 +15,6 @@ import com.ecomm.define.service.bigcommerce.BigCommerceService;
 import com.ecomm.define.service.bigcommerce.GenerateBCDataService;
 import com.ecomm.define.service.supplier.maison.MaisonService;
 import org.apache.commons.lang3.StringUtils;
-import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,21 +40,18 @@ import java.util.stream.Collectors;
 @Service
 public class GenerateBCDataServiceImpl implements GenerateBCDataService {
 
+    public static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
+    private final Logger logger = LoggerFactory.getLogger(BigCommerceProductApiController.class);
     @Autowired
     MaisonService maisonService;
-
     @Autowired
     BigCommerceService bigCommerceService;
-
-
     @Autowired
     BigCommerceApiService bigCommerceApiService;
-
     @Autowired
     BigCommerceImageApiService bigCommerceImageApiService;
-
-
-    private final Logger logger = LoggerFactory.getLogger(BigCommerceProductApiController.class);
+    @Autowired
+    BigCommerceProductApiController bigCommerceProductApiController;
     @Value("${bigcommerce.storehash}")
     private String storeHash;
     @Value("${bigcommerce.access.token}")
@@ -62,7 +60,6 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
     private String clientId;
     @Value("${bigcommerce.client.baseUrl}")
     private String baseUrl;
-    public static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
 
 
     /*@Override
@@ -188,7 +185,6 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
         bigCommerceService.saveAll(bigCommerceCsvProductList);
     }*/
 
-
     @Override
     public void generateBcProductsFromMaison(List<MaisonProduct> updatedMaisonProductList) throws Exception {
         List<BigCommerceApiProduct> bigCommerceApiProductList = new ArrayList<>();
@@ -203,16 +199,15 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                 data.setSku(maisonProd.getProductCode());
                 int priceIntValue = evaluatePrice(maisonProd);
                 data.setPrice(priceIntValue);
-                List<Integer> categories = new ArrayList<>();
-                categories.add(69);
-                data.setCategories(categories);
+                assignCategories(data, maisonProd.getTitle());
+
                 data.setType("physical");
                 data.setName("Define " + data.getName());
                 data.setSalePrice(priceIntValue);
                 data.setWeight(20);
                 data.setInventoryLevel(maisonProd.getStockQuantity() < 0 ? 0 : maisonProd.getStockQuantity());
                 data.setInventoryTracking("product");
-                data.setSupplier("Maison");
+                data.setSupplier(Supplier.MAISON.getName());
                 bigCommerceApiProduct.setData(data);
                 bigCommerceApiProductList.add(bigCommerceApiProduct);
                 BcProductData bcProductData = bigCommerceApiService.create(data);
@@ -220,17 +215,36 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
             } else {
                 bigCommerceApiProduct = new BigCommerceApiProduct();
                 byProductSku.setInventoryLevel(maisonProd.getStockQuantity());
-                byProductSku.setSupplier("Maison");
+                byProductSku.setSupplier(Supplier.MAISON.getName());
                 int priceIntValue = evaluatePrice(maisonProd);
                 byProductSku.setPrice(priceIntValue);
                 byProductSku.setSalePrice(priceIntValue);
+                assignCategories(byProductSku, maisonProd.getTitle());
+
                 bigCommerceApiProduct.setData(byProductSku);
                 bigCommerceApiProductList.add(bigCommerceApiProduct);
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
+
             }
         }
         updateBigCommerceProducts(updatedBcProductDataList);
+    }
+
+    private void assignCategories(BcProductData data, String title) {
+        List<Integer> categories = new ArrayList<>();
+
+        for (Category category : Category.values()) {
+            if (title.contains(category.getCategoryWord())) {
+                categories.add(category.getCategoryCode());
+                System.out.println(title + " assigned Codes " + category.getCategoryWord());
+
+            }
+        }
+        categories.add(Category.FURNITURE.getCategoryCode());
+        data.setCategories(categories);
+        System.out.println(title + " assigned Codes " + Category.FURNITURE.getCategoryCode());
+
     }
 
 
@@ -269,7 +283,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
             logger.info("Found duplicate products while processing maison products. Processing the duplicate products by updating the name attribute");
             //processDuplicateRecords(duplicateRecords);
         }
-        logger.info("Successfully Generated CSV File");
+        logger.info("Successfully Updated Relavant Products");
     }
 
 
