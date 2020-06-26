@@ -18,4 +18,5 @@ public interface MaisonService {
     MaisonProduct update(MaisonProduct maisonProduct);
     void saveAll(List<MaisonProduct> bcProductList);
     void delete(final ObjectId id);
-}
+    List<MaisonProduct> getUpdatedProductList(List<MaisonProduct> newList, List<MaisonProduct> oldList);
+    }

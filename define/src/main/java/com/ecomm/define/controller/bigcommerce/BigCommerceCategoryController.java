@@ -1,23 +1,12 @@
 package com.ecomm.define.controller.bigcommerce;
 
 import com.ecomm.define.domain.bigcommerce.BcCategoryData;
-import com.ecomm.define.domain.bigcommerce.BcProductData;
-import com.ecomm.define.domain.bigcommerce.BcProductImageData;
-import com.ecomm.define.domain.bigcommerce.BigCommerceApiCategory;
 import com.ecomm.define.domain.bigcommerce.BigCommerceApiCategoryList;
-import com.ecomm.define.domain.bigcommerce.BigCommerceApiImage;
-import com.ecomm.define.domain.bigcommerce.BigCommerceApiProduct;
-import com.ecomm.define.domain.supplier.maison.MaisonProduct;
-import com.ecomm.define.service.bigcommerce.BigCommerceApiService;
 import com.ecomm.define.service.bigcommerce.BigCommerceCategoryService;
-import com.ecomm.define.service.bigcommerce.BigCommerceImageApiService;
-import com.ecomm.define.service.bigcommerce.GenerateBCDataService;
-import com.ecomm.define.service.supplier.maison.MaisonService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,17 +16,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 /**
@@ -56,7 +40,7 @@ public class BigCommerceCategoryController {
     private String clientId;
     @Value("${bigcommerce.client.baseUrl}")
     private String baseUrl;
-    public static final String PRODUCTS_ENDPOINT = "/v3/catalog/categories";
+    public static final String CATEGORIES_ENDPOINT = "/v3/catalog/categories/?limit=300";
 
     @Autowired
     private BigCommerceCategoryService service;
@@ -76,7 +60,7 @@ public class BigCommerceCategoryController {
     @GetMapping("/categories")
     public String getAllCategories() throws Exception {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT);
+        URI uri = new URI(baseUrl + storeHash + CATEGORIES_ENDPOINT);
 
             try {
                 HttpEntity<BigCommerceApiCategoryList> request = new HttpEntity<>(null,getHttpHeaders());
@@ -91,12 +75,12 @@ public class BigCommerceCategoryController {
 
             }
 
-        return "Successfully Generated CSV File";
+        return "Successfully Saved Categories";
     }
 
 
 
-    private HttpHeaders getHttpHeaders() {
+    public HttpHeaders getHttpHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Auth-Token", accessToken);
         headers.set("X-Auth-Client", clientId);

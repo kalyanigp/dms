@@ -2,7 +2,6 @@ package com.ecomm.define.controller.supplier.maison;
 
 import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.supplier.maison.MaisonProduct;
-import com.ecomm.define.exception.CSVProcessException;
 import com.ecomm.define.exception.FileNotFoundException;
 import com.ecomm.define.exception.RecordNotFoundException;
 import com.ecomm.define.service.bigcommerce.BigCommerceApiService;
@@ -37,7 +36,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,7 +49,9 @@ import java.util.stream.Stream;
 public class MaisonProductUploadController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MaisonProductUploadController.class);
-
+    private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
+    @Autowired
+    BigCommerceApiService bigCommerceApiService;
     @Value("${bigcommerce.storehash}")
     private String storeHash;
     @Value("${bigcommerce.access.token}")
@@ -60,14 +60,8 @@ public class MaisonProductUploadController {
     private String clientId;
     @Value("${bigcommerce.client.baseUrl}")
     private String baseUrl;
-    private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
-
     @Autowired
     private MaisonService maisonService;
-
-    @Autowired
-    BigCommerceApiService bigCommerceApiService;
-
     @Autowired
     private GenerateBCDataService generateBCDataService;
 
@@ -134,34 +128,26 @@ public class MaisonProductUploadController {
                 List<MaisonProduct> oldMaisonProducts = maisonService.findAll();
                 List<MaisonProduct> updatedProductList = null;
                 if (!oldMaisonProducts.isEmpty()) {
-                    updatedProductList = getUpdatedProductList(maisonProducts, oldMaisonProducts);
-                    maisonService.saveAll(updatedProductList);
+                    updatedProductList = maisonService.getUpdatedProductList(maisonProducts, oldMaisonProducts);
+                    if (updatedProductList != null) {
+                        maisonService.saveAll(updatedProductList);
+                        generateBCDataService.generateBcProductsFromMaison(updatedProductList);
+                        LOGGER.info("Successfully Updated Stock and Price");
+                    }
+
+                    //Check whether any product discontinued and delete them from MaisonProduct table
+                    List<MaisonProduct> existingProducts = maisonService.findAll();
+                    deleteDiscontinuedProducts(maisonProducts, existingProducts);
                 } else {
                     maisonService.saveAll(maisonProducts);
-                }
-
-                //Check whether any product discontinued and delete them from MaisonProduct table
-                List<MaisonProduct> updatedProducts = maisonService.findAll();
-                deleteDiscontinuedProducts(maisonProducts, updatedProducts);
-                if (updatedProductList != null) {
-                    generateBCDataService.generateBcProductsFromMaison(updatedProductList);
-                } else {
-                    generateBCDataService.generateBcProductsFromMaison(updatedProducts);
+                    generateBCDataService.generateBcProductsFromMaison(maisonProducts);
+                    LOGGER.info("Successfully Added New Products from supplier");
                 }
             } catch (Exception ex) {
-                throw new CSVProcessException("Error while processing CSV File");
+                LOGGER.error("Error while processing CSV File" + ex.getMessage());
             }
         }
-        return ResponseEntity.ok().body("Successfully uploaded CSV File");
-    }
-
-    private HttpHeaders getHttpHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Auth-Token", accessToken);
-        headers.set("X-Auth-Client", clientId);
-        headers.set("Content-Type", "application/json");
-        headers.set("Accept", "application/json");
-        return headers;
+        return ResponseEntity.ok().body("Successfully updated Stock Feed");
     }
 
     private void deleteDiscontinuedProducts(
@@ -182,20 +168,13 @@ public class MaisonProductUploadController {
         }
     }
 
-    private List<MaisonProduct> getUpdatedProductList(List<MaisonProduct> newList, List<MaisonProduct> oldList) {
-
-        List<MaisonProduct> listOneList = new ArrayList<>();
-        for(MaisonProduct newProduct : newList) {
-            for(MaisonProduct oldProduct : oldList) {
-                if(newProduct.getProductCode().equals(oldProduct.getProductCode())) {
-                    if(oldProduct.getStockQuantity() != newProduct.getStockQuantity() || !oldProduct.getMspPrice().equals(newProduct.getMspPrice()) || !oldProduct.getTradePrice().equals(newProduct.getTradePrice())) {
-                        listOneList.add(newProduct);
-                    }
-                }
-            }
-        }
-
-
-        return listOneList;
+    private HttpHeaders getHttpHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Auth-Token", accessToken);
+        headers.set("X-Auth-Client", clientId);
+        headers.set("Content-Type", "application/json");
+        headers.set("Accept", "application/json");
+        return headers;
     }
+
 }

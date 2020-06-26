@@ -1,5 +1,6 @@
 package com.ecomm.define.controller.bigcommerce;
 
+import com.ecomm.define.bcenum.Supplier;
 import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.bigcommerce.BcProductImageData;
 import com.ecomm.define.domain.bigcommerce.BcProductImageDataList;
@@ -116,14 +117,14 @@ public class BigCommerceProductApiController {
         try {
             HttpEntity<BigCommerceApiProductList> request = new HttpEntity<>(null, getHttpHeaders());
             ResponseEntity<BigCommerceApiProductList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiProductList.class);
-            List<BcProductData> bcCategoryDataList = responseEntity.getBody().getData();
-            for (BcProductData bcProductData : bcCategoryDataList) {
+            List<BcProductData> bcProductDataList = responseEntity.getBody().getData();
+            for (BcProductData bcProductData : bcProductDataList) {
                 BcProductData byProductSku = bigCommerceApiService.findByProductSku(bcProductData.getSku());
                 if (byProductSku != null) {
-                    byProductSku.setSupplier("Maison");
+                    byProductSku.setSupplier(Supplier.MAISON.getName());
                     bigCommerceApiService.update(byProductSku);
                 } else {
-                    bcProductData.setSupplier("Maison");
+                    bcProductData.setSupplier(Supplier.MAISON.getName());
                     bigCommerceApiService.create(bcProductData);
                 }
             }
@@ -161,10 +162,10 @@ public class BigCommerceProductApiController {
                 List<BcProductImageData> bcCategoryDataList = responseEntity.getBody().getData();
                 for (BcProductImageData imageData : bcCategoryDataList) {
                     Optional<BcProductImageData> byId = bigCommerceImageApiService.findById(imageData.getId());
-                    if (byId.get() == null) {
-                        bigCommerceImageApiService.create(imageData);
-                    } else {
+                    if (byId.isPresent()) {
                         bigCommerceImageApiService.update(byId.get());
+                    } else {
+                        bigCommerceImageApiService.create(imageData);
                     }
                 }
             }
@@ -240,7 +241,7 @@ public class BigCommerceProductApiController {
     }*/
 
 
-    private HttpHeaders getHttpHeaders() {
+    public HttpHeaders getHttpHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Auth-Token", accessToken);
         headers.set("X-Auth-Client", clientId);
