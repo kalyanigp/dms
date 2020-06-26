@@ -16,7 +16,7 @@ public class MaisonProductPredicates {
                 .collect(Collectors.<MaisonProduct>toList());
     }
 
-    public static Predicate<MaisonProduct> isPriceChanged( String productCode, String msp, int stockQty) {
+    public static Predicate<MaisonProduct> isPriceQuantityChanged( String productCode, String msp, int stockQty) {
         return maisonProduct -> (maisonProduct.getProductCode().equals(productCode)) && (!maisonProduct.getMspPrice().equals(msp) || maisonProduct.getStockQuantity() !=stockQty);
     }
 }

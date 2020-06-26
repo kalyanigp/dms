@@ -40,7 +40,7 @@ public class BigCommerceCategoryController {
     private String clientId;
     @Value("${bigcommerce.client.baseUrl}")
     private String baseUrl;
-    public static final String PRODUCTS_ENDPOINT = "/v3/catalog/categories";
+    public static final String CATEGORIES_ENDPOINT = "/v3/catalog/categories/?limit=300";
 
     @Autowired
     private BigCommerceCategoryService service;
@@ -60,7 +60,7 @@ public class BigCommerceCategoryController {
     @GetMapping("/categories")
     public String getAllCategories() throws Exception {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT);
+        URI uri = new URI(baseUrl + storeHash + CATEGORIES_ENDPOINT);
 
             try {
                 HttpEntity<BigCommerceApiCategoryList> request = new HttpEntity<>(null,getHttpHeaders());

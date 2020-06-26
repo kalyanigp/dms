@@ -129,24 +129,25 @@ public class MaisonProductUploadController {
                 List<MaisonProduct> updatedProductList = null;
                 if (!oldMaisonProducts.isEmpty()) {
                     updatedProductList = maisonService.getUpdatedProductList(maisonProducts, oldMaisonProducts);
-                    maisonService.saveAll(updatedProductList);
-                    //Check whether any product discontinued and delete them from MaisonProduct table
-                    List<MaisonProduct> updatedProducts = maisonService.findAll();
-                    deleteDiscontinuedProducts(maisonProducts, updatedProducts);
                     if (updatedProductList != null) {
+                        maisonService.saveAll(updatedProductList);
                         generateBCDataService.generateBcProductsFromMaison(updatedProductList);
+                        LOGGER.info("Successfully Updated Stock and Price");
                     }
+
+                    //Check whether any product discontinued and delete them from MaisonProduct table
+                    List<MaisonProduct> existingProducts = maisonService.findAll();
+                    deleteDiscontinuedProducts(maisonProducts, existingProducts);
                 } else {
                     maisonService.saveAll(maisonProducts);
                     generateBCDataService.generateBcProductsFromMaison(maisonProducts);
+                    LOGGER.info("Successfully Added New Products from supplier");
                 }
-
-
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
             }
         }
-        return ResponseEntity.ok().body("Successfully uploaded CSV File");
+        return ResponseEntity.ok().body("Successfully updated Stock Feed");
     }
 
     private void deleteDiscontinuedProducts(

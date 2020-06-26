@@ -68,7 +68,7 @@ public class MaisonServiceImpl implements MaisonService {
         List<MaisonProduct> priceChangedProducts = new ArrayList<>();
         for(MaisonProduct newMaisonProduct: newList) {
             priceChangedProducts.addAll(MaisonProductPredicates.filterProducts(oldList,
-                    MaisonProductPredicates.isPriceChanged(newMaisonProduct.getProductCode(), newMaisonProduct.getMspPrice(), newMaisonProduct.getStockQuantity())));
+                    MaisonProductPredicates.isPriceQuantityChanged(newMaisonProduct.getProductCode(), newMaisonProduct.getMspPrice(), newMaisonProduct.getStockQuantity())));
         }
 
       /*  List<MaisonProduct> listOneList = new ArrayList<>();
