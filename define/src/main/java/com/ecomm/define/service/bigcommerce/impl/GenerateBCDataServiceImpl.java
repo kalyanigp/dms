@@ -194,7 +194,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
 
             if (byProductSku == null) {
                 byProductSku = new BcProductData();
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + maisonProd.getTitle());
+                byProductSku.setName(Supplier.MAISON.name() + " " + maisonProd.getTitle());
                 byProductSku.setSku(maisonProd.getProductCode());
                 setPriceAndQuantity(maisonProd, byProductSku);
                 assignCategories(byProductSku, maisonProd.getTitle());
@@ -203,7 +203,10 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                 byProductSku.setType(MaisonConstants.TYPE);
                 byProductSku.setWeight(20);
                 byProductSku.setInventoryTracking(MaisonConstants.INVENTORY_TRACKING);
-                byProductSku.setAvailability("N");
+                byProductSku.setAvailability("preorder");
+                if(maisonProd.getStockQuantity() > 0) {
+                    byProductSku.setAvailability("available");
+                }
               //  bigCommerceCsvProduct.setBrandName("Define");
 
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
@@ -252,7 +255,6 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                     logger.info(request.getBody().getName());
                     result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
                     BcProductData resultData = result.getData();
-                    resultData.set_id(product.get_id());
                     resultData.set_id(product.get_id());
                     resultData = bigCommerceApiService.update(resultData);
                     updateImage(resultData, restTemplate);
