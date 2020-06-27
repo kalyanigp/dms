@@ -1,5 +1,6 @@
 package com.ecomm.define.controller.bigcommerce;
 
+import com.ecomm.define.config.HeadersConfig;
 import com.ecomm.define.domain.bigcommerce.BcCategoryData;
 import com.ecomm.define.domain.bigcommerce.BigCommerceApiCategoryList;
 import com.ecomm.define.service.bigcommerce.BigCommerceCategoryService;
@@ -32,20 +33,16 @@ import java.util.List;
 @Api(value = "BigCommerceCSVGenerator", description = "Operation to generate Big Commerce CSV")
 public class BigCommerceCategoryController {
     private final Logger logger = LoggerFactory.getLogger(BigCommerceCategoryController.class);
+
     @Value("${bigcommerce.storehash}")
     private String storeHash;
-    @Value("${bigcommerce.access.token}")
-    private String accessToken;
-    @Value("${bigcommerce.client.id}")
-    private String clientId;
+
     @Value("${bigcommerce.client.baseUrl}")
     private String baseUrl;
     public static final String CATEGORIES_ENDPOINT = "/v3/catalog/categories/?limit=300";
 
     @Autowired
     private BigCommerceCategoryService service;
-
-
 
 
     @ApiOperation(value = "Rest call to fetch the categories from BigCommerce and Save in Mongo", response = Iterable.class)
@@ -61,31 +58,15 @@ public class BigCommerceCategoryController {
     public String getAllCategories() throws Exception {
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(baseUrl + storeHash + CATEGORIES_ENDPOINT);
-
             try {
-                HttpEntity<BigCommerceApiCategoryList> request = new HttpEntity<>(null,getHttpHeaders());
+                HttpEntity<BigCommerceApiCategoryList> request = new HttpEntity<>(null, HeadersConfig.getHttpHeaders());
                 ResponseEntity<BigCommerceApiCategoryList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiCategoryList.class);
                 List<BcCategoryData> bcCategoryData = responseEntity.getBody().getData();
                 service.saveAll(bcCategoryData);
                 logger.info("successfully saved the categories");
-
-                //List<BcCategoryData> categories = result.getBody().getCategories();
             } catch (Exception ex) {
                 logger.error("Exception while saving the categories");
-
             }
-
         return "Successfully Saved Categories";
-    }
-
-
-
-    public HttpHeaders getHttpHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Auth-Token", accessToken);
-        headers.set("X-Auth-Client", clientId);
-        headers.set("Content-Type", "application/json");
-        headers.set("Accept", "application/json");
-        return headers;
     }
 }
