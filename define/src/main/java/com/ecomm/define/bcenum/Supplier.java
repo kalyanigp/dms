@@ -8,7 +8,7 @@ public enum Supplier {
     ARTISAN("Artisan"),
     FURNITURE2GO("Furniture 2 Go"),
     HILL_INTERIORS("Hill Interiors"),
-    SELLER_BRAND("Define ");
+    SELLER_BRAND("Define");
 
 
     private String name;

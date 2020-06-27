@@ -2,6 +2,7 @@ package com.ecomm.define.service.supplier.maison;
 
 import com.ecomm.define.domain.supplier.maison.MaisonProduct;
 import org.bson.types.ObjectId;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -19,4 +20,5 @@ public interface MaisonService {
     void saveAll(List<MaisonProduct> bcProductList);
     void delete(final ObjectId id);
     List<MaisonProduct> getUpdatedProductList(List<MaisonProduct> newList, List<MaisonProduct> oldList);
+    void uploadProducts(MultipartFile file);
     }
