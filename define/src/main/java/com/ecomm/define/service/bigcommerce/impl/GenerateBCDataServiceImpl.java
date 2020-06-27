@@ -194,7 +194,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
 
             if (byProductSku == null) {
                 byProductSku = new BcProductData();
-                byProductSku.setName(Supplier.MAISON.name() + " " + maisonProd.getTitle());
+                byProductSku.setName(Supplier.MAISON.getName() + " " + maisonProd.getTitle());
                 byProductSku.setSku(maisonProd.getProductCode());
                 setPriceAndQuantity(maisonProd, byProductSku);
                 assignCategories(byProductSku, maisonProd.getTitle());

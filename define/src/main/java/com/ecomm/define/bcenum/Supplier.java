@@ -14,7 +14,7 @@ public enum Supplier {
     private String name;
 
     Supplier(String supplierName) {
-        this.name = name;
+        this.name = supplierName;
     }
 
     public String getName() {
