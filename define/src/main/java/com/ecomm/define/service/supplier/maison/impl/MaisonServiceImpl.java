@@ -33,6 +33,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.ecomm.define.config.HeadersConfig.getHttpHeaders;
+import static com.ecomm.define.constants.Constants.MAISON_CODE;
+
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
  */
@@ -133,7 +136,7 @@ public class MaisonServiceImpl implements MaisonService {
                 // convert `CsvToBean` object to list of users
                 List<MaisonProduct> maisonProducts = csvToBean.parse();
                 List<MaisonProduct> oldMaisonProducts = findAll();
-                List<MaisonProduct> updatedProductList = null;
+                List<MaisonProduct> updatedProductList;
                 if (!oldMaisonProducts.isEmpty()) {
                     updatedProductList = getUpdatedProductList(maisonProducts, oldMaisonProducts);
                     if (updatedProductList != null) {
@@ -146,6 +149,7 @@ public class MaisonServiceImpl implements MaisonService {
                     List<MaisonProduct> existingProducts = findAll();
                     deleteDiscontinuedProducts(maisonProducts, existingProducts);
                 } else {
+                    maisonProducts.stream().forEach(maisonProd -> maisonProd.setProductCode(MAISON_CODE+maisonProd.getProductCode()));
                     saveAll(maisonProducts);
                     generateBCDataService.generateBcProductsFromMaison(maisonProducts);
                     LOGGER.info("Successfully Added New Products from supplier");
@@ -156,6 +160,12 @@ public class MaisonServiceImpl implements MaisonService {
         }
     }
 
+    /**
+     * Delete discontinued products from BigCommerce
+     * @param newProductList
+     * @param oldProductList
+     * @throws URISyntaxException
+     */
     private void deleteDiscontinuedProducts(
             final List<MaisonProduct> newProductList, List<MaisonProduct> oldProductList) throws URISyntaxException {
         List<String> updatedSkus = newProductList.stream().flatMap(p -> Stream.of(p.getProductCode())).collect(Collectors.toList());
@@ -174,13 +184,6 @@ public class MaisonServiceImpl implements MaisonService {
         }
     }
 
-    private HttpHeaders getHttpHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Auth-Token", accessToken);
-        headers.set("X-Auth-Client", clientId);
-        headers.set("Content-Type", "application/json");
-        headers.set("Accept", "application/json");
-        return headers;
-    }
+
 
 }
