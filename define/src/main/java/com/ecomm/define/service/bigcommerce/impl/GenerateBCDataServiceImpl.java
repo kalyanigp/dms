@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
+import static com.ecomm.define.constants.Constants.MAISON_CODE;
+
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
  */
@@ -194,8 +196,6 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
 
             if (byProductSku == null) {
                 byProductSku = new BcProductData();
-                byProductSku.setName(Supplier.MAISON.getName() + " " + maisonProd.getTitle());
-                byProductSku.setSku(maisonProd.getProductCode());
                 setPriceAndQuantity(maisonProd, byProductSku);
                 assignCategories(byProductSku, maisonProd.getTitle());
 
@@ -207,8 +207,8 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                 if(maisonProd.getStockQuantity() > 0) {
                     byProductSku.setAvailability("available");
                 }
-              //  bigCommerceCsvProduct.setBrandName("Define");
-
+                //TODO Pull the brand names
+                //byProductSku.setBrandName("Define");
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
@@ -225,6 +225,8 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
         int priceIntValue = evaluatePrice(maisonProd);
         byProductSku.setPrice(priceIntValue);
         byProductSku.setSalePrice(priceIntValue);
+        byProductSku.setSku(maisonProd.getProductCode());
+        byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
         byProductSku.setInventoryLevel(maisonProd.getStockQuantity() < 0 ? 0 : maisonProd.getStockQuantity());
     }
 
@@ -241,7 +243,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
     }
 
 
-    public void updateBigCommerceProducts(List<BcProductData> updatedBcProductDataList) throws Exception {
+    private void updateBigCommerceProducts(List<BcProductData> updatedBcProductDataList) throws Exception {
 
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT);

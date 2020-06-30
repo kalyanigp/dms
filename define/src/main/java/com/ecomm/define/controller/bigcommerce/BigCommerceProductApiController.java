@@ -35,7 +35,7 @@ import java.util.Optional;
  * Created by vamshikirangullapelly on 18/04/2020.
  */
 @RestController
-@RequestMapping("/define/bigcommerce/export")
+@RequestMapping("/define/bigcommerce/import")
 @Api(value = "BigCommerceCSVGenerator", description = "Operation to generate Big Commerce CSV")
 public class BigCommerceProductApiController {
     private final Logger logger = LoggerFactory.getLogger(BigCommerceProductApiController.class);
@@ -64,7 +64,7 @@ public class BigCommerceProductApiController {
             @ApiResponse(code = 409, message = "Duplicate record found")
     }
     )
-    @GetMapping("/maison/products")
+    @GetMapping("/all/products")
     public String getAllProducts() throws Exception {
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT + "/?limit=300");
@@ -76,13 +76,16 @@ public class BigCommerceProductApiController {
             for (BcProductData bcProductData : bcProductDataList) {
                 BcProductData byProductSku = bigCommerceApiService.findByProductSku(bcProductData.getSku());
                 if (byProductSku != null) {
-                    byProductSku.setSupplier(Supplier.MAISON.getName());
+                    //TODO Resolve supplier column from BigCommerce Product
+                    //byProductSku.setSupplier(Supplier.MAISON.getName());
                     bigCommerceApiService.update(byProductSku);
                 } else {
-                    bcProductData.setSupplier(Supplier.MAISON.getName());
+                    //TODO Resolve supplier column from BigCommerce Product
+                    //bcProductData.setSupplier(Supplier.MAISON.getName());
                     bigCommerceApiService.create(bcProductData);
                 }
             }
+            //TODO generate CSV file to take the backup everyday morning after updating all products.
             logger.info("successfully saved the Big Commerce Product Data for Maison");
 
         } catch (Exception ex) {
