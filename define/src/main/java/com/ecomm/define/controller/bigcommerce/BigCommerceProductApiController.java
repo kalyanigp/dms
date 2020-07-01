@@ -1,6 +1,5 @@
 package com.ecomm.define.controller.bigcommerce;
 
-import com.ecomm.define.bcenum.Supplier;
 import com.ecomm.define.config.HeadersConfig;
 import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.bigcommerce.BcProductImageData;
@@ -8,7 +7,6 @@ import com.ecomm.define.domain.bigcommerce.BcProductImageDataList;
 import com.ecomm.define.domain.bigcommerce.BigCommerceApiProductList;
 import com.ecomm.define.service.bigcommerce.BigCommerceApiService;
 import com.ecomm.define.service.bigcommerce.BigCommerceImageApiService;
-import com.ecomm.define.service.bigcommerce.GenerateBCDataService;
 import com.ecomm.define.service.supplier.maison.MaisonService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -17,7 +15,6 @@ import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -39,11 +36,9 @@ import java.util.Optional;
 @Api(value = "BigCommerceCSVGenerator", description = "Operation to generate Big Commerce CSV")
 public class BigCommerceProductApiController {
     private final Logger logger = LoggerFactory.getLogger(BigCommerceProductApiController.class);
-    @Value("${bigcommerce.storehash}")
-    private String storeHash;
-    @Value("${bigcommerce.client.baseUrl}")
-    private String baseUrl;
+
     public static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
+    HeadersConfig headersConfig = new HeadersConfig();
 
     @Autowired
     BigCommerceApiService bigCommerceApiService;
@@ -67,10 +62,10 @@ public class BigCommerceProductApiController {
     @GetMapping("/all/products")
     public String getAllProducts() throws Exception {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT + "/?limit=300");
+        URI uri = new URI(headersConfig.getBaseUrl() + headersConfig.getStoreHash() + PRODUCTS_ENDPOINT + "/?limit=300");
 
         try {
-            HttpEntity<BigCommerceApiProductList> request = new HttpEntity<>(null, HeadersConfig.getHttpHeaders());
+            HttpEntity<BigCommerceApiProductList> request = new HttpEntity<>(null, headersConfig.getHttpHeaders());
             ResponseEntity<BigCommerceApiProductList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiProductList.class);
             List<BcProductData> bcProductDataList = responseEntity.getBody().getData();
             for (BcProductData bcProductData : bcProductDataList) {
@@ -109,10 +104,10 @@ public class BigCommerceProductApiController {
     @GetMapping("/maison/products/images")
     public String getAllProductImages() throws Exception {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT);
+        URI uri = new URI(headersConfig.getBaseUrl() + headersConfig.getStoreHash() + PRODUCTS_ENDPOINT);
 
         try {
-            HttpEntity<BcProductImageDataList> request = new HttpEntity<>(null, HeadersConfig.getHttpHeaders());
+            HttpEntity<BcProductImageDataList> request = new HttpEntity<>(null, headersConfig.getHttpHeaders());
             List<BcProductData> bigCommerceProducts = bigCommerceApiService.findAll();
             for (BcProductData bcProduct : bigCommerceProducts) {
                 ResponseEntity<BcProductImageDataList> responseEntity = restTemplate.exchange(uri + "/" + bcProduct.getId() + "/images", HttpMethod.GET, request, BcProductImageDataList.class);
