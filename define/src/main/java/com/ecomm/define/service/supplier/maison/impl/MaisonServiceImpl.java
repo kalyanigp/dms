@@ -107,6 +107,7 @@ public class MaisonServiceImpl implements MaisonService {
     @Override
     public List<MaisonProduct> getUpdatedProductList(List<MaisonProduct> newList, List<MaisonProduct> oldList) {
         List<MaisonProduct> priceChangedProducts = new ArrayList<>();
+        newList.stream().forEach(newProduct -> newProduct.setProductCode(MAISON_CODE+newProduct.getProductCode()));
         for (MaisonProduct newMaisonProduct : newList) {
             priceChangedProducts.addAll(MaisonProductPredicates.filterProducts(oldList,
                     MaisonProductPredicates.isPriceQuantityChanged(newMaisonProduct.getProductCode(), newMaisonProduct.getMspPrice(), newMaisonProduct.getStockQuantity())));
