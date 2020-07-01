@@ -4,6 +4,8 @@ package com.ecomm.define.bcenum;
  * Created by vamshikirangullapelly on 04/05/2020.
  */
 public enum Category {
+
+
     LIVING(27, "Living"),
     LIVING_SOFAS(28, "Sofa"),
     LIVING_ARMCHAIRS(29, "ArmChair"),
