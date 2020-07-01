@@ -2,6 +2,7 @@ package com.ecomm.define.service.bigcommerce.impl;
 
 import com.ecomm.define.bcenum.Category;
 import com.ecomm.define.bcenum.Supplier;
+import com.ecomm.define.config.HeadersConfig;
 import com.ecomm.define.controller.bigcommerce.BigCommerceProductApiController;
 import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.bigcommerce.BcProductImageData;
@@ -21,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -34,8 +34,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
-
-import static com.ecomm.define.constants.Constants.MAISON_CODE;
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
@@ -55,14 +53,8 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
     BigCommerceImageApiService bigCommerceImageApiService;
     @Autowired
     BigCommerceProductApiController bigCommerceProductApiController;
-    @Value("${bigcommerce.storehash}")
-    private String storeHash;
-    @Value("${bigcommerce.access.token}")
-    private String accessToken;
-    @Value("${bigcommerce.client.id}")
-    private String clientId;
-    @Value("${bigcommerce.client.baseUrl}")
-    private String baseUrl;
+    @Autowired
+    HeadersConfig headersConfig;
 
 
     /*@Override
@@ -246,13 +238,13 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
     private void updateBigCommerceProducts(List<BcProductData> updatedBcProductDataList) throws Exception {
 
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT);
+        URI uri = new URI(headersConfig.getBaseUrl() + headersConfig.getStoreHash() + PRODUCTS_ENDPOINT);
         List<BcProductData> duplicateRecords = new ArrayList<>();
         HttpEntity<BcProductData> request = null;
         BigCommerceApiProduct result;
         for (BcProductData product : updatedBcProductDataList) {
             try {
-                request = new HttpEntity<>(product, getHttpHeaders());
+                request = new HttpEntity<>(product, headersConfig.getHttpHeaders());
                 if (product.getId() == null) {
                     logger.info(request.getBody().getName());
                     result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
@@ -330,21 +322,10 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
         return "Your Order will be considered as Back Order. Kindly contact us for delivery timelines";
     }
 
-
-    private HttpHeaders getHttpHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Auth-Token", accessToken);
-        headers.set("X-Auth-Client", clientId);
-        headers.set("Content-Type", "application/json");
-        headers.set("Accept", "application/json");
-        return headers;
-    }
-
-
     private void updateImage(BcProductData data, RestTemplate restTemplate) throws Exception {
         MaisonProduct maisonProduct = maisonService.findByProductSku(data.getSku());
         List<String> images = Arrays.asList(maisonProduct.getImages().split(","));
-        URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT + "/" + data.getId() + "/images");
+        URI uri = new URI(headersConfig.getBaseUrl() + headersConfig.getStoreHash() + PRODUCTS_ENDPOINT + "/" + data.getId() + "/images");
         BcProductImageData imageData;
         HttpEntity<BcProductImageData> request = null;
         boolean ifFirstImage = true;
@@ -360,7 +341,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                 imageData.setIsThumbnail(ifFirstImage);
                 imageData.setDescription("Image_" + imageDesriptionCount++);
                 imageData.setImageUrl(image);
-                request = new HttpEntity<>(imageData, getHttpHeaders());
+                request = new HttpEntity<>(imageData, headersConfig.getHttpHeaders());
                 bigCommerceApiImage = restTemplate.postForObject(uri, request, BigCommerceApiImage.class);
                 bigCommerceImageApiService.create(bigCommerceApiImage.getData());
                 ifFirstImage = false;
@@ -375,7 +356,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
     private void processDuplicateRecords(List<BcProductData> duplicateRecords) throws Exception {
         logger.info("Started processing duplicate records for Maison");
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT);
+        URI uri = new URI(headersConfig.getBaseUrl() + headersConfig.getStoreHash() + PRODUCTS_ENDPOINT);
         HttpEntity<BcProductData> request = null;
         List<BcProductData> duplicateRecords1 = new ArrayList<>();
         BigCommerceApiProduct result = null;
@@ -386,7 +367,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
             MaisonProduct updatedMaisonProduct = maisonService.update(byProductSku);
             data.setName(updatedMaisonProduct.getTitle());
             try {
-                request = new HttpEntity<>(data, getHttpHeaders());
+                request = new HttpEntity<>(data, headersConfig.getHttpHeaders());
                 logger.info(request.getBody().getName());
                 result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
                 BcProductData bcProductData = bigCommerceApiService.create(result.getData());

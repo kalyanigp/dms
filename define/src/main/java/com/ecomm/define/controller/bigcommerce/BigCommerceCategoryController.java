@@ -33,12 +33,8 @@ import java.util.List;
 @Api(value = "BigCommerceCSVGenerator", description = "Operation to generate Big Commerce CSV")
 public class BigCommerceCategoryController {
     private final Logger logger = LoggerFactory.getLogger(BigCommerceCategoryController.class);
+    HeadersConfig headersConfig = new HeadersConfig();
 
-    @Value("${bigcommerce.storehash}")
-    private String storeHash;
-
-    @Value("${bigcommerce.client.baseUrl}")
-    private String baseUrl;
     public static final String CATEGORIES_ENDPOINT = "/v3/catalog/categories/?limit=300";
 
     @Autowired
@@ -57,9 +53,9 @@ public class BigCommerceCategoryController {
     @GetMapping("/categories")
     public String getAllCategories() throws Exception {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(baseUrl + storeHash + CATEGORIES_ENDPOINT);
+        URI uri = new URI(headersConfig.getBaseUrl() + headersConfig.getStoreHash() + CATEGORIES_ENDPOINT);
             try {
-                HttpEntity<BigCommerceApiCategoryList> request = new HttpEntity<>(null, HeadersConfig.getHttpHeaders());
+                HttpEntity<BigCommerceApiCategoryList> request = new HttpEntity<>(null, headersConfig.getHttpHeaders());
                 ResponseEntity<BigCommerceApiCategoryList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiCategoryList.class);
                 List<BcCategoryData> bcCategoryData = responseEntity.getBody().getData();
                 service.saveAll(bcCategoryData);
