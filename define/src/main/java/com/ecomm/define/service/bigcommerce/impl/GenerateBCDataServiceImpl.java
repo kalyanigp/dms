@@ -249,7 +249,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
         URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT);
         List<BcProductData> duplicateRecords = new ArrayList<>();
         HttpEntity<BcProductData> request = null;
-        BigCommerceApiProduct result = null;
+        BigCommerceApiProduct result;
         for (BcProductData product : updatedBcProductDataList) {
             try {
                 request = new HttpEntity<>(product, getHttpHeaders());
