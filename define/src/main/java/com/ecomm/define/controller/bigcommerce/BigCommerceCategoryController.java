@@ -1,8 +1,8 @@
 package com.ecomm.define.controller.bigcommerce;
 
-import com.ecomm.define.config.HeadersConfig;
 import com.ecomm.define.domain.bigcommerce.BcCategoryData;
 import com.ecomm.define.domain.bigcommerce.BigCommerceApiCategoryList;
+import com.ecomm.define.service.bigcommerce.BigCommerceApiService;
 import com.ecomm.define.service.bigcommerce.BigCommerceCategoryService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -11,9 +11,7 @@ import io.swagger.annotations.ApiResponses;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,15 +32,13 @@ import java.util.List;
 public class BigCommerceCategoryController {
     private final Logger logger = LoggerFactory.getLogger(BigCommerceCategoryController.class);
 
-    @Value("${bigcommerce.storehash}")
-    private String storeHash;
-
-    @Value("${bigcommerce.client.baseUrl}")
-    private String baseUrl;
     public static final String CATEGORIES_ENDPOINT = "/v3/catalog/categories/?limit=300";
 
     @Autowired
     private BigCommerceCategoryService service;
+
+    @Autowired
+    private BigCommerceApiService apiService;
 
 
     @ApiOperation(value = "Rest call to fetch the categories from BigCommerce and Save in Mongo", response = Iterable.class)
@@ -57,16 +53,16 @@ public class BigCommerceCategoryController {
     @GetMapping("/categories")
     public String getAllCategories() throws Exception {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(baseUrl + storeHash + CATEGORIES_ENDPOINT);
-            try {
-                HttpEntity<BigCommerceApiCategoryList> request = new HttpEntity<>(null, HeadersConfig.getHttpHeaders());
-                ResponseEntity<BigCommerceApiCategoryList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiCategoryList.class);
-                List<BcCategoryData> bcCategoryData = responseEntity.getBody().getData();
-                service.saveAll(bcCategoryData);
-                logger.info("successfully saved the categories");
-            } catch (Exception ex) {
-                logger.error("Exception while saving the categories");
-            }
+        URI uri = new URI(apiService.getBaseUrl() + apiService.getStoreHash() + CATEGORIES_ENDPOINT);
+        try {
+            HttpEntity<BigCommerceApiCategoryList> request = new HttpEntity<>(null, apiService.getHttpHeaders());
+            ResponseEntity<BigCommerceApiCategoryList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiCategoryList.class);
+            List<BcCategoryData> bcCategoryData = responseEntity.getBody().getData();
+            service.saveAll(bcCategoryData);
+            logger.info("successfully saved the categories");
+        } catch (Exception ex) {
+            logger.error("Exception while saving the categories");
+        }
         return "Successfully Saved Categories";
     }
 }

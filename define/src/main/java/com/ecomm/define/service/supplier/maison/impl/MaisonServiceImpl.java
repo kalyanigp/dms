@@ -14,9 +14,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -33,8 +31,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.ecomm.define.config.HeadersConfig.getHttpHeaders;
 import static com.ecomm.define.constants.Constants.MAISON_CODE;
+
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
@@ -51,16 +49,9 @@ public class MaisonServiceImpl implements MaisonService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MaisonServiceImpl.class);
 
     private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
+
     @Autowired
     BigCommerceApiService bigCommerceApiService;
-    @Value("${bigcommerce.storehash}")
-    private String storeHash;
-    @Value("${bigcommerce.access.token}")
-    private String accessToken;
-    @Value("${bigcommerce.client.id}")
-    private String clientId;
-    @Value("${bigcommerce.client.baseUrl}")
-    private String baseUrl;
 
     @Override
     public MaisonProduct create(MaisonProduct maisonProduct) {
@@ -171,8 +162,8 @@ public class MaisonServiceImpl implements MaisonService {
             final List<MaisonProduct> newProductList, List<MaisonProduct> oldProductList) throws URISyntaxException {
         List<String> updatedSkus = newProductList.stream().flatMap(p -> Stream.of(p.getProductCode())).collect(Collectors.toList());
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(baseUrl + storeHash + PRODUCTS_ENDPOINT);
-        HttpEntity<BcProductData> request = new HttpEntity<>(null, getHttpHeaders());
+        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
+        HttpEntity<BcProductData> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
         for (MaisonProduct maisonProduct : oldProductList) {
             if (!updatedSkus.contains(maisonProduct.getProductCode())) {
                 delete(maisonProduct.get_id());

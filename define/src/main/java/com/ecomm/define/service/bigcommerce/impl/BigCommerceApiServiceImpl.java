@@ -5,6 +5,8 @@ import com.ecomm.define.repository.bigcommerce.BigcDataApiRepository;
 import com.ecomm.define.service.bigcommerce.BigCommerceApiService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +18,15 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
 
     @Autowired
     BigcDataApiRepository repository;
+
+    @Value("${bigcommerce.access.token}")
+    private String accessToken;
+    @Value("${bigcommerce.client.id}")
+    private String clientId;
+    @Value("${bigcommerce.storehash}")
+    private String storeHash;
+    @Value("${bigcommerce.client.baseUrl}")
+    private String baseUrl;
 
     @Override
     public BcProductData create(BcProductData bcProduct) {
@@ -63,5 +74,27 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
         repository.delete(findBy_Id(id));
 
     }
+
+    @Override
+    public HttpHeaders getHttpHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Auth-Token", accessToken);
+        headers.set("X-Auth-Client", clientId);
+        headers.set("Content-Type", "application/json");
+        headers.set("Accept", "application/json");
+        return headers;
+    }
+
+    @Override
+    public String getStoreHash() {
+        return storeHash;
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return baseUrl;
+    }
+
+
 
 }
