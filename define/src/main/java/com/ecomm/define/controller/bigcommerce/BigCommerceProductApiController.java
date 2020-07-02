@@ -1,6 +1,5 @@
 package com.ecomm.define.controller.bigcommerce;
 
-import com.ecomm.define.config.HeadersConfig;
 import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.bigcommerce.BcProductImageData;
 import com.ecomm.define.domain.bigcommerce.BcProductImageDataList;
@@ -38,7 +37,6 @@ public class BigCommerceProductApiController {
     private final Logger logger = LoggerFactory.getLogger(BigCommerceProductApiController.class);
 
     public static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
-    HeadersConfig headersConfig = new HeadersConfig();
 
     @Autowired
     BigCommerceApiService bigCommerceApiService;
@@ -62,10 +60,10 @@ public class BigCommerceProductApiController {
     @GetMapping("/all/products")
     public String getAllProducts() throws Exception {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(headersConfig.getBaseUrl() + headersConfig.getStoreHash() + PRODUCTS_ENDPOINT + "/?limit=300");
+        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT + "/?limit=300");
 
         try {
-            HttpEntity<BigCommerceApiProductList> request = new HttpEntity<>(null, headersConfig.getHttpHeaders());
+            HttpEntity<BigCommerceApiProductList> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
             ResponseEntity<BigCommerceApiProductList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiProductList.class);
             List<BcProductData> bcProductDataList = responseEntity.getBody().getData();
             for (BcProductData bcProductData : bcProductDataList) {
@@ -104,10 +102,10 @@ public class BigCommerceProductApiController {
     @GetMapping("/maison/products/images")
     public String getAllProductImages() throws Exception {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(headersConfig.getBaseUrl() + headersConfig.getStoreHash() + PRODUCTS_ENDPOINT);
+        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
 
         try {
-            HttpEntity<BcProductImageDataList> request = new HttpEntity<>(null, headersConfig.getHttpHeaders());
+            HttpEntity<BcProductImageDataList> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
             List<BcProductData> bigCommerceProducts = bigCommerceApiService.findAll();
             for (BcProductData bcProduct : bigCommerceProducts) {
                 ResponseEntity<BcProductImageDataList> responseEntity = restTemplate.exchange(uri + "/" + bcProduct.getId() + "/images", HttpMethod.GET, request, BcProductImageDataList.class);

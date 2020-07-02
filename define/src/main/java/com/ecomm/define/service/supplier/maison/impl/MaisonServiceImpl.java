@@ -1,6 +1,5 @@
 package com.ecomm.define.service.supplier.maison.impl;
 
-import com.ecomm.define.config.HeadersConfig;
 import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.supplier.maison.MaisonProduct;
 import com.ecomm.define.exception.FileNotFoundException;
@@ -50,9 +49,6 @@ public class MaisonServiceImpl implements MaisonService {
     private static final Logger LOGGER = LoggerFactory.getLogger(MaisonServiceImpl.class);
 
     private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
-
-    @Autowired
-    private HeadersConfig headersConfig;
 
     @Autowired
     BigCommerceApiService bigCommerceApiService;
@@ -166,8 +162,8 @@ public class MaisonServiceImpl implements MaisonService {
             final List<MaisonProduct> newProductList, List<MaisonProduct> oldProductList) throws URISyntaxException {
         List<String> updatedSkus = newProductList.stream().flatMap(p -> Stream.of(p.getProductCode())).collect(Collectors.toList());
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(headersConfig.getBaseUrl() + headersConfig.getStoreHash() + PRODUCTS_ENDPOINT);
-        HttpEntity<BcProductData> request = new HttpEntity<>(null, headersConfig.getHttpHeaders());
+        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
+        HttpEntity<BcProductData> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
         for (MaisonProduct maisonProduct : oldProductList) {
             if (!updatedSkus.contains(maisonProduct.getProductCode())) {
                 delete(maisonProduct.get_id());

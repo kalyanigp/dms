@@ -2,6 +2,7 @@ package com.ecomm.define.service.bigcommerce;
 
 import com.ecomm.define.domain.bigcommerce.BcProductData;
 import org.bson.types.ObjectId;
+import org.springframework.http.HttpHeaders;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,4 +25,10 @@ public interface BigCommerceApiService {
     void delete(final ObjectId id);
 
     List<BcProductData> findBySupplier(String supplier);
+
+    HttpHeaders getHttpHeaders();
+
+    String getStoreHash();
+
+    String getBaseUrl();
 }
