@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 
@@ -30,10 +31,8 @@ import java.util.List;
 @RequestMapping("/define/bigcommerce/export")
 @Api(value = "BigCommerceCSVGenerator", description = "Operation to generate Big Commerce CSV")
 public class BigCommerceCategoryController {
-    private final Logger logger = LoggerFactory.getLogger(BigCommerceCategoryController.class);
-
     public static final String CATEGORIES_ENDPOINT = "/v3/catalog/categories/?limit=300";
-
+    private final Logger logger = LoggerFactory.getLogger(BigCommerceCategoryController.class);
     @Autowired
     private BigCommerceCategoryService service;
 
@@ -51,18 +50,38 @@ public class BigCommerceCategoryController {
     }
     )
     @GetMapping("/categories")
-    public String getAllCategories() throws Exception {
+    public String getAllCategories() throws URISyntaxException {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(apiService.getBaseUrl() + apiService.getStoreHash() + CATEGORIES_ENDPOINT);
+        ResponseEntity<BigCommerceApiCategoryList> responseEntity = null;
         try {
+            URI uri = new URI(apiService.getBaseUrl() + apiService.getStoreHash() + CATEGORIES_ENDPOINT);
             HttpEntity<BigCommerceApiCategoryList> request = new HttpEntity<>(null, apiService.getHttpHeaders());
-            ResponseEntity<BigCommerceApiCategoryList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiCategoryList.class);
+            responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiCategoryList.class);
             List<BcCategoryData> bcCategoryData = responseEntity.getBody().getData();
-            service.saveAll(bcCategoryData);
+
+
+            //TODO
+
+            //search a document that doesn't exist Upsert example
+            //https://mkyong.com/mongodb/spring-data-mongodb-update-document/
+            /*Query query = new Query();
+            query.addCriteria(Criteria.where("name").is("appleZ"));
+
+            Update update = new Update();
+            update.set("age", 21);
+
+            mongoOperation.upsert(query, update, User.class);
+
+            User userTest5 = mongoOperation.findOne(query, User.class);
+            System.out.println("userTest5 - " + userTest5);*/
+
+
+            bcCategoryData.stream().forEach(categoryData -> service.create(categoryData));
+            //service.saveAll(bcCategoryData);
             logger.info("successfully saved the categories");
-        } catch (Exception ex) {
+        } catch (URISyntaxException ex) {
             logger.error("Exception while saving the categories");
         }
-        return "Successfully Saved Categories";
+        return responseEntity.getStatusCode().getReasonPhrase();
     }
 }

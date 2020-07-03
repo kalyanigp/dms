@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.HashMap;
@@ -36,6 +37,8 @@ import java.util.Map;
 public class BcCategoryData {
     @Id
     public ObjectId _id;
+
+    @Indexed(unique = true)
     @JsonProperty("id")
     private Integer id;
     @JsonProperty("parent_id")

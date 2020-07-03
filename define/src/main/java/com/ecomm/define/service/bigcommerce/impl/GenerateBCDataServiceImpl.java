@@ -2,6 +2,7 @@ package com.ecomm.define.service.bigcommerce.impl;
 
 import com.ecomm.define.bcenum.Category;
 import com.ecomm.define.bcenum.Supplier;
+import com.ecomm.define.constants.BcConstants;
 import com.ecomm.define.controller.bigcommerce.BigCommerceProductApiController;
 import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.bigcommerce.BcProductImageData;
@@ -9,7 +10,7 @@ import com.ecomm.define.domain.bigcommerce.BigCommerceApiImage;
 import com.ecomm.define.domain.bigcommerce.BigCommerceApiProduct;
 import com.ecomm.define.domain.bigcommerce.BigCommerceCsvProduct;
 import com.ecomm.define.domain.supplier.maison.MaisonProduct;
-import com.ecomm.define.helper.supplier.maison.MaisonConstants;
+import com.ecomm.define.repository.bigcommerce.BigcBrandApiRepository;
 import com.ecomm.define.service.bigcommerce.BigCommerceApiService;
 import com.ecomm.define.service.bigcommerce.BigCommerceImageApiService;
 import com.ecomm.define.service.bigcommerce.BigCommerceService;
@@ -51,6 +52,8 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
     BigCommerceImageApiService bigCommerceImageApiService;
     @Autowired
     BigCommerceProductApiController bigCommerceProductApiController;
+    @Autowired
+    BigcBrandApiRepository brandApiRepository;
 
 
     /*@Override
@@ -188,21 +191,22 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                 assignCategories(byProductSku, maisonProd.getTitle());
 
                 byProductSku.setSupplier(Supplier.MAISON.getName());
-                byProductSku.setType(MaisonConstants.TYPE);
+                byProductSku.setType(BcConstants.TYPE);
                 byProductSku.setWeight(20);
-                byProductSku.setInventoryTracking(MaisonConstants.INVENTORY_TRACKING);
-                byProductSku.setAvailability("preorder");
+                byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
+                byProductSku.setAvailability(BcConstants.PREORDER);
                 if(maisonProd.getStockQuantity() > 0) {
-                    byProductSku.setAvailability("available");
+                    byProductSku.setAvailability(BcConstants.AVAILABLE);
                 }
-                //TODO Pull the brand names
-                //byProductSku.setBrandName("Define");
+
+                byProductSku.setBrandId(brandApiRepository.findByName(Supplier.SELLER_BRAND.getName()).get().getId());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
                 setPriceAndQuantity(maisonProd, byProductSku);
                 assignCategories(byProductSku, maisonProd.getTitle());
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
+
                 updatedBcProductDataList.add(bcProductData);
             }
         }
