@@ -1,5 +1,6 @@
 package com.ecomm.define.service.supplier.maison.impl;
 
+import com.ecomm.define.bcenum.Supplier;
 import com.ecomm.define.domain.bigcommerce.BcProductData;
 import com.ecomm.define.domain.supplier.maison.MaisonProduct;
 import com.ecomm.define.exception.FileNotFoundException;
@@ -31,7 +32,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.ecomm.define.constants.Constants.MAISON_CODE;
+import static com.ecomm.define.constants.BcConstants.MAISON_CODE;
 
 
 /**
@@ -125,7 +126,7 @@ public class MaisonServiceImpl implements MaisonService {
                         .withIgnoreLeadingWhiteSpace(true)
                         .build();
 
-                // convert `CsvToBean` object to list of users
+                // convert `CsvToBean` object to list of MaisonProducts
                 List<MaisonProduct> maisonProducts = csvToBean.parse();
                 List<MaisonProduct> oldMaisonProducts = findAll();
                 List<MaisonProduct> updatedProductList;
@@ -144,7 +145,7 @@ public class MaisonServiceImpl implements MaisonService {
                     maisonProducts.stream().forEach(maisonProd -> maisonProd.setProductCode(MAISON_CODE+maisonProd.getProductCode()));
                     saveAll(maisonProducts);
                     generateBCDataService.generateBcProductsFromMaison(maisonProducts);
-                    LOGGER.info("Successfully Added New Products from supplier");
+                    LOGGER.info("Successfully Added New Products from supplier"+ Supplier.MAISON.getName());
                 }
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
