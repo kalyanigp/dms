@@ -15,13 +15,27 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableSwagger2
 public class SpringFoxConfig {
     @Bean
-    public Docket api() {
-        return new Docket(DocumentationType.SWAGGER_2).select()
+    public Docket swaggerBigCommerceApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("BigCommerce")
+                .select()
                 .apis(RequestHandlerSelectors
-                        .basePackage("com.ecomm.define.controller"))
+                        .basePackage("com.ecomm.define.platforms.bigcommerce.controller"))
                 .paths(PathSelectors.regex("/.*"))
                 .build().apiInfo(apiEndPointsInfo());
     }
+
+    @Bean
+    public Docket swaggerMaisonApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("MaisonSupplier")
+                .select()
+                .apis(RequestHandlerSelectors
+                        .basePackage("com.ecomm.define.suppliers.maison.controller"))
+                .paths(PathSelectors.regex("/.*"))
+                .build().apiInfo(apiEndPointsInfo());
+    }
+
     private ApiInfo apiEndPointsInfo() {
         return new ApiInfoBuilder().title("Spring Boot REST API")
                 .description("Define Furniture Product Management System REST API")
