@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 
@@ -57,18 +58,18 @@ public class BigCommerceBrandController {
     }
     )
     @GetMapping("/brands")
-    public String getAllBrands() throws Exception {
+    public String getAllBrands() throws URISyntaxException {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(baseUrl + storeHash + BRANDS_ENDPOINT);
-            try {
-                HttpEntity<BigCommerceApiBrandList> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
-                ResponseEntity<BigCommerceApiBrandList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiBrandList.class);
-                List<BcBrandData> bcBrandData = responseEntity.getBody().getData();
-                service.saveAll(bcBrandData);
-                logger.info("successfully saved all brands");
-            } catch (Exception ex) {
-                logger.error("Exception while saving the brands");
-            }
+        try {
+            URI uri = new URI(baseUrl + storeHash + BRANDS_ENDPOINT);
+            HttpEntity<BigCommerceApiBrandList> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
+            ResponseEntity<BigCommerceApiBrandList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiBrandList.class);
+            List<BcBrandData> bcBrandData = responseEntity.getBody().getData();
+            service.saveAll(bcBrandData);
+            logger.info("successfully saved all brands");
+        } catch (URISyntaxException ex) {
+            logger.error("Exception while saving the brands");
+        }
         return "Successfully Saved Brands";
     }
 }

@@ -1,7 +1,5 @@
 package com.ecomm.define.suppliers.maison.domain;
 
-import com.ecomm.define.suppliers.maison.domain.MaisonProduct;
-
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -16,7 +14,7 @@ public class MaisonProductPredicates {
                 .collect(Collectors.<MaisonProduct>toList());
     }
 
-    public static Predicate<MaisonProduct> isPriceQuantityChanged( String productCode, String msp, int stockQty) {
-        return maisonProduct -> (maisonProduct.getProductCode().equals(productCode)) && (!maisonProduct.getMspPrice().equals(msp) || maisonProduct.getStockQuantity() !=stockQty);
+    public static Predicate<MaisonProduct> isPriceQuantityChanged(String productCode, String msp, int stockQty) {
+        return maisonProduct -> (maisonProduct.getProductCode().equals(productCode)) && (!maisonProduct.getMspPrice().equals(msp) || maisonProduct.getStockQuantity() != stockQty);
     }
 }

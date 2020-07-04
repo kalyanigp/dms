@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.repository.Query;
 
 public interface MaisonProductRepository extends MongoRepository<MaisonProduct, String> {
     MaisonProduct findBy_id(ObjectId _id);
+
     @Query("{productCode : ?0}")
     MaisonProduct findByProductSku(String productName);
 }
