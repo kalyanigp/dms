@@ -58,26 +58,8 @@ public class BigCommerceCategoryController {
             HttpEntity<BigCommerceApiCategoryList> request = new HttpEntity<>(null, apiService.getHttpHeaders());
             responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiCategoryList.class);
             List<BcCategoryData> bcCategoryData = responseEntity.getBody().getData();
-
-
-            //TODO
-
-            //search a document that doesn't exist Upsert example
-            //https://mkyong.com/mongodb/spring-data-mongodb-update-document/
-            /*Query query = new Query();
-            query.addCriteria(Criteria.where("name").is("appleZ"));
-
-            Update update = new Update();
-            update.set("age", 21);
-
-            mongoOperation.upsert(query, update, User.class);
-
-            User userTest5 = mongoOperation.findOne(query, User.class);
-            System.out.println("userTest5 - " + userTest5);*/
-
-
             bcCategoryData.stream().forEach(categoryData -> service.create(categoryData));
-            //service.saveAll(bcCategoryData);
+            service.saveAll(bcCategoryData);
             logger.info("successfully saved the categories");
         } catch (URISyntaxException ex) {
             logger.error("Exception while saving the categories");

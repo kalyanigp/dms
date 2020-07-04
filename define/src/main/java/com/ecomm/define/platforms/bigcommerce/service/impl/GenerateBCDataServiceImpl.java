@@ -1,7 +1,5 @@
 package com.ecomm.define.platforms.bigcommerce.service.impl;
 
-import com.ecomm.define.platforms.bigcommerce.ennum.Category;
-import com.ecomm.define.suppliers.commons.Supplier;
 import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
 import com.ecomm.define.platforms.bigcommerce.controller.BigCommerceProductApiController;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
@@ -9,12 +7,14 @@ import com.ecomm.define.platforms.bigcommerce.domain.BcProductImageData;
 import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiImage;
 import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiProduct;
 import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceCsvProduct;
-import com.ecomm.define.suppliers.maison.domain.MaisonProduct;
+import com.ecomm.define.platforms.bigcommerce.ennum.Category;
 import com.ecomm.define.platforms.bigcommerce.repository.BigcBrandApiRepository;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceImageApiService;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
+import com.ecomm.define.suppliers.commons.Supplier;
+import com.ecomm.define.suppliers.maison.domain.MaisonProduct;
 import com.ecomm.define.suppliers.maison.service.MaisonService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -189,6 +189,8 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                 byProductSku = new BcProductData();
                 setPriceAndQuantity(maisonProd, byProductSku);
                 assignCategories(byProductSku, maisonProd.getTitle());
+                byProductSku.setSku(maisonProd.getProductCode());
+                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
 
                 byProductSku.setSupplier(Supplier.MAISON.getName());
                 byProductSku.setType(BcConstants.TYPE);
@@ -200,7 +202,32 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                 }
 
                 byProductSku.setBrandId(brandApiRepository.findByName(Supplier.SELLER_BRAND.getName()).get().getId());
+                if (maisonProd.getPackingSpec() != null) {
+                    int index = 0;
+                    if (maisonProd.getPackingSpec().contains("Kg")) {
+                        index = maisonProd.getPackingSpec().indexOf("Kg");
+                    } else if (maisonProd.getPackingSpec().contains("KG")) {
+                        index = maisonProd.getPackingSpec().indexOf("KG");
+                    }
+                    if (index > 0) {
+                        String weight = maisonProd.getPackingSpec().substring(index - 3, index);
+                        if (weight != null){
+                            weight = weight.replaceAll(" ","").replaceAll(":","");
+                            double dWeight = Double.parseDouble(weight);
+                            if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
+                                byProductSku.setWeight((int)dWeight);
+                            }
+                        }
+
+                    }
+                }
+                if (maisonProd.getMaterial() != null) {
+                    byProductSku.setDescription(maisonProd.getMaterial().replaceAll(",", ""));
+                }
+                byProductSku.setDescription(byProductSku.getDescription() + " " + maisonProd.getSize() + " " + maisonProd.getPackingSpec());
+
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
+
                 updatedBcProductDataList.add(bcProductData);
             } else {
                 setPriceAndQuantity(maisonProd, byProductSku);
@@ -217,8 +244,6 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
         int priceIntValue = evaluatePrice(maisonProd);
         byProductSku.setPrice(priceIntValue);
         byProductSku.setSalePrice(priceIntValue);
-        byProductSku.setSku(maisonProd.getProductCode());
-        byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
         byProductSku.setInventoryLevel(maisonProd.getStockQuantity() < 0 ? 0 : maisonProd.getStockQuantity());
     }
 
