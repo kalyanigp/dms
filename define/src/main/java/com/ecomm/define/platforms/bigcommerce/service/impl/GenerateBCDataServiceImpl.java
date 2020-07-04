@@ -197,7 +197,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                 byProductSku.setWeight(20);
                 byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 byProductSku.setAvailability(BcConstants.PREORDER);
-                if(maisonProd.getStockQuantity() > 0) {
+                if (maisonProd.getStockQuantity() > 0) {
                     byProductSku.setAvailability(BcConstants.AVAILABLE);
                 }
 
@@ -211,11 +211,11 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                     }
                     if (index > 0) {
                         String weight = maisonProd.getPackingSpec().substring(index - 3, index);
-                        if (weight != null){
-                            weight = weight.replaceAll(" ","").replaceAll(":","");
+                        if (weight != null) {
+                            weight = weight.replaceAll(" ", "").replaceAll(":", "");
                             double dWeight = Double.parseDouble(weight);
                             if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
-                                byProductSku.setWeight((int)dWeight);
+                                byProductSku.setWeight((int) dWeight);
                             }
                         }
 

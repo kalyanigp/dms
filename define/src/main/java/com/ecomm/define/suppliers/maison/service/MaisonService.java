@@ -12,13 +12,22 @@ import java.util.Optional;
  */
 public interface MaisonService {
     MaisonProduct create(final MaisonProduct maisonProduct);
+
     MaisonProduct findBy_Id(final ObjectId id);
+
     Optional<MaisonProduct> findById(String id);
+
     MaisonProduct findByProductSku(final String sku);
+
     List<MaisonProduct> findAll();
+
     MaisonProduct update(MaisonProduct maisonProduct);
+
     void saveAll(List<MaisonProduct> bcProductList);
+
     void delete(final ObjectId id);
+
     List<MaisonProduct> getUpdatedProductList(List<MaisonProduct> newList, List<MaisonProduct> oldList);
+
     void uploadProducts(MultipartFile file);
-    }
+}

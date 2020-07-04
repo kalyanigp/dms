@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,11 +59,10 @@ public class BigCommerceProductApiController {
     }
     )
     @GetMapping("/all/products")
-    public String getAllProducts() throws Exception {
+    public String getAllProducts() throws URISyntaxException {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT + "/?limit=300");
-
         try {
+            URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT + "/?limit=300");
             HttpEntity<BigCommerceApiProductList> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
             ResponseEntity<BigCommerceApiProductList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiProductList.class);
             List<BcProductData> bcProductDataList = responseEntity.getBody().getData();
@@ -100,11 +100,10 @@ public class BigCommerceProductApiController {
     }
     )
     @GetMapping("/maison/products/images")
-    public String getAllProductImages() throws Exception {
+    public String getAllProductImages() throws URISyntaxException {
         RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
-
         try {
+            URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
             HttpEntity<BcProductImageDataList> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
             List<BcProductData> bigCommerceProducts = bigCommerceApiService.findAll();
             for (BcProductData bcProduct : bigCommerceProducts) {

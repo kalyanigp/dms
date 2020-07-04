@@ -1,8 +1,7 @@
 package com.ecomm.define.suppliers.maison.controller;
 
-import com.ecomm.define.suppliers.maison.domain.MaisonProduct;
 import com.ecomm.define.exception.RecordNotFoundException;
-import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
+import com.ecomm.define.suppliers.maison.domain.MaisonProduct;
 import com.ecomm.define.suppliers.maison.service.MaisonService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -31,8 +30,6 @@ public class MaisonProductUploadController {
 
     @Autowired
     private MaisonService maisonService;
-    @Autowired
-    private GenerateBCDataService generateBCDataService;
 
     @ApiOperation(value = "Retrieves All Maison Products From DB", response = Iterable.class)
     @ApiResponses(value = {
