@@ -134,7 +134,7 @@ public class MaisonServiceImpl implements MaisonService {
                     updatedProductList = getUpdatedProductList(maisonProducts, oldMaisonProducts);
                     if (updatedProductList != null) {
                         saveAll(updatedProductList);
-                        generateBCDataService.generateBcProductsFromMaison(updatedProductList);
+                        generateBCDataService.generateBcProductsFromSupplier(updatedProductList);
                         LOGGER.info("Successfully Updated Stock and Price");
                     }
 
@@ -144,7 +144,7 @@ public class MaisonServiceImpl implements MaisonService {
                 } else {
                     maisonProducts.stream().forEach(maisonProd -> maisonProd.setProductCode(MAISON_CODE+maisonProd.getProductCode()));
                     saveAll(maisonProducts);
-                    generateBCDataService.generateBcProductsFromMaison(maisonProducts);
+                    generateBCDataService.generateBcProductsFromSupplier(maisonProducts);
                     LOGGER.info("Successfully Added New Products from supplier"+ Supplier.MAISON.getName());
                 }
             } catch (Exception ex) {
