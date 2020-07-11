@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
  */
 
 public class ArtisanPredicates {
-    public static List<Furniture2GoProduct> filterProducts(List<Furniture2GoProduct> furniture2GoProducts, Predicate<Furniture2GoProduct> predicate) {
-        return furniture2GoProducts.stream().filter(predicate)
-                .collect(Collectors.<Furniture2GoProduct>toList());
+    public static List<ArtisanProduct> filterProducts(List<ArtisanProduct> artisanProducts, Predicate<ArtisanProduct> predicate) {
+        return artisanProducts.stream().filter(predicate)
+                .collect(Collectors.<ArtisanProduct>toList());
     }
 
     /*public static Predicate<Furniture2GoProduct> isPriceQuantityChanged(String productCode, String msp, int stockQty) {

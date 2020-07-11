@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  * Created by vamshikirangullapelly on 19/04/2020.
  */
 @Service
-public class GenerateBCDataServiceImpl implements GenerateBCDataService {
+public class GenerateBCDataServiceImpl implements GenerateBCDataService<MaisonProduct> {
 
     public static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
     private final Logger logger = LoggerFactory.getLogger(BigCommerceProductApiController.class);
@@ -180,7 +180,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
     }*/
 
     @Override
-    public void generateBcProductsFromMaison(List<MaisonProduct> updatedMaisonProductList) throws Exception {
+    public void generateBcProductsFromSupplier(List<MaisonProduct> updatedMaisonProductList) throws Exception {
         List<BcProductData> updatedBcProductDataList = new ArrayList<>();
         for (MaisonProduct maisonProd : updatedMaisonProductList) {
             BcProductData byProductSku = bigCommerceApiService.findByProductSku(maisonProd.getProductCode());
@@ -197,7 +197,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                 byProductSku.setWeight(20);
                 byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 byProductSku.setAvailability(BcConstants.PREORDER);
-                if (maisonProd.getStockQuantity() > 0) {
+                if(maisonProd.getStockQuantity() > 0) {
                     byProductSku.setAvailability(BcConstants.AVAILABLE);
                 }
 
@@ -211,11 +211,11 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                     }
                     if (index > 0) {
                         String weight = maisonProd.getPackingSpec().substring(index - 3, index);
-                        if (weight != null) {
-                            weight = weight.replaceAll(" ", "").replaceAll(":", "");
+                        if (weight != null){
+                            weight = weight.replaceAll(" ","").replaceAll(":","");
                             double dWeight = Double.parseDouble(weight);
                             if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
-                                byProductSku.setWeight((int) dWeight);
+                                byProductSku.setWeight((int)dWeight);
                             }
                         }
 
@@ -406,4 +406,5 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
 
         logger.info("Successfully finished processing the duplicate records for Maison");
     }
+
 }
