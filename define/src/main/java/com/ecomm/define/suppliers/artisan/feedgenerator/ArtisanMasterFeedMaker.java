@@ -114,12 +114,12 @@ public class ArtisanMasterFeedMaker {
                         origin = ArtisanURLReader.findOrigin(doc);
                         ean = ArtisanURLReader.findEAN(doc);
                         material = ArtisanURLReader.findMaterial(doc);
-                        bp1 = ArtisanURLReader.findBP1(doc);
-                        bp2 = ArtisanURLReader.findBP2(doc);
-                        bp3 = ArtisanURLReader.findBP3(doc);
-                        bp4 = ArtisanURLReader.findBP4(doc);
-                        bp5 = ArtisanURLReader.findBP5(doc);
-                        bp6 = ArtisanURLReader.findBP6(doc);
+                        bp1 = ArtisanURLReader.findBulletPoint(doc,1);
+                        bp2 = ArtisanURLReader.findBulletPoint(doc,2);
+                        bp3 = ArtisanURLReader.findBulletPoint(doc,3);
+                        bp4 = ArtisanURLReader.findBulletPoint(doc,4);
+                        bp5 = ArtisanURLReader.findBulletPoint(doc,5);
+                        bp6 = ArtisanURLReader.findBulletPoint(doc,6);
 
                         productDesc = ArtisanURLReader.findProductDescription(doc);
 

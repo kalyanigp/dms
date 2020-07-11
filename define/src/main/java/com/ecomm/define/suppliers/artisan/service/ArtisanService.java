@@ -1,6 +1,6 @@
 package com.ecomm.define.suppliers.artisan.service;
 
-import com.ecomm.define.suppliers.artisan.domain.Furniture2GoProduct;
+import com.ecomm.define.suppliers.artisan.domain.ArtisanProduct;
 import org.bson.types.ObjectId;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -11,13 +11,13 @@ import java.util.Optional;
  * Created by vamshikirangullapelly on 19/04/2020.
  */
 public interface ArtisanService {
-    Furniture2GoProduct create(final Furniture2GoProduct furniture2GoProduct);
-    Furniture2GoProduct findBy_Id(final ObjectId id);
-    Optional<Furniture2GoProduct> findById(String id);
-    Furniture2GoProduct findByProductSku(final String sku);
-    List<Furniture2GoProduct> findAll();
-    Furniture2GoProduct update(Furniture2GoProduct furniture2GoProduct);
-    void saveAll(List<Furniture2GoProduct> bcProductList);
+    ArtisanProduct create(final ArtisanProduct artisanProduct);
+    ArtisanProduct findBy_Id(final ObjectId id);
+    Optional<ArtisanProduct> findById(String id);
+    ArtisanProduct findByProductSku(final String sku);
+    List<ArtisanProduct> findAll();
+    ArtisanProduct update(ArtisanProduct artisanProduct);
+    void saveAll(List<ArtisanProduct> bcProductList);
     //void delete(final ObjectId id);
     //List<Furniture2GoProduct> getUpdatedProductList(List<Furniture2GoProduct> newList, List<Furniture2GoProduct> oldList);
     void uploadProducts(MultipartFile file);

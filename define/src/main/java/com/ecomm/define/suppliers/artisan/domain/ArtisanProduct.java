@@ -15,7 +15,7 @@ import java.math.BigDecimal;
  */
 @AllArgsConstructor
 @Data
-@Document(collection = "furniture2GoProduct")
+@Document(collection = "artisanProduct")
 public class ArtisanProduct {
 
     @Id
