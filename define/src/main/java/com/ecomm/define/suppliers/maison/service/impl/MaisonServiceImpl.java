@@ -1,13 +1,13 @@
 package com.ecomm.define.suppliers.maison.service.impl;
 
-import com.ecomm.define.suppliers.commons.Supplier;
-import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
-import com.ecomm.define.suppliers.maison.domain.MaisonProduct;
 import com.ecomm.define.exception.FileNotFoundException;
-import com.ecomm.define.suppliers.maison.domain.MaisonProductPredicates;
-import com.ecomm.define.suppliers.maison.repository.MaisonProductRepository;
+import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
+import com.ecomm.define.suppliers.commons.Supplier;
+import com.ecomm.define.suppliers.maison.domain.MaisonProduct;
+import com.ecomm.define.suppliers.maison.domain.MaisonProductPredicates;
+import com.ecomm.define.suppliers.maison.repository.MaisonProductRepository;
 import com.ecomm.define.suppliers.maison.service.MaisonService;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
@@ -15,6 +15,8 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -44,12 +46,16 @@ public class MaisonServiceImpl implements MaisonService {
     @Autowired
     MaisonProductRepository repository;
 
-    @Autowired
-    private GenerateBCDataService generateBCDataService;
+    private final GenerateBCDataService generateBCDataService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MaisonServiceImpl.class);
 
     private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
+
+    @Autowired // inject maisonDataService
+    public MaisonServiceImpl(@Lazy @Qualifier("maisonDataService") GenerateBCDataService generateBCDataService) {
+        this.generateBCDataService = generateBCDataService;
+    }
 
     @Autowired
     BigCommerceApiService bigCommerceApiService;

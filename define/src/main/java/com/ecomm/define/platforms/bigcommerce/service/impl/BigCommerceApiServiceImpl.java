@@ -1,7 +1,8 @@
-package com.ecomm.define.platforms.bigcommerce.service;
+package com.ecomm.define.platforms.bigcommerce.service.impl;
 
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
 import com.ecomm.define.platforms.bigcommerce.repository.BigcDataApiRepository;
+import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
