@@ -52,5 +52,15 @@ public class BigCommerceCategoryServiceImpl implements BigCommerceCategoryServic
         repository.saveAll(bcCategoryList);
     }
 
+    @Override
+    public void insertOrUpdate(BcCategoryData bcCategoryData) {
+        Optional<BcCategoryData> categoryData = repository.findById(bcCategoryData.getId());
+        if(categoryData.isPresent()) {
+            repository.save(categoryData.get());
+        } else {
+            repository.insert(categoryData.get());
+        }
+    }
+
 
 }

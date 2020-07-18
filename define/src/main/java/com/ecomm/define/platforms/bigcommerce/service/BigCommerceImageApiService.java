@@ -20,4 +20,7 @@ public interface BigCommerceImageApiService {
     void saveAll(List<BcProductImageData> bcProductList);
 
     void delete(BcProductImageData id);
+
+    void insertOrUpdate(BcProductImageData bcProductImageData);
+
 }

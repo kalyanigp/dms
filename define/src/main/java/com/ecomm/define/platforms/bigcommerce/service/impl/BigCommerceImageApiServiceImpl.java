@@ -54,4 +54,14 @@ public class BigCommerceImageApiServiceImpl implements BigCommerceImageApiServic
 
         repository.delete(id);
     }
+
+    @Override
+    public void insertOrUpdate(BcProductImageData bcProductImageData) {
+        Optional<BcProductImageData> imageData = repository.findById(bcProductImageData.getId());
+        if(imageData.isPresent()) {
+            repository.save(imageData.get());
+        } else {
+            repository.insert(imageData.get());
+        }
+    }
 }
