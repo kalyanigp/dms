@@ -52,5 +52,15 @@ public class BigCommerceBrandServiceImpl implements BigCommerceBrandService {
         repository.saveAll(bcCategoryList);
     }
 
+    @Override
+    public void insertOrUpdate(BcBrandData bcBrandData) {
+        Optional<BcBrandData> brandData = repository.findById(bcBrandData.getId());
+        if(brandData.isPresent()) {
+            repository.save(brandData.get());
+        } else {
+            repository.insert(brandData.get());
+        }
+    }
+
 
 }

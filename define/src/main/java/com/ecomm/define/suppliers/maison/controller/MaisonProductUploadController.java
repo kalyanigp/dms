@@ -64,7 +64,7 @@ public class MaisonProductUploadController {
 
     @ApiOperation(value = "Uploads CSV File From Maison to DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Maison Products to DB"),
+            @ApiResponse(code = 200, message = "Successfully uploaded Maison Products to BigCommerce and saved in DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
@@ -73,6 +73,6 @@ public class MaisonProductUploadController {
     @PostMapping("/maison/upload-csv-file")
     public ResponseEntity<String> uploadCSVFile(@RequestParam("file") MultipartFile file) {
         maisonService.uploadProducts(file);
-        return ResponseEntity.ok().body("Successfully updated Stock Feed");
+        return ResponseEntity.ok().body("Successfully uploaded Maison Products to BigCommerce and saved in DB");
     }
 }

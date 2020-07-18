@@ -50,20 +50,20 @@ public class BigCommerceCategoryController {
     }
     )
     @GetMapping("/categories")
-    public String getAllCategories() throws URISyntaxException {
+    public List<BcCategoryData> getAllCategories() throws URISyntaxException {
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<BigCommerceApiCategoryList> responseEntity = null;
+        List<BcCategoryData> bcCategoryData = null;
         try {
             URI uri = new URI(apiService.getBaseUrl() + apiService.getStoreHash() + CATEGORIES_ENDPOINT);
             HttpEntity<BigCommerceApiCategoryList> request = new HttpEntity<>(null, apiService.getHttpHeaders());
             responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiCategoryList.class);
-            List<BcCategoryData> bcCategoryData = responseEntity.getBody().getData();
-            bcCategoryData.stream().forEach(categoryData -> service.create(categoryData));
-            service.saveAll(bcCategoryData);
+            bcCategoryData = responseEntity.getBody().getData();
+            bcCategoryData.stream().forEach(categoryData -> service.insertOrUpdate(categoryData));
             logger.info("successfully saved the categories");
         } catch (URISyntaxException ex) {
             logger.error("Exception while saving the categories");
         }
-        return responseEntity.getStatusCode().getReasonPhrase();
+        return bcCategoryData;
     }
 }

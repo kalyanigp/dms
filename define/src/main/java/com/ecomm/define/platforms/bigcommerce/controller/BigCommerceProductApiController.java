@@ -59,13 +59,15 @@ public class BigCommerceProductApiController {
     }
     )
     @GetMapping("/all/products")
-    public String getAllProducts() throws URISyntaxException {
+    public ResponseEntity getAllProducts() throws URISyntaxException {
         RestTemplate restTemplate = new RestTemplate();
+        List<BcProductData> bcProductDataList = null;
+        ResponseEntity<BigCommerceApiProductList> responseEntity = null;
         try {
             URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT + "/?limit=300");
             HttpEntity<BigCommerceApiProductList> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
-            ResponseEntity<BigCommerceApiProductList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiProductList.class);
-            List<BcProductData> bcProductDataList = responseEntity.getBody().getData();
+            responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiProductList.class);
+            bcProductDataList = responseEntity.getBody().getData();
             for (BcProductData bcProductData : bcProductDataList) {
                 BcProductData byProductSku = bigCommerceApiService.findByProductSku(bcProductData.getSku());
                 if (byProductSku != null) {
@@ -86,7 +88,7 @@ public class BigCommerceProductApiController {
 
         }
 
-        return "Successfully saved the BigCommerce products data.";
+        return responseEntity;
     }
 
 
@@ -100,14 +102,15 @@ public class BigCommerceProductApiController {
     }
     )
     @GetMapping("/maison/products/images")
-    public String getAllProductImages() throws URISyntaxException {
+    public ResponseEntity getAllProductImages() throws URISyntaxException {
         RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<BcProductImageDataList> responseEntity = null;
         try {
             URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
             HttpEntity<BcProductImageDataList> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
             List<BcProductData> bigCommerceProducts = bigCommerceApiService.findAll();
             for (BcProductData bcProduct : bigCommerceProducts) {
-                ResponseEntity<BcProductImageDataList> responseEntity = restTemplate.exchange(uri + "/" + bcProduct.getId() + "/images", HttpMethod.GET, request, BcProductImageDataList.class);
+                responseEntity = restTemplate.exchange(uri + "/" + bcProduct.getId() + "/images", HttpMethod.GET, request, BcProductImageDataList.class);
                 List<BcProductImageData> bcCategoryDataList = responseEntity.getBody().getData();
                 for (BcProductImageData imageData : bcCategoryDataList) {
                     Optional<BcProductImageData> byId = bigCommerceImageApiService.findById(imageData.getId());
@@ -122,6 +125,6 @@ public class BigCommerceProductApiController {
         } catch (Exception ex) {
             logger.error("Exception while saving the categories");
         }
-        return "Images successfully Saved";
+        return responseEntity;
     }
 }

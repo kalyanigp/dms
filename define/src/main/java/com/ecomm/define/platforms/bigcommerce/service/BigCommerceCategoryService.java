@@ -21,4 +21,6 @@ public interface BigCommerceCategoryService {
 
     void saveAll(List<BcCategoryData> bcCategoryList);
 
+    void insertOrUpdate(BcCategoryData bcCategoryData);
+
 }
