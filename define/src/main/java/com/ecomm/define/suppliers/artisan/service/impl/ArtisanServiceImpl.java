@@ -3,8 +3,8 @@ package com.ecomm.define.suppliers.artisan.service.impl;
 import com.ecomm.define.exception.FileNotFoundException;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
-import com.ecomm.define.suppliers.artisan.domain.ArtisanProduct;
 import com.ecomm.define.suppliers.artisan.domain.ArtisanPrice;
+import com.ecomm.define.suppliers.artisan.domain.ArtisanProduct;
 import com.ecomm.define.suppliers.artisan.domain.ArtisanStock;
 import com.ecomm.define.suppliers.artisan.repository.ArtisanProductRepository;
 import com.ecomm.define.suppliers.artisan.service.ArtisanService;
@@ -14,6 +14,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,8 +36,7 @@ public class ArtisanServiceImpl implements ArtisanService {
     @Autowired
     ArtisanProductRepository repository;
 
-    @Autowired
-    private GenerateBCDataService generateBCDataService;
+    private final GenerateBCDataService generateBCDataService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ArtisanServiceImpl.class);
 
@@ -44,6 +44,11 @@ public class ArtisanServiceImpl implements ArtisanService {
 
     @Autowired
     BigCommerceApiService bigCommerceApiService;
+
+    @Autowired // inject artisanDataService
+    public ArtisanServiceImpl(@Qualifier("artisanDataService") GenerateBCDataService generateBCDataService) {
+        this.generateBCDataService = generateBCDataService;
+    }
 
     @Override
     public ArtisanProduct create(ArtisanProduct furniture2Go) {

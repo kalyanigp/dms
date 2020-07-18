@@ -14,6 +14,7 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,8 +36,7 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
     @Autowired
     Furniture2GoProductRepository repository;
 
-    @Autowired
-    private GenerateBCDataService generateBCDataService;
+    private final GenerateBCDataService generateBCDataService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Furniture2GoServiceImpl.class);
 
@@ -80,6 +80,11 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
         repository.saveAll(furniture2GoList);
     }
 
+
+    @Autowired // inject furniture2GoDataService
+    public Furniture2GoServiceImpl(@Qualifier("furniture2GoDataService") GenerateBCDataService generateBCDataService) {
+        this.generateBCDataService = generateBCDataService;
+    }
 
     /*@Override
     public void delete(ObjectId id) {
