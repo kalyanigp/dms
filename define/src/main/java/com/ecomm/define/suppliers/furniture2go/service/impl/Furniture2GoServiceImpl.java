@@ -1,5 +1,6 @@
 package com.ecomm.define.suppliers.furniture2go.service.impl;
 
+import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.exception.FileNotFoundException;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -42,6 +44,18 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
     private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
 
+    @Value("${bigcommerce.f2g.profit.percentage.high}")
+    private String profitPercentHigh;
+
+    @Value("${bigcommerce.f2g.profit.percentage.low}")
+    private String profitPercentLow;
+
+    @Value("${bigcommerce.f2g.vat.percentage}")
+    private String vatPercent;
+
+    @Value("${bigcommerce.f2g.profit.limit.low}")
+    private String lowerLimitHDPrice;
+
     @Autowired
     BigCommerceApiService bigCommerceApiService;
 
@@ -61,9 +75,10 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
     }
 
     @Override
-    public Furniture2GoProduct findByProductSku(String sku) {
+    public Optional<Furniture2GoProduct> findByProductSku(String sku) {
         return repository.findByProductSku(sku);
     }
+
 
     @Override
     public List<Furniture2GoProduct> findAll() {
@@ -118,14 +133,14 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
                 // create csv bean reader
                 CsvToBean<Furniture2GoProduct> csvToBean = new CsvToBeanBuilder(reader)
+                        .withIgnoreEmptyLine(true)
                         .withType(Furniture2GoProduct.class)
                         .withIgnoreLeadingWhiteSpace(true)
                         .build();
 
                 // convert `CsvToBean` object to list of MaisonProducts
                 List<Furniture2GoProduct> furniture2GoProducts = csvToBean.parse();
-                repository.saveAll(furniture2GoProducts);
-
+                furniture2GoProducts.stream().parallel().forEach(product -> insertOrUpdate(product));
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
             }
@@ -162,19 +177,57 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
     }
 
     private void savePrice(Furniture2GoPrice price) {
-        Furniture2GoProduct byProductSku = repository.findByProductSku(price.getSku());
-        if(byProductSku != null) {
-            LOGGER.info("Price --- "+price.getPrice());
-            byProductSku.setPrice(new BigDecimal(price.getPrice().replace("£","")));
-            repository.save(byProductSku);
+        if (price.getSku() != null && !price.getSku().isEmpty()) {
+            Optional<Furniture2GoProduct> byProductSku = repository.findByProductSku(price.getSku());
+            BigDecimal hdPrice = null;
+            BigDecimal hdPriceBeforeVat = null;
+            if (byProductSku.isPresent()) {
+                Furniture2GoProduct product = byProductSku.get();
+                LOGGER.info("SKU - " + product.getSku() + " & Price --- " + price.getPrice());
+
+                String priceValue = price.getPrice().trim();
+                if (DefineUtils.isNumeric(priceValue)) {
+                    hdPrice = new BigDecimal(priceValue);
+                } else {
+                    hdPrice = new BigDecimal(priceValue.substring(1));
+                }
+                hdPriceBeforeVat = hdPrice;
+                //add 20% VAT
+                hdPrice = hdPrice.add(DefineUtils.getVat(hdPrice, new BigDecimal(vatPercent)));
+
+                //add profit
+                //Profit depends on the HD Price, if HDPrice is < 400 then the profit percent is 30 else 40
+                if (hdPriceBeforeVat.compareTo(new BigDecimal(lowerLimitHDPrice)) < 1) {
+                    hdPrice = hdPrice.add(DefineUtils.percentage(hdPrice, new BigDecimal(profitPercentLow))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                } else {
+                    hdPrice = hdPrice.add(DefineUtils.percentage(hdPrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                }
+
+                if (product.getPrice() != hdPrice) {
+                    product.setUpdated(Boolean.TRUE);
+                    product.setPrice(hdPrice);
+                    repository.save(product);
+                }
+
+                product.setPrice(hdPrice);
+                repository.save(product);
+            }
         }
     }
 
 
-    private void saveStock(Furniture2GoStock price) {
-        Furniture2GoProduct byProductSku = repository.findByProductSku(price.getSku());
-        if(byProductSku != null) {
-            byProductSku.setStockLevel(price.getStockLevel());
+    private void saveStock(Furniture2GoStock stock) {
+        if (stock.getSku() != null && !stock.getSku().isEmpty()) {
+            Optional<Furniture2GoProduct> byProductSku = repository.findByProductSku(stock.getSku());
+            if (byProductSku.isPresent()) {
+                Furniture2GoProduct product = byProductSku.get();
+                if (product != null && stock.getStockLevel() != product.getStockLevel()) {
+                    LOGGER.info("SKU - " + product.getSku() + " & Stock --- " + stock.getStockLevel());
+                    product.setStockLevel(stock.getStockLevel());
+                    product.setUpdated(Boolean.TRUE);
+                    repository.save(product);
+                }
+            }
         }
     }
 
@@ -192,7 +245,6 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
                 // create csv bean reader
                 CsvToBean<Furniture2GoStock> csvToBean = new CsvToBeanBuilder(reader)
-                        .withSkipLines(1)
                         .withIgnoreEmptyLine(true)
                         .withType(Furniture2GoStock.class)
                         .withIgnoreLeadingWhiteSpace(true)
@@ -205,6 +257,17 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
             }
+        }
+    }
+
+    @Override
+    public void insertOrUpdate(Furniture2GoProduct furniture2GoProduct) {
+        Optional<Furniture2GoProduct> byProductSku = repository.findByProductSku(furniture2GoProduct.getSku());
+        if (byProductSku.isPresent()) {
+            repository.save(byProductSku.get());
+            LOGGER.info("Duplicate Records Found : " + furniture2GoProduct.getSku());
+        } else {
+            repository.insert(furniture2GoProduct);
         }
     }
 
@@ -232,7 +295,6 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
             }
         }
     }*/
-
 
 
 }

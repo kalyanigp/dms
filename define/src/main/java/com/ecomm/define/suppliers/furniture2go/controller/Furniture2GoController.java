@@ -39,7 +39,7 @@ public class Furniture2GoController {
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     }
     )
-    @GetMapping(value = "/furniture2Go")
+    @GetMapping(value = "/furniture2Go/products")
     public List<Furniture2GoProduct> getAllProducts() {
         return furniture2GoService.findAll();
     }
@@ -52,7 +52,7 @@ public class Furniture2GoController {
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     }
     )
-    @GetMapping(value = "/furniture2Go/{id}")
+    @GetMapping(value = "/furniture2Go/products/{id}")
     public ResponseEntity<Furniture2GoProduct> getProductById(@PathVariable("id") ObjectId id) {
         Furniture2GoProduct furniture2Go = furniture2GoService.findBy_Id(id);
         if (furniture2Go == null) {
@@ -70,7 +70,7 @@ public class Furniture2GoController {
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     }
     )
-    @PostMapping("/furniture2Go/upload-furniture2go-price")
+    @PostMapping("/furniture2Go/products/price")
     public ResponseEntity<String> uploadFurniture2GoPriceCSVFile(@RequestParam("file") MultipartFile file) {
         furniture2GoService.uploadProductPrice(file);
         return ResponseEntity.ok().body("Successfully updated Stock Feed");
@@ -86,7 +86,7 @@ public class Furniture2GoController {
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     }
     )
-    @PostMapping("/furniture2Go/upload-furniture2go-products")
+    @PostMapping("/furniture2Go/products")
     public ResponseEntity<String> uploadFurniture2GoStockCSVFile(@RequestParam("file") MultipartFile file) {
         furniture2GoService.uploadProducts(file);
         return ResponseEntity.ok().body("Successfully updated Stock Feed");
@@ -101,7 +101,7 @@ public class Furniture2GoController {
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     }
     )
-    @PostMapping("/furniture2Go/furniture2go-stocklist")
+    @PostMapping("/furniture2Go/products/stock")
     public ResponseEntity<String> uploadFurniture2GoProductCSVFile(@RequestParam("file") MultipartFile file) {
         furniture2GoService.uploadProductStockList(file);
         return ResponseEntity.ok().body("Successfully updated Stock Feed");

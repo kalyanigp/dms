@@ -12,16 +12,27 @@ import java.util.Optional;
  */
 public interface Furniture2GoService {
     Furniture2GoProduct create(final Furniture2GoProduct furniture2GoProduct);
+
     Furniture2GoProduct findBy_Id(final ObjectId id);
+
     Optional<Furniture2GoProduct> findById(String id);
-    Furniture2GoProduct findByProductSku(final String sku);
+
+    Optional<Furniture2GoProduct> findByProductSku(final String sku);
+
     List<Furniture2GoProduct> findAll();
+
     Furniture2GoProduct update(Furniture2GoProduct furniture2GoProduct);
+
     void saveAll(List<Furniture2GoProduct> bcProductList);
+
     //void delete(final ObjectId id);
     //List<Furniture2GoProduct> getUpdatedProductList(List<Furniture2GoProduct> newList, List<Furniture2GoProduct> oldList);
     void uploadProducts(MultipartFile file);
+
     void uploadProductPrice(MultipartFile file);
+
     void uploadProductStockList(MultipartFile file);
 
-    }
+    void insertOrUpdate(Furniture2GoProduct furniture2GoProduct);
+
+}
