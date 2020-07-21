@@ -119,6 +119,16 @@
 			<version>1.10.2</version>
 		</dependency>
 
+		<!-- https://mvnrepository.com/artifact/org.subethamail/subethasmtp -->
+		<!-- email dependency -->
+		<dependency>
+			<groupId>org.subethamail</groupId>
+			<artifactId>subethasmtp</artifactId>
+			<version>3.1.7</version>
+			<scope>test</scope>
+		</dependency>
+
+
 
 	</dependencies>
 
