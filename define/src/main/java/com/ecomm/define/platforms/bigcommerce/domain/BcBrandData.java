@@ -27,6 +27,7 @@ public class BcBrandData {
     public ObjectId _id;
     @JsonProperty("custom_url")
     private CustomUrl customUrl;
+    
     @Indexed(unique = true)
     @JsonProperty("id")
     private Integer id;

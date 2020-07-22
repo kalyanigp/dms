@@ -21,4 +21,6 @@ public interface BigCommerceBrandService {
 
     void saveAll(List<BcBrandData> bcCategoryList);
 
+    void insertOrUpdate(BcBrandData bcBrandData);
+
 }

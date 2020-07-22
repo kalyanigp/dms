@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,8 @@ import java.util.stream.Collectors;
  * Created by vamshikirangullapelly on 19/04/2020.
  */
 @Service
-public class GenerateBCDataServiceImpl implements GenerateBCDataService {
+@Qualifier("maisonDataService")
+public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<MaisonProduct> {
 
     public static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
     private final Logger logger = LoggerFactory.getLogger(BigCommerceProductApiController.class);
@@ -180,7 +182,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
     }*/
 
     @Override
-    public void generateBcProductsFromMaison(List<MaisonProduct> updatedMaisonProductList) throws Exception {
+    public void generateBcProductsFromSupplier(List<MaisonProduct> updatedMaisonProductList) throws Exception {
         List<BcProductData> updatedBcProductDataList = new ArrayList<>();
         for (MaisonProduct maisonProd : updatedMaisonProductList) {
             BcProductData byProductSku = bigCommerceApiService.findByProductSku(maisonProd.getProductCode());
@@ -197,7 +199,7 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                 byProductSku.setWeight(20);
                 byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 byProductSku.setAvailability(BcConstants.PREORDER);
-                if (maisonProd.getStockQuantity() > 0) {
+                if(maisonProd.getStockQuantity() > 0) {
                     byProductSku.setAvailability(BcConstants.AVAILABLE);
                 }
 
@@ -211,11 +213,11 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                     }
                     if (index > 0) {
                         String weight = maisonProd.getPackingSpec().substring(index - 3, index);
-                        if (weight != null) {
-                            weight = weight.replaceAll(" ", "").replaceAll(":", "");
+                        if (weight != null){
+                            weight = weight.replaceAll(" ","").replaceAll(":","");
                             double dWeight = Double.parseDouble(weight);
                             if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
-                                byProductSku.setWeight((int) dWeight);
+                                byProductSku.setWeight((int)dWeight);
                             }
                         }
 
@@ -277,12 +279,12 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
                     resultData.set_id(product.get_id());
                     resultData = bigCommerceApiService.update(resultData);
                     updateImage(resultData, restTemplate);
-                    logger.info("Successfully created the Maison Product to Big Commerce for the product id {}, and sku {}", resultData.getId(), resultData.getSku());
+                    logger.info("Successfully sent Maison Product to Big Commerce for the product id {}, and sku {}", resultData.getId(), resultData.getSku());
                 } else {
                     String url = uri + "/" + product.getId();
                     ResponseEntity<BigCommerceApiProduct> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, request, BigCommerceApiProduct.class);
                     BcProductData data = responseEntity.getBody().getData();
-                    logger.info("Successfully updated the Maison Product to Big Commerce for the product id {}, and sku {}", data.getId(), data.getSku());
+                    logger.info("Successfully updated the Maison Product on Big Commerce for the product id {}, and sku {}", data.getId(), data.getSku());
                 }
             } catch (Exception duplicateRecordException) {
                 logger.error("Duplicate record found with the name {}", request.getBody().getName());
@@ -406,4 +408,5 @@ public class GenerateBCDataServiceImpl implements GenerateBCDataService {
 
         logger.info("Successfully finished processing the duplicate records for Maison");
     }
+
 }

@@ -58,18 +58,21 @@ public class BigCommerceBrandController {
     }
     )
     @GetMapping("/brands")
-    public String getAllBrands() throws URISyntaxException {
+    public List<BcBrandData> getAllBrands() throws URISyntaxException {
         RestTemplate restTemplate = new RestTemplate();
+        List<BcBrandData> bcBrandData = null;
         try {
             URI uri = new URI(baseUrl + storeHash + BRANDS_ENDPOINT);
             HttpEntity<BigCommerceApiBrandList> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
             ResponseEntity<BigCommerceApiBrandList> responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BigCommerceApiBrandList.class);
-            List<BcBrandData> bcBrandData = responseEntity.getBody().getData();
-            service.saveAll(bcBrandData);
+            bcBrandData = responseEntity.getBody().getData();
+            bcBrandData.stream().forEach(brand -> service.insertOrUpdate(brand));
             logger.info("successfully saved all brands");
         } catch (URISyntaxException ex) {
             logger.error("Exception while saving the brands");
         }
-        return "Successfully Saved Brands";
+        return bcBrandData;
     }
+
+
 }

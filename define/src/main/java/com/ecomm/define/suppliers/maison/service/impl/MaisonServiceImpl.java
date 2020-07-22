@@ -15,6 +15,8 @@ import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -44,12 +46,16 @@ public class MaisonServiceImpl implements MaisonService {
     @Autowired
     MaisonProductRepository repository;
 
-    @Autowired
-    private GenerateBCDataService generateBCDataService;
+    private final GenerateBCDataService generateBCDataService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MaisonServiceImpl.class);
 
     private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
+
+    @Autowired // inject maisonDataService
+    public MaisonServiceImpl(@Lazy @Qualifier("maisonDataService") GenerateBCDataService generateBCDataService) {
+        this.generateBCDataService = generateBCDataService;
+    }
 
     @Autowired
     BigCommerceApiService bigCommerceApiService;
@@ -99,13 +105,14 @@ public class MaisonServiceImpl implements MaisonService {
     @Override
     public List<MaisonProduct> getUpdatedProductList(List<MaisonProduct> newList, List<MaisonProduct> oldList) {
         List<MaisonProduct> priceChangedProducts = new ArrayList<>();
-        newList.stream().forEach(newProduct -> newProduct.setProductCode(MAISON_CODE + newProduct.getProductCode()));
+        newList.stream().forEach(newProduct -> newProduct.setProductCode(MAISON_CODE+newProduct.getProductCode()));
         for (MaisonProduct newMaisonProduct : newList) {
             priceChangedProducts.addAll(MaisonProductPredicates.filterProducts(oldList,
                     MaisonProductPredicates.isPriceQuantityChanged(newMaisonProduct.getProductCode(), newMaisonProduct.getMspPrice(), newMaisonProduct.getStockQuantity())));
         }
         return priceChangedProducts;
     }
+
 
     @Override
     public void uploadProducts(MultipartFile file) {
@@ -133,7 +140,7 @@ public class MaisonServiceImpl implements MaisonService {
                     updatedProductList = getUpdatedProductList(maisonProducts, oldMaisonProducts);
                     if (updatedProductList != null) {
                         saveAll(updatedProductList);
-                        generateBCDataService.generateBcProductsFromMaison(updatedProductList);
+                        generateBCDataService.generateBcProductsFromSupplier(updatedProductList);
                         LOGGER.info("Successfully Updated Stock and Price");
                     }
 
@@ -141,10 +148,10 @@ public class MaisonServiceImpl implements MaisonService {
                     List<MaisonProduct> existingProducts = findAll();
                     deleteDiscontinuedProducts(maisonProducts, existingProducts);
                 } else {
-                    maisonProducts.stream().forEach(maisonProd -> maisonProd.setProductCode(MAISON_CODE + maisonProd.getProductCode()));
+                    maisonProducts.stream().forEach(maisonProd -> maisonProd.setProductCode(MAISON_CODE+maisonProd.getProductCode()));
                     saveAll(maisonProducts);
-                    generateBCDataService.generateBcProductsFromMaison(maisonProducts);
-                    LOGGER.info("Successfully Added New Products from supplier" + Supplier.MAISON.getName());
+                    generateBCDataService.generateBcProductsFromSupplier(maisonProducts);
+                    LOGGER.info("Successfully Added New Products from supplier"+ Supplier.MAISON.getName());
                 }
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
@@ -154,7 +161,6 @@ public class MaisonServiceImpl implements MaisonService {
 
     /**
      * Delete discontinued products from BigCommerce
-     *
      * @param newProductList
      * @param oldProductList
      * @throws URISyntaxException
