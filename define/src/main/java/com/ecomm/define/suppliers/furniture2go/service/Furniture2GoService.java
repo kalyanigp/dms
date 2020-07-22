@@ -35,4 +35,6 @@ public interface Furniture2GoService {
 
     void insertOrUpdate(Furniture2GoProduct furniture2GoProduct);
 
+    void uploadFurniture2GoCatalogueToBigCommerce() throws Exception;
+
 }
