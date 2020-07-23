@@ -33,7 +33,7 @@ public class Furniture2GoController {
 
     @ApiOperation(value = "Retrieves All Furniture2Go Products From DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully retrieved all Maison products"),
+            @ApiResponse(code = 200, message = "Successfully retrieved all furniture2Go products"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
@@ -46,7 +46,7 @@ public class Furniture2GoController {
 
     @ApiOperation(value = "Retrieves furniture2Go Product by ID From DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully retrieved Maison product by ID from DB"),
+            @ApiResponse(code = 200, message = "Successfully retrieved furniture2Go product by ID from DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
@@ -63,7 +63,7 @@ public class Furniture2GoController {
 
     @ApiOperation(value = "Uploads CSV File From furniture2Go Stock List to DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Maison Products to DB"),
+            @ApiResponse(code = 200, message = "Successfully uploaded furniture2Go Products to DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
@@ -77,7 +77,7 @@ public class Furniture2GoController {
 
     @ApiOperation(value = "Uploads CSV File From furniture2Go Price List to DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Maison Products to DB"),
+            @ApiResponse(code = 200, message = "Successfully uploaded furniture2Go Products to DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
@@ -89,9 +89,24 @@ public class Furniture2GoController {
         return ResponseEntity.ok().body("Successfully updated Stock Feed");
     }
 
+
+    @ApiOperation(value = "Uploads CSV File From furniture2Go Images List to DB", response = Iterable.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully uploaded Furniture2Go Product Images to DB"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    }
+    )
+    @PostMapping("/furniture2Go/products/image")
+    public ResponseEntity<String> uploadFurniture2GoImageCSVFile(@RequestParam("file") MultipartFile file) {
+        furniture2GoService.uploadProductImages(file);
+        return ResponseEntity.ok().body("Successfully updated Stock Feed");
+    }
+
     @ApiOperation(value = "Uploads CSV File From furniture2Go to Product Details DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Maison Products to DB"),
+            @ApiResponse(code = 200, message = "Successfully uploaded furniture2Go Products to DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
