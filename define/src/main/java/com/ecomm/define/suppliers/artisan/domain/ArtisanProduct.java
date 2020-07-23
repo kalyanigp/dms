@@ -115,6 +115,12 @@ public class ArtisanProduct {
     @CsvBindByName(column = "ImageURL12")
     private String imageURL12;
 
+    @CsvBindByName(column = "ImageURL13")
+    private String imageURL13;
+
+    @CsvBindByName(column = "ImageURL14")
+    private String imageURL14;
+
     @CsvBindByName(column = "HD Prices")
     private BigDecimal price;
 

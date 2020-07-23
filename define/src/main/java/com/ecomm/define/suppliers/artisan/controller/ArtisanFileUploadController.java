@@ -26,12 +26,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/define")
 @Api(value = "ArtisanCSVUpload", description = "Uploads Artisan products and saves in the DB")
-public class ArtisanController {
+public class ArtisanFileUploadController {
 
     @Autowired
     private ArtisanService artisanService;
 
-    @ApiOperation(value = "Retrieves All Furniture2Go Products From DB", response = Iterable.class)
+    @ApiOperation(value = "Retrieves All Artisan Products From DB", response = Iterable.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully retrieved all Artisan products"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
@@ -62,9 +62,9 @@ public class ArtisanController {
     }
 
 
-    @ApiOperation(value = "Uploads CSV File From artisan Price List to DB", response = Iterable.class)
+    @ApiOperation(value = "Uploads Artisan Price Deatils from CSV File to DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Artisan Products to DB"),
+            @ApiResponse(code = 200, message = "Successfully uploaded Artisan Products Images to DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
@@ -78,9 +78,9 @@ public class ArtisanController {
 
 
 
-    @ApiOperation(value = "Uploads CSV File From Artisan Stock List to DB", response = Iterable.class)
+    @ApiOperation(value = "Uploads Artisan Products from CSV File to DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Artisan Products to DB"),
+            @ApiResponse(code = 200, message = "Successfully uploaded Artisan Products Stock to DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
@@ -89,11 +89,11 @@ public class ArtisanController {
     @PostMapping("/artisan/upload-artisan-products")
     public ResponseEntity<String> uploadArtisanCSVFile(@RequestParam("file") MultipartFile file) {
         artisanService.uploadProducts(file);
-        return ResponseEntity.ok().body("Successfully updated Stock Feed");
+        return ResponseEntity.ok().body("Successfully updated Products");
     }
 
 
-    @ApiOperation(value = "Uploads CSV File From artisan to Product Details DB", response = Iterable.class)
+    @ApiOperation(value = "Uploads Artisan Stock Feed  from CSV File to DB", response = Iterable.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully uploaded Artisan Products to DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),

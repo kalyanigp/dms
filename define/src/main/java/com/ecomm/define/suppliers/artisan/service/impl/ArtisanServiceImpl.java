@@ -6,6 +6,7 @@ import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
 import com.ecomm.define.suppliers.artisan.domain.ArtisanPrice;
 import com.ecomm.define.suppliers.artisan.domain.ArtisanProduct;
 import com.ecomm.define.suppliers.artisan.domain.ArtisanStock;
+import com.ecomm.define.suppliers.artisan.feedgenerator.ArtisanMasterFeedMaker;
 import com.ecomm.define.suppliers.artisan.repository.ArtisanProductRepository;
 import com.ecomm.define.suppliers.artisan.service.ArtisanService;
 import com.opencsv.bean.CsvToBean;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
@@ -106,29 +108,21 @@ public class ArtisanServiceImpl implements ArtisanService {
 
     @Override
     public void uploadProducts(MultipartFile file) {
-        LOGGER.info("started uploading furniture2Go from file - {}", file.getOriginalFilename());
+        LOGGER.info("started uploading Artisan Master Data from file - {}", file.getOriginalFilename());
 
         // validate file
         if (file.isEmpty()) {
-            throw new FileNotFoundException("Please select a valid CSV file to upload.");
+            throw new FileNotFoundException("Please select a valid CSV file containing EAN Codes  to upload.");
         } else {
 
-            // parse CSV file to create a list of `Product` objects
-            try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-
-                // create csv bean reader
-                CsvToBean<ArtisanProduct> csvToBean = new CsvToBeanBuilder(reader)
-                        .withType(ArtisanProduct.class)
-                        .withIgnoreLeadingWhiteSpace(true)
-                        .build();
-
-                // convert `CsvToBean` object to list of MaisonProducts
-                List<ArtisanProduct> artisanProducts = csvToBean.parse();
-                repository.saveAll(artisanProducts);
-
-            } catch (Exception ex) {
-                LOGGER.error("Error while processing CSV File" + ex.getMessage());
+            ArtisanMasterFeedMaker feedMaker = new ArtisanMasterFeedMaker();
+            List<ArtisanProduct> artsianProductList = null;
+            try {
+                artsianProductList = feedMaker.processMasterData(file.getInputStream());
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+            repository.saveAll(artsianProductList);
         }
     }
 
