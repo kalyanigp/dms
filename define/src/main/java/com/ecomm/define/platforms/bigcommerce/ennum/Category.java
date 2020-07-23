@@ -62,7 +62,7 @@ public enum Category {
     DECO_TILES(66, "Tile"),
     DECO_WALL_TILES(67, "Wall Tile"),
     HALLWAY(68, "Hallway"),
-    FURNITURE(69, "Furniture"),
+    FURNITURE(69, "Furniture (All)"),
     HALLWAY_CONSOLE_TABLES(70, "Console"),
     HF_DECORATIONS_MIRRORS(71, "Mirror"),
     FRENCH_FURNITURE(72, "French"),
