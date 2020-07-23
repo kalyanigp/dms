@@ -31,8 +31,12 @@ public interface Furniture2GoService {
 
     void uploadProductPrice(MultipartFile file);
 
+    void uploadProductImages(MultipartFile file);
+
     void uploadProductStockList(MultipartFile file);
 
     void insertOrUpdate(Furniture2GoProduct furniture2GoProduct);
+
+    void uploadFurniture2GoCatalogueToBigCommerce() throws Exception;
 
 }
