@@ -43,22 +43,22 @@ import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.MAISO
 @Service
 public class MaisonServiceImpl implements MaisonService {
 
-    @Autowired
-    MaisonProductRepository repository;
+    final MaisonProductRepository repository;
 
-    private final GenerateBCDataService generateBCDataService;
+    final GenerateBCDataService generateBCDataService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MaisonServiceImpl.class);
 
     private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
 
     @Autowired // inject maisonDataService
-    public MaisonServiceImpl(@Lazy @Qualifier("maisonDataService") GenerateBCDataService generateBCDataService) {
+    public MaisonServiceImpl(@Lazy @Qualifier("maisonDataService") GenerateBCDataService generateBCDataService, BigCommerceApiService bigCommerceApiService, MaisonProductRepository repository) {
         this.generateBCDataService = generateBCDataService;
+        this.bigCommerceApiService = bigCommerceApiService;
+        this.repository = repository;
     }
 
-    @Autowired
-    BigCommerceApiService bigCommerceApiService;
+    final BigCommerceApiService bigCommerceApiService;
 
     @Override
     public MaisonProduct create(MaisonProduct maisonProduct) {
@@ -105,7 +105,7 @@ public class MaisonServiceImpl implements MaisonService {
     @Override
     public List<MaisonProduct> getUpdatedProductList(List<MaisonProduct> newList, List<MaisonProduct> oldList) {
         List<MaisonProduct> priceChangedProducts = new ArrayList<>();
-        newList.stream().forEach(newProduct -> newProduct.setProductCode(MAISON_CODE+newProduct.getProductCode()));
+        newList.forEach(newProduct -> newProduct.setProductCode(MAISON_CODE+newProduct.getProductCode()));
         for (MaisonProduct newMaisonProduct : newList) {
             priceChangedProducts.addAll(MaisonProductPredicates.filterProducts(oldList,
                     MaisonProductPredicates.isPriceQuantityChanged(newMaisonProduct.getProductCode(), newMaisonProduct.getMspPrice(), newMaisonProduct.getStockQuantity())));
@@ -148,7 +148,7 @@ public class MaisonServiceImpl implements MaisonService {
                     List<MaisonProduct> existingProducts = findAll();
                     deleteDiscontinuedProducts(maisonProducts, existingProducts);
                 } else {
-                    maisonProducts.stream().forEach(maisonProd -> maisonProd.setProductCode(MAISON_CODE+maisonProd.getProductCode()));
+                    maisonProducts.forEach(maisonProd -> maisonProd.setProductCode(MAISON_CODE+maisonProd.getProductCode()));
                     saveAll(maisonProducts);
                     generateBCDataService.generateBcProductsFromSupplier(maisonProducts);
                     LOGGER.info("Successfully Added New Products from supplier"+ Supplier.MAISON.getName());
