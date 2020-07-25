@@ -82,7 +82,7 @@ public enum Category {
     FIRE_SORROUNDS(82, "Fire Sorrounds"),
     BUFFET_TABLE(81, "Buffet"),
     SIDEBOARD(80, "Sideboard"),
-    LIVING_TABLES_COFFEE_TABLES(74, "Coffee Table");
+    LIVING_TABLES_COFFEE_TABLES(78, "Coffee Table");
 
     private final int categoryCode;
     private final String categoryWord;

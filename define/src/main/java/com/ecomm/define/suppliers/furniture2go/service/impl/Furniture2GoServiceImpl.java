@@ -256,6 +256,7 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
                 if (stock.getStockLevel() != product.getStockLevel()) {
                     LOGGER.info("SKU - " + product.getSku() + " & Stock --- " + stock.getStockLevel());
                     product.setStockLevel(stock.getStockLevel());
+                    product.setStockArrivalDate(stock.getStockArrivalDate());
                     product.setUpdated(Boolean.TRUE);
                     update(product);
                 }

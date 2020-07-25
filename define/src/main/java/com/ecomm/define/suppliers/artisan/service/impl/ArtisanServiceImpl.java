@@ -1,5 +1,6 @@
 package com.ecomm.define.suppliers.artisan.service.impl;
 
+import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.exception.FileNotFoundException;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
@@ -9,6 +10,8 @@ import com.ecomm.define.suppliers.artisan.domain.ArtisanStock;
 import com.ecomm.define.suppliers.artisan.feedgenerator.ArtisanMasterFeedMaker;
 import com.ecomm.define.suppliers.artisan.repository.ArtisanProductRepository;
 import com.ecomm.define.suppliers.artisan.service.ArtisanService;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.bson.types.ObjectId;
@@ -16,6 +19,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,9 +33,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
-import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 /**
@@ -35,26 +45,31 @@ import java.util.Optional;
 @Service
 public class ArtisanServiceImpl implements ArtisanService {
 
-    @Autowired
-    ArtisanProductRepository repository;
-
-    private final GenerateBCDataService generateBCDataService;
+    private final ArtisanProductRepository repository;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ArtisanServiceImpl.class);
 
-    private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
+    private final BigCommerceApiService bigCommerceApiService;
 
-    @Autowired
-    BigCommerceApiService bigCommerceApiService;
+    private final GenerateBCDataService generateBCDataService;
+
+    private final MongoOperations mongoOperations;
+
+    @Value("${bigcommerce.artisan.profit.percentage.high}")
+    private String profitPercentHigh;
 
     @Autowired // inject artisanDataService
-    public ArtisanServiceImpl(@Qualifier("artisanDataService") GenerateBCDataService generateBCDataService) {
+    public ArtisanServiceImpl(@Qualifier("artisanDataService") GenerateBCDataService generateBCDataService
+            , MongoOperations mongoOperations, ArtisanProductRepository repository, BigCommerceApiService bigCommerceApiService) {
+        this.repository = repository;
+        this.bigCommerceApiService = bigCommerceApiService;
+        this.mongoOperations = mongoOperations;
         this.generateBCDataService = generateBCDataService;
     }
 
     @Override
-    public ArtisanProduct create(ArtisanProduct furniture2Go) {
-        return repository.save(furniture2Go);
+    public ArtisanProduct create(ArtisanProduct artisanProduct) {
+        return repository.save(artisanProduct);
     }
 
     @Override
@@ -68,7 +83,7 @@ public class ArtisanServiceImpl implements ArtisanService {
     }
 
     @Override
-    public ArtisanProduct findByProductSku(String sku) {
+    public Optional<ArtisanProduct> findByProductSku(String sku) {
         return repository.findByProductSku(sku);
     }
 
@@ -78,32 +93,14 @@ public class ArtisanServiceImpl implements ArtisanService {
     }
 
     @Override
-    public ArtisanProduct update(ArtisanProduct furniture2Go) {
-        return repository.save(furniture2Go);
+    public ArtisanProduct update(ArtisanProduct artisanProduct) {
+        return repository.save(artisanProduct);
     }
 
     @Override
-    public void saveAll(List<ArtisanProduct> furniture2GoList) {
-        repository.saveAll(furniture2GoList);
+    public void saveAll(List<ArtisanProduct> artisanProducts) {
+        repository.saveAll(artisanProducts);
     }
-
-
-    /*@Override
-    public void delete(ObjectId id) {
-        repository.delete(findBy_Id(id));
-
-    }*/
-
-    /*@Override
-    public List<Furniture2GoProduct> getUpdatedProductList(List<Furniture2GoPrice> newList, List<Furniture2GoPrice> oldList) {
-        List<Furniture2GoProduct> furniture2GoList = new ArrayList<>();
-        newList.stream().forEach(newProduct -> newProduct.setSku(FURNITURE_2_GO+newProduct.getProductName()));
-        for (Furniture2GoProduct furniture2Go : newList) {
-            furniture2GoList.addAll(Furniture2GoPredicates.filterProducts(oldList,
-                    Furniture2GoPredicates.isPriceQuantityChanged(furniture2Go.getProductName(), furniture2Go.getMspPrice(), furniture2Go.getStockQuantity())));
-        }
-        return furniture2GoList;
-    }*/
 
 
     @Override
@@ -114,21 +111,21 @@ public class ArtisanServiceImpl implements ArtisanService {
         if (file.isEmpty()) {
             throw new FileNotFoundException("Please select a valid CSV file containing EAN Codes  to upload.");
         } else {
-
             ArtisanMasterFeedMaker feedMaker = new ArtisanMasterFeedMaker();
-            List<ArtisanProduct> artsianProductList = null;
+            List<ArtisanProduct> artsianProductList;
             try {
                 artsianProductList = feedMaker.processMasterData(file.getInputStream());
+                artsianProductList.stream().parallel().forEach(this::insertOrUpdate);
+                processDiscontinuedCatalog(artsianProductList);
             } catch (IOException e) {
-                e.printStackTrace();
+                LOGGER.error("Error while processing Artisan Master Catalog {}", e.getCause());
             }
-            repository.saveAll(artsianProductList);
         }
     }
 
     @Override
     public void uploadProductPrice(MultipartFile file) {
-        LOGGER.info("started uploading furniture2Go price from file - {}", file.getOriginalFilename());
+        LOGGER.info("started uploading Artisan price from file - {}", file.getOriginalFilename());
 
         // validate file
         if (file.isEmpty()) {
@@ -145,9 +142,10 @@ public class ArtisanServiceImpl implements ArtisanService {
                         .withIgnoreLeadingWhiteSpace(true)
                         .build();
 
-                // convert `CsvToBean` object to list of Furniture2GoPrice
-                List<ArtisanPrice> furniture2GoPrices = csvToBean.parse();
-                furniture2GoPrices.stream().parallel().forEach(price -> savePrice(price));
+                // convert `CsvToBean` object to list of Artisan
+                List<ArtisanPrice> artisanPrices = csvToBean.parse();
+                artisanPrices.stream().parallel().forEach(this::savePrice);
+                LOGGER.info("Successfully Updated price for all catalog");
 
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
@@ -156,25 +154,43 @@ public class ArtisanServiceImpl implements ArtisanService {
     }
 
     private void savePrice(ArtisanPrice price) {
-        ArtisanProduct byProductSku = repository.findByProductSku(price.getSku());
-        if(byProductSku != null) {
-            LOGGER.info("Price --- "+price.getPrice());
-            byProductSku.setPrice(new BigDecimal(price.getPrice().replace("£","")));
-            repository.save(byProductSku);
+        if (price.getSku() != null && !price.getSku().isEmpty()) {
+            Optional<ArtisanProduct> byProductSku = findByProductSku(price.getSku());
+            BigDecimal hdPrice;
+            if (byProductSku.isPresent()) {
+                ArtisanProduct product = byProductSku.get();
+                LOGGER.info("SKU --- " + product.getSku() + " & Price --- " + price.getPrice());
+
+                String priceValue = price.getPrice().trim();
+                if (DefineUtils.isNumeric(priceValue)) {
+                    hdPrice = new BigDecimal(priceValue);
+                } else {
+                    hdPrice = new BigDecimal(priceValue.substring(1));
+                }
+
+                //add 20% VAT plus 30% Profit
+                hdPrice = hdPrice.add(DefineUtils.getVat(hdPrice, new BigDecimal(profitPercentHigh)));
+
+                if (!Objects.equals(product.getPrice(), hdPrice)) {
+                    product.setUpdated(Boolean.TRUE);
+                }
+                product.setPrice(hdPrice);
+                update(product);
+            }
         }
     }
 
-
-    private void saveStock(ArtisanStock price) {
-        ArtisanProduct byProductSku = repository.findByProductSku(price.getSku());
-        if(byProductSku != null) {
-            byProductSku.setStockLevel(price.getStockLevel());
-        }
+    private void saveStock(ArtisanStock stock) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("sku").is(stock.getSku()));
+        Update update = new Update().inc("matches", 1).set("stockLevel", stock.getStockLevel());
+        ArtisanProduct andModify = mongoOperations.findAndModify(query, update, new FindAndModifyOptions().returnNew(false).upsert(false), ArtisanProduct.class);
+        LOGGER.info("Catalog has been updated with price for sku {}, product name {}", andModify.getSku(), andModify.getProductName());
     }
 
     @Override
     public void uploadProductStockList(MultipartFile file) {
-        LOGGER.info("started uploading furniture2Go stock from file - {}", file.getOriginalFilename());
+        LOGGER.info("started uploading Artisan stock from file - {}", file.getOriginalFilename());
 
         // validate file
         if (file.isEmpty()) {
@@ -184,17 +200,17 @@ public class ArtisanServiceImpl implements ArtisanService {
             // parse CSV file to create a list of `Product` objects
             try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
 
-                // create csv bean reader
+                // create csv bean nf
                 CsvToBean<ArtisanStock> csvToBean = new CsvToBeanBuilder(reader)
-                        .withSkipLines(1)
                         .withIgnoreEmptyLine(true)
                         .withType(ArtisanStock.class)
                         .withIgnoreLeadingWhiteSpace(true)
                         .build();
 
-                // convert `CsvToBean` object to list of Furniture2GoPrice
+                // convert `CsvToBean` object to list of Artisan
                 List<ArtisanStock> artisanStockList = csvToBean.parse();
-                artisanStockList.stream().parallel().forEach(stock -> saveStock(stock));
+                artisanStockList.stream().parallel().forEach(this::saveStock);
+                LOGGER.info("Successfully Updated stock for all catalog");
 
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
@@ -203,29 +219,73 @@ public class ArtisanServiceImpl implements ArtisanService {
     }
 
 
-    /**
-     * Delete discontinued products from BigCommerce
-     * @param newProductList
-     * @param oldProductList
-     * @throws URISyntaxException
-     */
-    /*private void deleteDiscontinuedProducts(
-            final List<Furniture2GoProduct> newProductList, List<Furniture2GoProduct> oldProductList) throws URISyntaxException {
-        List<String> updatedSkus = newProductList.stream().flatMap(p -> Stream.of(p.getProductCode())).collect(Collectors.toList());
-        RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
-        HttpEntity<BcProductData> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
-        for (Furniture2GoProduct maisonProduct : oldProductList) {
-            if (!updatedSkus.contains(maisonProduct.getProductCode())) {
-                delete(maisonProduct.get_id());
-                BcProductData byProductSku = bigCommerceApiService.findByProductSku(maisonProduct.getProductCode());
-                String url = uri + "/" + byProductSku.getId();
-                restTemplate.exchange(url, HttpMethod.DELETE, request, Void.class);
-                LOGGER.info("Successfully Deleted product from Big Commerce due to discontinue, product id {} and product sku {}", byProductSku.getId(), byProductSku.getSku());
-                bigCommerceApiService.delete(byProductSku.get_id());
+    @Override
+    public void insertOrUpdate(ArtisanProduct artisanProduct) {
+        Query query = new Query();
+        query.addCriteria(Criteria.where("sku").is(artisanProduct.getSku()));
+        ArtisanProduct product = mongoOperations.findOne(query, ArtisanProduct.class);
+        if (product != null) {
+            Update update = new Update();
+            update.set("updated", Boolean.TRUE);
+            update.set("discontinued", Boolean.FALSE);
+            UpdateResult updatedProduct = mongoOperations.updateFirst(query, update, ArtisanProduct.class);
+            LOGGER.info("Successfully updated Artisan Product SKU {} and ProductName {}", artisanProduct.getSku(), artisanProduct.getProductName());
+        } else {
+            artisanProduct.setDiscontinued(Boolean.FALSE);
+            artisanProduct.setUpdated(Boolean.TRUE);
+            ArtisanProduct insertedProduct = mongoOperations.insert(artisanProduct);
+            LOGGER.info("Successfully created Artisan Product SKU {} and ProductName {}", insertedProduct.getSku(), insertedProduct.getProductName());
+        }
+    }
+
+
+    private void processDiscontinuedCatalog(List<ArtisanProduct> artisanProducts) {
+        List<ArtisanProduct> dbCatalog = findAll();
+        List<String> oldCatalog = dbCatalog.stream().map(ArtisanProduct::getSku).collect(Collectors.toList());
+        List<String> newCatalog = artisanProducts.stream().map(ArtisanProduct::getSku).collect(Collectors.toList());
+        List<String> discontinuedList = oldCatalog.stream()
+                .filter(e -> !newCatalog.contains(e))
+                .collect(Collectors.toList());
+
+        for (String sku : discontinuedList) {
+            Optional<ArtisanProduct> byProductSku = findByProductSku(sku);
+            if (byProductSku.isPresent()) {
+                ArtisanProduct artisanProduct = byProductSku.get();
+                artisanProduct.setUpdated(Boolean.TRUE);
+                artisanProduct.setDiscontinued(Boolean.TRUE);
+                repository.save(artisanProduct);
             }
         }
-    }*/
+
+    }
+
+    @Override
+    public void uploadCatalogueToBigCommerce() throws Exception {
+        Query discontinuedOrModifiedQuery = new Query();
+        discontinuedOrModifiedQuery.addCriteria(Criteria.where("updated").is(true));
+        List<ArtisanProduct> artisanProducts = mongoOperations.find(discontinuedOrModifiedQuery, ArtisanProduct.class);
+        generateBCDataService.generateBcProductsFromSupplier(artisanProducts);
+
+        //Delete the catalog which has been Discontinued from the DB
+        Query deleteDiscontinuedCatalogQuery = new Query();
+        deleteDiscontinuedCatalogQuery.addCriteria(Criteria.where("isDiscontinued").is(true));
+        DeleteResult deleteResult = mongoOperations.remove(deleteDiscontinuedCatalogQuery, ArtisanProduct.class);
+        LOGGER.info("Discontinued Catalog has been deleted from the ArtisanProduct Table, total records been deleted is {}", deleteResult.getDeletedCount());
+
+        //Update modified to false.
+        Query updateModifiedCatalogQuery = new Query();
+        updateModifiedCatalogQuery.addCriteria(Criteria.where("updated").is(true));
+        Update update = new Update();
+        update.set("updated", false);
+        UpdateResult updateResult = mongoOperations.updateMulti(updateModifiedCatalogQuery, update, ArtisanProduct.class);
+        LOGGER.info("Total number of products modified Updated flag to false is, {}", updateResult.getModifiedCount());
+    }
+
+
+
+
+
+
 
 
 

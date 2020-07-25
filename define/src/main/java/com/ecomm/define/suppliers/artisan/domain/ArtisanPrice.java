@@ -18,10 +18,10 @@ public class ArtisanPrice {
     public ObjectId _id;
 
     @Indexed(unique = true)
-    @CsvBindByName(column = "FTG SKU No.")
+    @CsvBindByName(column = "sku")
     private String sku;
 
-    @CsvBindByName(column = "HD Prices")
+    @CsvBindByName(column = " Dropship price £ ")
     private String price;
 
     public ArtisanPrice() {

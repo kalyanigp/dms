@@ -95,4 +95,6 @@ public class Furniture2GoProduct {
 
     private boolean isDiscontinued;
 
+    private String stockArrivalDate;
+
 }

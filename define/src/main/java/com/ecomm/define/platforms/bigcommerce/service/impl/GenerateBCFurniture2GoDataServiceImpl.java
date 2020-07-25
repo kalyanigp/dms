@@ -33,6 +33,7 @@ import org.springframework.web.client.RestTemplate;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -121,6 +122,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
     /**
      * This method will delete the discontinued catalog from BigCommerce and from bcProductData table
+     *
      * @param productList
      * @throws URISyntaxException
      */
@@ -146,6 +148,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
     /**
      * This method will update the catalog if there is any modifications in the price & stock level
+     *
      * @param updatedBcProductDataList
      * @throws Exception
      */
@@ -223,7 +226,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         //Height logic
         StringBuilder dimensionsDescription = new StringBuilder();
         String heightDelimeter = getDelimiter(furniture2GoProduct.getHeight());
-        dimensionsDescription.append("Height : "+furniture2GoProduct.getHeight()+" (mm)");
+        dimensionsDescription.append("Height : " + furniture2GoProduct.getHeight() + " (mm)");
         if (!heightDelimeter.isEmpty()) {
             List<String> heightList = evaluateDimensions(heightDelimeter, furniture2GoProduct.getHeight());
             if (!heightList.isEmpty()) {
@@ -235,7 +238,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
         //Width logic
         String widthDelimeter = getDelimiter(furniture2GoProduct.getWidth());
-        dimensionsDescription.append("Width : "+furniture2GoProduct.getWidth()+" (mm)");
+        dimensionsDescription.append("Width : " + furniture2GoProduct.getWidth() + " (mm)");
         if (!widthDelimeter.isEmpty()) {
             List<String> widthList = evaluateDimensions(widthDelimeter, furniture2GoProduct.getWidth());
             if (!widthList.isEmpty()) {
@@ -247,7 +250,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
         //Depth logic
         String depthDelimeter = getDelimiter(furniture2GoProduct.getDepth());
-        dimensionsDescription.append("Depth : "+furniture2GoProduct.getDepth()+" (mm)");
+        dimensionsDescription.append("Depth : " + furniture2GoProduct.getDepth() + " (mm)");
         if (!depthDelimeter.isEmpty()) {
             List<String> depthList = evaluateDimensions(widthDelimeter, furniture2GoProduct.getDepth());
             if (!depthList.isEmpty()) {
@@ -255,6 +258,18 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
             }
         } else {
             byProductSku.setDepth(new BigDecimal(furniture2GoProduct.getDepth()).intValue());
+        }
+        String stockArrivalDate = furniture2GoProduct.getStockArrivalDate();
+        if (stockArrivalDate != null && !stockArrivalDate.isEmpty()) {
+            dimensionsDescription.append("Next Dispatch Date : ");
+            if (DefineUtils.isValidDate(stockArrivalDate)) {
+                dimensionsDescription.append(stockArrivalDate);
+            } else {
+                LocalDate today = LocalDate.now();
+                //adding 10 weeks of time to the localdate
+                LocalDate nextTenWeeks = today.plusDays(70);
+                dimensionsDescription.append(nextTenWeeks);
+            }
         }
         byProductSku.setDescription(furniture2GoProduct.getDescription() + " " + dimensionsDescription.toString());
     }
@@ -266,7 +281,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
             List<String> imagesList = furniture2GoProduct.getImages();
 
             URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT + "/" + data.getId() + "/images");
-            if (checkImagesNotExists(uri, restTemplate)) {
+            if (checkIfImagesExists(uri, restTemplate)) {
                 BcProductImageData imageData;
                 HttpEntity<BcProductImageData> request;
                 boolean ifFirstImage = true;
@@ -295,7 +310,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         }
     }
 
-    private boolean checkImagesNotExists(URI uri, RestTemplate restTemplate) {
+    private boolean checkIfImagesExists(URI uri, RestTemplate restTemplate) {
         ResponseEntity<BcProductImageDataList> responseEntity;
         HttpEntity<BcProductImageDataList> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
         responseEntity = restTemplate.exchange(uri, HttpMethod.GET, request, BcProductImageDataList.class);
