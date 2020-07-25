@@ -10,6 +10,8 @@ import com.ecomm.define.suppliers.furniture2go.domain.Furniture2GoProduct;
 import com.ecomm.define.suppliers.furniture2go.domain.Furniture2GoStock;
 import com.ecomm.define.suppliers.furniture2go.repository.Furniture2GoProductRepository;
 import com.ecomm.define.suppliers.furniture2go.service.Furniture2GoService;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.apache.commons.collections4.map.HashedMap;
@@ -19,7 +21,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -27,10 +32,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -41,14 +46,13 @@ import java.util.stream.Collectors;
 @Service
 public class Furniture2GoServiceImpl implements Furniture2GoService {
 
-    @Autowired
-    Furniture2GoProductRepository repository;
+    private final Furniture2GoProductRepository repository;
 
     private final GenerateBCDataService generateBCDataService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Furniture2GoServiceImpl.class);
 
-    private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
+    private final  MongoOperations mongoOperations;
 
     @Value("${bigcommerce.f2g.profit.percentage.high}")
     private String profitPercentHigh;
@@ -62,8 +66,6 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
     @Value("${bigcommerce.f2g.profit.limit.low}")
     private String lowerLimitHDPrice;
 
-    @Autowired
-    BigCommerceApiService bigCommerceApiService;
 
     @Override
     public Furniture2GoProduct create(Furniture2GoProduct furniture2Go) {
@@ -85,10 +87,14 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
         return repository.findByProductSku(sku);
     }
 
-
     @Override
     public List<Furniture2GoProduct> findAll() {
         return repository.findAll();
+    }
+
+    @Override
+    public List<Furniture2GoProduct> findDiscontinued(boolean discontinued) {
+        return repository.findDiscontinued(discontinued);
     }
 
     @Override
@@ -103,27 +109,11 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
 
     @Autowired // inject furniture2GoDataService
-    public Furniture2GoServiceImpl(@Qualifier("furniture2GoDataService") GenerateBCDataService generateBCDataService) {
+    public Furniture2GoServiceImpl(@Qualifier("furniture2GoDataService") GenerateBCDataService generateBCDataService, Furniture2GoProductRepository repository, BigCommerceApiService bigCommerceApiService, MongoOperations mongoOperations) {
         this.generateBCDataService = generateBCDataService;
+        this.repository = repository;
+        this.mongoOperations = mongoOperations;
     }
-
-    /*@Override
-    public void delete(ObjectId id) {
-        repository.delete(findBy_Id(id));
-
-    }*/
-
-    /*@Override
-    public List<Furniture2GoProduct> getUpdatedProductList(List<Furniture2GoPrice> newList, List<Furniture2GoPrice> oldList) {
-        List<Furniture2GoProduct> furniture2GoList = new ArrayList<>();
-        newList.stream().forEach(newProduct -> newProduct.setSku(FURNITURE_2_GO+newProduct.getProductName()));
-        for (Furniture2GoProduct furniture2Go : newList) {
-            furniture2GoList.addAll(Furniture2GoPredicates.filterProducts(oldList,
-                    Furniture2GoPredicates.isPriceQuantityChanged(furniture2Go.getProductName(), furniture2Go.getMspPrice(), furniture2Go.getStockQuantity())));
-        }
-        return furniture2GoList;
-    }*/
-
 
     @Override
     public void uploadProducts(MultipartFile file) {
@@ -146,11 +136,32 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
                 // convert `CsvToBean` object to list of MaisonProducts
                 List<Furniture2GoProduct> furniture2GoProducts = csvToBean.parse();
-                furniture2GoProducts.stream().parallel().forEach(product -> insertOrUpdate(product));
+                furniture2GoProducts.stream().parallel().forEach(this::insertOrUpdate);
+                processDiscontinuedCatalog(furniture2GoProducts);
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
             }
         }
+    }
+
+    private void processDiscontinuedCatalog(List<Furniture2GoProduct> furniture2GoProducts) {
+        List<Furniture2GoProduct> dbCatalog = findAll();
+        List<String> oldCatalog = dbCatalog.stream().map(Furniture2GoProduct::getSku).collect(Collectors.toList());
+        List<String> newCatalog = furniture2GoProducts.stream().map(Furniture2GoProduct::getSku).collect(Collectors.toList());
+        List<String> discontinuedList = oldCatalog.stream()
+                .filter(e -> !newCatalog.contains(e))
+                .collect(Collectors.toList());
+
+        for (String sku : discontinuedList) {
+            Optional<Furniture2GoProduct> byProductSku = findByProductSku(sku);
+            if (byProductSku.isPresent()) {
+                Furniture2GoProduct furniture2GoProduct = byProductSku.get();
+                furniture2GoProduct.setUpdated(Boolean.TRUE);
+                furniture2GoProduct.setDiscontinued(Boolean.TRUE);
+                repository.save(furniture2GoProduct);
+            }
+        }
+
     }
 
     @Override
@@ -174,7 +185,7 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
                 // convert `CsvToBean` object to list of Furniture2GoPrice
                 List<Furniture2GoPrice> furniture2GoPrices = csvToBean.parse();
-                furniture2GoPrices.stream().parallel().forEach(price -> savePrice(price));
+                furniture2GoPrices.stream().parallel().forEach(this::savePrice);
 
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
@@ -184,12 +195,12 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
     private void savePrice(Furniture2GoPrice price) {
         if (price.getSku() != null && !price.getSku().isEmpty()) {
-            Optional<Furniture2GoProduct> byProductSku = repository.findByProductSku(price.getSku());
-            BigDecimal hdPrice = null;
-            BigDecimal hdPriceBeforeVat = null;
+            Optional<Furniture2GoProduct> byProductSku = findByProductSku(price.getSku());
+            BigDecimal hdPrice;
+            BigDecimal hdPriceBeforeVat;
             if (byProductSku.isPresent()) {
                 Furniture2GoProduct product = byProductSku.get();
-                LOGGER.info("SKU - " + product.getSku() + " & Price --- " + price.getPrice());
+                LOGGER.info("SKU --- " + product.getSku() + " & Price --- " + price.getPrice());
 
                 String priceValue = price.getPrice().trim();
                 if (DefineUtils.isNumeric(priceValue)) {
@@ -209,14 +220,14 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
                     hdPrice = hdPrice.add(DefineUtils.percentage(hdPrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
                 }
 
-                if (product.getPrice() != hdPrice) {
+                if (!Objects.equals(product.getPrice(), hdPrice)) {
                     product.setUpdated(Boolean.TRUE);
                     product.setPrice(hdPrice);
-                    repository.save(product);
+                    update(product);
                 }
 
                 product.setPrice(hdPrice);
-                repository.save(product);
+                update(product);
             }
         }
     }
@@ -224,12 +235,14 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
     private void saveImage(Map<String, List<String>> images) {
         for (Map.Entry<String, List<String>> entry : images.entrySet()) {
-            Optional<Furniture2GoProduct> byProductSku = repository.findByProductSku(entry.getKey());
+            Optional<Furniture2GoProduct> byProductSku = findByProductSku(entry.getKey());
             if (byProductSku.isPresent()) {
                 Furniture2GoProduct furniture2GoProduct = byProductSku.get();
-                furniture2GoProduct.setImages(entry.getValue());
-                furniture2GoProduct.setUpdated(Boolean.TRUE);
-                repository.save(furniture2GoProduct);
+                if(!furniture2GoProduct.getImages().equals(entry.getValue())) {
+                    furniture2GoProduct.setImages(entry.getValue());
+                    furniture2GoProduct.setUpdated(Boolean.TRUE);
+                    update(furniture2GoProduct);
+                }
             }
         }
     }
@@ -237,14 +250,14 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
     private void saveStock(Furniture2GoStock stock) {
         if (stock.getSku() != null && !stock.getSku().isEmpty()) {
-            Optional<Furniture2GoProduct> byProductSku = repository.findByProductSku(stock.getSku());
+            Optional<Furniture2GoProduct> byProductSku = findByProductSku(stock.getSku());
             if (byProductSku.isPresent()) {
                 Furniture2GoProduct product = byProductSku.get();
-                if (product != null && stock.getStockLevel() != product.getStockLevel()) {
+                if (stock.getStockLevel() != product.getStockLevel()) {
                     LOGGER.info("SKU - " + product.getSku() + " & Stock --- " + stock.getStockLevel());
                     product.setStockLevel(stock.getStockLevel());
                     product.setUpdated(Boolean.TRUE);
-                    repository.save(product);
+                    update(product);
                 }
             }
         }
@@ -323,7 +336,7 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
                 // convert `CsvToBean` object to list of Furniture2GoPrice
                 List<Furniture2GoStock> furniture2GoStockList = csvToBean.parse();
-                furniture2GoStockList.stream().parallel().forEach(stock -> saveStock(stock));
+                furniture2GoStockList.stream().parallel().forEach(this::saveStock);
 
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
@@ -333,45 +346,37 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
     @Override
     public void insertOrUpdate(Furniture2GoProduct furniture2GoProduct) {
-        Optional<Furniture2GoProduct> byProductSku = repository.findByProductSku(furniture2GoProduct.getSku());
+        Optional<Furniture2GoProduct> byProductSku = findByProductSku(furniture2GoProduct.getSku());
         if (byProductSku.isPresent()) {
-            repository.save(byProductSku.get());
-            LOGGER.info("Duplicate Records Found : " + furniture2GoProduct.getSku());
+            Furniture2GoProduct furnitureTogoProduct = byProductSku.get();
+            furnitureTogoProduct.setDiscontinued(Boolean.FALSE);
+            update(furnitureTogoProduct);
         } else {
+            furniture2GoProduct.setDiscontinued(Boolean.FALSE);
             repository.insert(furniture2GoProduct);
         }
     }
 
     @Override
     public void uploadFurniture2GoCatalogueToBigCommerce() throws Exception {
-        List<Furniture2GoProduct> furniture2GoProducts = repository.findAll();
+        Query discontinuedOrModifiedQuery = new Query();
+        discontinuedOrModifiedQuery.addCriteria(Criteria.where("updated").is(true));
+        List<Furniture2GoProduct> furniture2GoProducts = mongoOperations.find(discontinuedOrModifiedQuery, Furniture2GoProduct.class);
         generateBCDataService.generateBcProductsFromSupplier(furniture2GoProducts);
+
+        //Delete the catalog which has been Discontinued from the DB
+        Query deleteDiscontinuedCatalogQuery = new Query();
+        deleteDiscontinuedCatalogQuery.addCriteria(Criteria.where("isDiscontinued").is(true));
+        DeleteResult deleteResult = mongoOperations.remove(deleteDiscontinuedCatalogQuery, Furniture2GoProduct.class);
+        LOGGER.info("Discontinued Catalog has been deleted from the Furniture2Go Table, total records been deleted is {}", deleteResult.getDeletedCount());
+
+        //Update modified to false.
+        Query updateModifiedCatalogQuery = new Query();
+        updateModifiedCatalogQuery.addCriteria(Criteria.where("updated").is(true));
+        Update update = new Update();
+        update.set("updated", false);
+        UpdateResult updateResult = mongoOperations.updateMulti(updateModifiedCatalogQuery, update, Furniture2GoProduct.class);
+        LOGGER.info("Total number of products modified Updated flag to false is, {}", updateResult.getModifiedCount());
     }
-
-
-    /**
-     * Delete discontinued products from BigCommerce
-     * @param newProductList
-     * @param oldProductList
-     * @throws URISyntaxException
-     */
-    /*private void deleteDiscontinuedProducts(
-            final List<Furniture2GoProduct> newProductList, List<Furniture2GoProduct> oldProductList) throws URISyntaxException {
-        List<String> updatedSkus = newProductList.stream().flatMap(p -> Stream.of(p.getProductCode())).collect(Collectors.toList());
-        RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
-        HttpEntity<BcProductData> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
-        for (Furniture2GoProduct maisonProduct : oldProductList) {
-            if (!updatedSkus.contains(maisonProduct.getProductCode())) {
-                delete(maisonProduct.get_id());
-                BcProductData byProductSku = bigCommerceApiService.findByProductSku(maisonProduct.getProductCode());
-                String url = uri + "/" + byProductSku.getId();
-                restTemplate.exchange(url, HttpMethod.DELETE, request, Void.class);
-                LOGGER.info("Successfully Deleted product from Big Commerce due to discontinue, product id {} and product sku {}", byProductSku.getId(), byProductSku.getSku());
-                bigCommerceApiService.delete(byProductSku.get_id());
-            }
-        }
-    }*/
-
 
 }

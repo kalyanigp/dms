@@ -93,4 +93,6 @@ public class Furniture2GoProduct {
 
     private boolean updated;
 
+    private boolean isDiscontinued;
+
 }

@@ -72,7 +72,7 @@ public class Furniture2GoController {
     @PostMapping("/furniture2Go/products")
     public ResponseEntity<String> uploadFurniture2GoStockCSVFile(@RequestParam("file") MultipartFile file) {
         furniture2GoService.uploadProducts(file);
-        return ResponseEntity.ok().body("Successfully updated Stock Feed");
+        return ResponseEntity.ok().body("Successfully updated Mater Catalog Feed");
     }
 
     @ApiOperation(value = "Uploads CSV File From furniture2Go Price List to DB", response = Iterable.class)
@@ -86,7 +86,7 @@ public class Furniture2GoController {
     @PostMapping("/furniture2Go/products/price")
     public ResponseEntity<String> uploadFurniture2GoPriceCSVFile(@RequestParam("file") MultipartFile file) {
         furniture2GoService.uploadProductPrice(file);
-        return ResponseEntity.ok().body("Successfully updated Stock Feed");
+        return ResponseEntity.ok().body("Successfully updated Price Feed");
     }
 
 
@@ -101,7 +101,7 @@ public class Furniture2GoController {
     @PostMapping("/furniture2Go/products/image")
     public ResponseEntity<String> uploadFurniture2GoImageCSVFile(@RequestParam("file") MultipartFile file) {
         furniture2GoService.uploadProductImages(file);
-        return ResponseEntity.ok().body("Successfully updated Stock Feed");
+        return ResponseEntity.ok().body("Successfully updated Image Feed");
     }
 
     @ApiOperation(value = "Uploads CSV File From furniture2Go to Product Details DB", response = Iterable.class)
