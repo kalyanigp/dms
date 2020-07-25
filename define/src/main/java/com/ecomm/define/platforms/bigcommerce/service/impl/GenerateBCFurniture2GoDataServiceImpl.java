@@ -154,7 +154,6 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
         List<BcProductData> duplicateRecords = new ArrayList<>();
 
-        //updatedBcProductDataList.stream().parallel().forEach(product -> populateBigCommerceProduct(restTemplate, uri, duplicateRecords, request, product));
         for (BcProductData product : updatedBcProductDataList) {
             populateBigCommerceProduct(restTemplate, uri, duplicateRecords, product);
         }
@@ -224,7 +223,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         //Height logic
         StringBuilder dimensionsDescription = new StringBuilder();
         String heightDelimeter = getDelimiter(furniture2GoProduct.getHeight());
-        dimensionsDescription.append("Height : ").append(furniture2GoProduct.getHeight()).append(" mm");
+        dimensionsDescription.append("Height : "+furniture2GoProduct.getHeight()+" (mm)");
         if (!heightDelimeter.isEmpty()) {
             List<String> heightList = evaluateDimensions(heightDelimeter, furniture2GoProduct.getHeight());
             if (!heightList.isEmpty()) {
@@ -236,7 +235,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
         //Width logic
         String widthDelimeter = getDelimiter(furniture2GoProduct.getWidth());
-        dimensionsDescription.append("Width : ").append(furniture2GoProduct.getWidth()).append(" mm");
+        dimensionsDescription.append("Width : "+furniture2GoProduct.getWidth()+" (mm)");
         if (!widthDelimeter.isEmpty()) {
             List<String> widthList = evaluateDimensions(widthDelimeter, furniture2GoProduct.getWidth());
             if (!widthList.isEmpty()) {
@@ -248,7 +247,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
         //Depth logic
         String depthDelimeter = getDelimiter(furniture2GoProduct.getDepth());
-        dimensionsDescription.append("Depth : ").append(furniture2GoProduct.getDepth()).append(" mm");
+        dimensionsDescription.append("Depth : "+furniture2GoProduct.getDepth()+" (mm)");
         if (!depthDelimeter.isEmpty()) {
             List<String> depthList = evaluateDimensions(widthDelimeter, furniture2GoProduct.getDepth());
             if (!depthList.isEmpty()) {
@@ -257,7 +256,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         } else {
             byProductSku.setDepth(new BigDecimal(furniture2GoProduct.getDepth()).intValue());
         }
-        byProductSku.setDescription(furniture2GoProduct.getDescription() + "\n" + dimensionsDescription.toString());
+        byProductSku.setDescription(furniture2GoProduct.getDescription() + " " + dimensionsDescription.toString());
     }
 
     private void updateImage(BcProductData data, RestTemplate restTemplate) throws Exception {
