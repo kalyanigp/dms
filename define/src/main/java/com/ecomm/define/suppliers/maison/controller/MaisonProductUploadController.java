@@ -75,4 +75,19 @@ public class MaisonProductUploadController {
         maisonService.uploadProducts(file);
         return ResponseEntity.ok().body("Successfully uploaded Maison Products to BigCommerce and saved in DB");
     }
+
+
+    @ApiOperation(value = "Uploads Maison Catalogue to BigCommerce by reading data from Maison table", response = Iterable.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully uploaded Maison Products to BigCommerce from Maison table"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    }
+    )
+    @PostMapping("/maison/bc/products")
+    public ResponseEntity<String> uploadFurniture2GoCataloguetoBigCommerce() throws Exception {
+        maisonService.uploadMaisonCatalogueToBigCommerce();
+        return ResponseEntity.ok().body("Successfully pushed Maison Catalogue to BigCommerce");
+    }
 }

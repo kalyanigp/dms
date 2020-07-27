@@ -89,21 +89,6 @@ public class Furniture2GoController {
         return ResponseEntity.ok().body("Successfully updated Price Feed");
     }
 
-
-    @ApiOperation(value = "Uploads CSV File From furniture2Go Images List to DB", response = Iterable.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Furniture2Go Product Images to DB"),
-            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-    }
-    )
-    @PostMapping("/furniture2Go/products/image")
-    public ResponseEntity<String> uploadFurniture2GoImageCSVFile(@RequestParam("file") MultipartFile file) {
-        furniture2GoService.uploadProductImages(file);
-        return ResponseEntity.ok().body("Successfully updated Image Feed");
-    }
-
     @ApiOperation(value = "Uploads CSV File From furniture2Go to Product Details DB", response = Iterable.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully uploaded furniture2Go Products to DB"),
@@ -130,7 +115,7 @@ public class Furniture2GoController {
     @PostMapping("/furniture2Go/bc/products")
     public ResponseEntity<String> uploadFurniture2GoCataloguetoBigCommerce() throws Exception {
         furniture2GoService.uploadFurniture2GoCatalogueToBigCommerce();
-        return ResponseEntity.ok().body("Successfully Furniture2Go Catalogue to BigCommerce");
+        return ResponseEntity.ok().body("Successfully pushed Furniture2Go Catalogue to BigCommerce");
     }
 
 

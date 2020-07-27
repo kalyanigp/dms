@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -91,5 +92,15 @@ public class ArtisanProduct {
 
 
     public ArtisanProduct() {
+    }
+
+    public int compareTo(ArtisanProduct catalog){
+        int compare = Comparator.comparing(ArtisanProduct::getSku)
+                .thenComparing(ArtisanProduct::getProductName)
+                .thenComparing(ArtisanProduct::getDescription)
+                .thenComparing(ArtisanProduct::getPrice)
+                .thenComparing(ArtisanProduct::getStockLevel)
+                .compare(this, catalog);
+        return compare;
     }
 }

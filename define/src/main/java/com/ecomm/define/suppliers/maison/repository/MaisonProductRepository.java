@@ -9,9 +9,11 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
+import java.util.Optional;
+
 public interface MaisonProductRepository extends MongoRepository<MaisonProduct, String> {
     MaisonProduct findBy_id(ObjectId _id);
 
     @Query("{productCode : ?0}")
-    MaisonProduct findByProductSku(String productName);
+    Optional<MaisonProduct> findByProductSku(String productName);
 }
