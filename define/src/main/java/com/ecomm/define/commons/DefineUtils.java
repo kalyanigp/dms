@@ -1,14 +1,23 @@
 package com.ecomm.define.commons;
 
 import java.math.BigDecimal;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DefineUtils {
     public static final BigDecimal ONE_HUNDRED = new BigDecimal(100);
+    private static final String DATE_FORMAT = "dd/MM/yyyy";
+    private static final DateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+    private static final DateTimeFormatter dateFormat8 = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
     public static boolean isNumeric(String str) {
         try {
@@ -60,6 +69,21 @@ public class DefineUtils {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher((CharSequence) d);
         return matcher.matches();
+    }
+
+    public static Date plusDays(int days) {
+
+        // Get current date
+        Date currentDate = new Date();
+
+        // convert date to localdatetime
+        LocalDateTime localDateTime = currentDate.toInstant().atZone(ZoneId.of("Europe/London")).toLocalDateTime();
+
+        // plus days
+        localDateTime = localDateTime.plusDays(days);
+        Date currentDatePlusOneDay = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+
+        return currentDatePlusOneDay;
     }
 
 
