@@ -85,9 +85,9 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
                 .stream()
                 .filter(Furniture2GoProduct::isUpdated)
                 .collect(Collectors.toList());
-        for (Furniture2GoProduct furniture2GoProduct : updatedCatalogList) {
-            BcProductData byProductSku = bigCommerceApiService.findByProductSku(furniture2GoProduct.getSku());
 
+        updatedCatalogList.parallelStream().forEach(furniture2GoProduct -> {
+            BcProductData byProductSku = bigCommerceApiService.findByProductSku(furniture2GoProduct.getSku());
             if (byProductSku == null) {
                 byProductSku = new BcProductData();
                 setPriceAndQuantity(furniture2GoProduct, byProductSku);
@@ -114,7 +114,8 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             }
-        }
+        });
+
         updateBigCommerceProducts(updatedBcProductDataList);
     }
 
@@ -154,10 +155,8 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
         List<BcProductData> duplicateRecords = new ArrayList<>();
+        updatedBcProductDataList.parallelStream().forEach(product -> populateBigCommerceProduct(restTemplate, uri, duplicateRecords, product));
 
-        for (BcProductData product : updatedBcProductDataList) {
-            populateBigCommerceProduct(restTemplate, uri, duplicateRecords, product);
-        }
         if (!duplicateRecords.isEmpty()) {
             LOGGER.info("Found duplicate products while processing Furniture2Go products. Processing the duplicate products by updating the name attribute");
         }
@@ -188,14 +187,13 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         }
     }
 
-    private BcProductData setPriceAndQuantity(Furniture2GoProduct furniture2GoProduct, BcProductData byProductSku) {
+    private void setPriceAndQuantity(Furniture2GoProduct furniture2GoProduct, BcProductData byProductSku) {
         evaluatePrice(furniture2GoProduct, byProductSku);
         byProductSku.setInventoryLevel(Math.max(furniture2GoProduct.getStockLevel(), 0));
         byProductSku.setAvailability(BcConstants.PREORDER);
         if (furniture2GoProduct.getStockLevel() > 0) {
             byProductSku.setAvailability(BcConstants.AVAILABLE);
         }
-        return byProductSku;
     }
 
     private void evaluatePrice(Furniture2GoProduct furniture2GoProduct, BcProductData byProductSku) {
@@ -213,7 +211,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         //Height logic
         StringBuilder dimensionsDescription = new StringBuilder();
         String heightDelimeter = getDelimiter(furniture2GoProduct.getHeight());
-        dimensionsDescription.append(" Height :" + furniture2GoProduct.getHeight() + "(mm) ");
+        dimensionsDescription.append(" Height :").append(furniture2GoProduct.getHeight()).append("(mm) ");
         if (!heightDelimeter.isEmpty()) {
             List<String> heightList = evaluateDimensions(heightDelimeter, furniture2GoProduct.getHeight());
             if (!heightList.isEmpty()) {
@@ -225,7 +223,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
         //Width logic
         String widthDelimeter = getDelimiter(furniture2GoProduct.getWidth());
-        dimensionsDescription.append(" Width :" + furniture2GoProduct.getWidth() + "(mm) ");
+        dimensionsDescription.append(" Width :").append(furniture2GoProduct.getWidth()).append("(mm) ");
         if (!widthDelimeter.isEmpty()) {
             List<String> widthList = evaluateDimensions(widthDelimeter, furniture2GoProduct.getWidth());
             if (!widthList.isEmpty()) {
@@ -237,7 +235,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
         //Depth logic
         String depthDelimeter = getDelimiter(furniture2GoProduct.getDepth());
-        dimensionsDescription.append(" Depth :" + furniture2GoProduct.getDepth() + "(mm) ");
+        dimensionsDescription.append(" Depth :").append(furniture2GoProduct.getDepth()).append("(mm) ");
         if (!depthDelimeter.isEmpty()) {
             List<String> depthList = evaluateDimensions(widthDelimeter, furniture2GoProduct.getDepth());
             if (!depthList.isEmpty()) {
@@ -275,6 +273,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
                 int imageDesriptionCount = 1;
                 BigCommerceApiImage bigCommerceApiImage;
                 List<String> filteredImagesList = imagesList.stream().filter(StringUtils::isNotEmpty).collect(Collectors.toList());
+
                 for (String image : filteredImagesList) {
                     try {
                         imageData = new BcProductImageData();

@@ -1,12 +1,11 @@
 package com.ecomm.define.platforms.bigcommerce.service.impl;
 
 import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
-import com.ecomm.define.platforms.bigcommerce.controller.BigCommerceProductApiController;
+import com.ecomm.define.platforms.bigcommerce.domain.BcBrandData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductImageData;
 import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiImage;
 import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiProduct;
-import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceCsvProduct;
 import com.ecomm.define.platforms.bigcommerce.ennum.Category;
 import com.ecomm.define.platforms.bigcommerce.repository.BigcBrandApiRepository;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
@@ -21,6 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -29,10 +31,16 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -43,149 +51,39 @@ import java.util.stream.Collectors;
 public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<MaisonProduct> {
 
     public static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
-    private final Logger logger = LoggerFactory.getLogger(BigCommerceProductApiController.class);
-    @Autowired
-    MaisonService maisonService;
-    @Autowired
-    BigCommerceService bigCommerceService;
-    @Autowired
-    BigCommerceApiService bigCommerceApiService;
-    @Autowired
-    BigCommerceImageApiService bigCommerceImageApiService;
-    @Autowired
-    BigCommerceProductApiController bigCommerceProductApiController;
-    @Autowired
-    BigcBrandApiRepository brandApiRepository;
+    private final Logger LOGGER = LoggerFactory.getLogger(GenerateBCMaisonDataServiceImpl.class);
+    private final MaisonService maisonService;
+    private final BigCommerceApiService bigCommerceApiService;
+    private final BigCommerceImageApiService bigCommerceImageApiService;
+    private final BigcBrandApiRepository brandApiRepository;
+    private final MongoOperations mongoOperations;
 
+    @Autowired
+    public GenerateBCMaisonDataServiceImpl(MaisonService maisonService, BigCommerceApiService bigCommerceApiService
+            , BigCommerceImageApiService bigCommerceImageApiService, BigcBrandApiRepository brandApiRepository, MongoOperations mongoOperations) {
+        this.maisonService = maisonService;
+        this.bigCommerceApiService = bigCommerceApiService;
+        this.bigCommerceImageApiService = bigCommerceImageApiService;
+        this.mongoOperations = mongoOperations;
+        this.brandApiRepository = brandApiRepository;
+    }
 
-    /*@Override
-    public void generateBcData() {
-        List<MaisonProduct> maisonProductList = maisonService.findAll();
-        List<BigCommerceCsvProduct> bigCommerceCsvProductList = new ArrayList<>();
-        ModelMapper modelMapper = new ModelMapper();
-        for (MaisonProduct maisonProd : maisonProductList) {
-
-            BigCommerceCsvProduct bigCommerceCsvProduct = modelMapper.map(maisonProd, BigCommerceCsvProduct.class);
-            bigCommerceCsvProduct.setCategory("Furniture");
-            bigCommerceCsvProduct.setAllowPurchases("N");
-            bigCommerceCsvProduct.setBrandName("Define");
-            if (maisonProd.getStockQuantity() > 0) {
-                bigCommerceCsvProduct.setAllowPurchases("Y");
-            }
-            bigCommerceCsvProduct.setTitle("Define " + bigCommerceCsvProduct.getTitle());
-            bigCommerceCsvProduct.setMspPrice(maisonProd.getMspPrice());
-            bigCommerceCsvProduct.setTradePrice(maisonProd.getTradePrice());
-            bigCommerceCsvProduct.setProductWeight("0");
-            bigCommerceCsvProduct.setFixedShippingCost("");
-            bigCommerceCsvProduct.setTrackInventory("by product");
-            bigCommerceCsvProduct.setProductType("P");
-            if (maisonProd.getPackingSpec() != null) {
-                int index = 0;
-                if (maisonProd.getPackingSpec().contains("Kg")) {
-                    index = maisonProd.getPackingSpec().indexOf("Kg");
-                } else if (maisonProd.getPackingSpec().contains("KG")) {
-                    index = maisonProd.getPackingSpec().indexOf("KG");
-                }
-                if (index > 0) {
-                    bigCommerceCsvProduct.setProductWeight(maisonProd.getPackingSpec().substring(index - 3, index));
-                }
-                String productWeight = bigCommerceCsvProduct.getProductWeight();
-                if (productWeight != null) {
-                    if (productWeight.contains("Weight")) {
-                        bigCommerceCsvProduct.setProductWeight(productWeight.replaceAll("Weight", ""));
-                    } else if (productWeight.contains("WEIGHT")) {
-                        bigCommerceCsvProduct.setProductWeight(productWeight.replaceAll("WEIGHT", ""));
-                    }
-                }
-            }
-            if (maisonProd.getMaterial() != null) {
-                bigCommerceCsvProduct.setProductDescription(maisonProd.getMaterial().replaceAll(",", ""));
-            }
-            bigCommerceCsvProduct.setProductDescription(bigCommerceCsvProduct.getProductDescription() + " " + maisonProd.getSize() + " " + maisonProd.getPackingSpec());
-
-            bigCommerceCsvProductList.add(bigCommerceCsvProduct);
-            if (maisonProd.getImages() != null && !maisonProd.getImages().isEmpty()) {
-                StringTokenizer st = new StringTokenizer(maisonProd.getImages(), ",");
-
-                if (st.hasMoreTokens()) {
-                    String fileURL = st.nextToken();
-                    bigCommerceCsvProduct.setProductImageFile_1(fileURL);
-                    bigCommerceCsvProduct.setProductImageSort_1("0");
-                    bigCommerceCsvProduct.setProductImageIsThumbnail_1("Y");
-                    bigCommerceCsvProduct.setProductImageDescription_1(bigCommerceCsvProduct.getTitle());
-                }
-                if (st.hasMoreTokens()) {
-                    String fileURL = st.nextToken();
-                    bigCommerceCsvProduct.setProductImageFile_2(fileURL);
-                    bigCommerceCsvProduct.setProductImageSort_2("1");
-                    bigCommerceCsvProduct.setProductImageIsThumbnail_2("N");
-                    bigCommerceCsvProduct.setProductImageDescription_2(bigCommerceCsvProduct.getTitle());
-                }
-                if (st.hasMoreTokens()) {
-                    String fileURL = st.nextToken();
-                    bigCommerceCsvProduct.setProductImageFile_3(fileURL);
-                    bigCommerceCsvProduct.setProductImageSort_3("2");
-                    bigCommerceCsvProduct.setProductImageIsThumbnail_3("N");
-                    bigCommerceCsvProduct.setProductImageDescription_3(bigCommerceCsvProduct.getTitle());
-                }
-                if (st.hasMoreTokens()) {
-                    String fileURL = st.nextToken();
-                    bigCommerceCsvProduct.setProductImageFile_4(fileURL);
-                    bigCommerceCsvProduct.setProductImageSort_4("3");
-                    bigCommerceCsvProduct.setProductImageIsThumbnail_4("N");
-                    bigCommerceCsvProduct.setProductImageDescription_4(bigCommerceCsvProduct.getTitle());
-                }
-                if (st.hasMoreTokens()) {
-                    String fileURL = st.nextToken();
-                    bigCommerceCsvProduct.setProductImageFile_5(fileURL);
-                    bigCommerceCsvProduct.setProductImageSort_5("4");
-                    bigCommerceCsvProduct.setProductImageIsThumbnail_5("N");
-                    bigCommerceCsvProduct.setProductImageDescription_5(bigCommerceCsvProduct.getTitle());
-                }
-
-                if (st.hasMoreTokens()) {
-                    String fileURL = st.nextToken();
-                    bigCommerceCsvProduct.setProductImageFile_6(fileURL);
-                    bigCommerceCsvProduct.setProductImageSort_6("5");
-                    bigCommerceCsvProduct.setProductImageIsThumbnail_6("N");
-                    bigCommerceCsvProduct.setProductImageDescription_6(bigCommerceCsvProduct.getTitle());
-                }
-                if (st.hasMoreTokens()) {
-                    String fileURL = st.nextToken();
-                    bigCommerceCsvProduct.setProductImageFile_7(fileURL);
-                    bigCommerceCsvProduct.setProductImageSort_7("6");
-                    bigCommerceCsvProduct.setProductImageIsThumbnail_7("N");
-                    bigCommerceCsvProduct.setProductImageDescription_7(bigCommerceCsvProduct.getTitle());
-                }
-                if (st.hasMoreTokens()) {
-                    String fileURL = st.nextToken();
-                    bigCommerceCsvProduct.setProductImageFile_8(fileURL);
-                    bigCommerceCsvProduct.setProductImageSort_8("7");
-                    bigCommerceCsvProduct.setProductImageIsThumbnail_8("N");
-                    bigCommerceCsvProduct.setProductImageDescription_8(bigCommerceCsvProduct.getTitle());
-                }
-                if (st.hasMoreTokens()) {
-                    String fileURL = st.nextToken();
-                    bigCommerceCsvProduct.setProductImageFile_9(fileURL);
-                    bigCommerceCsvProduct.setProductImageSort_9("8");
-                    bigCommerceCsvProduct.setProductImageIsThumbnail_9("N");
-                    bigCommerceCsvProduct.setProductImageDescription_9(bigCommerceCsvProduct.getTitle());
-                }
-            }
-            bigCommerceCsvProduct.setProductCondition("New");
-            bigCommerceCsvProduct.setShowProductCondition("Y");
-            bigCommerceCsvProduct.setStockQuantity(String.valueOf(maisonProd.getStockQuantity()));
-            bigCommerceCsvProduct.setProductAvailability(getProductAvailability(Double.parseDouble(bigCommerceCsvProduct.getTradePrice()), maisonProd.getStockQuantity()));
-            setDimensions(bigCommerceCsvProduct, maisonProd.getSize());
-        }
-        bigCommerceService.saveAll(bigCommerceCsvProductList);
-    }*/
 
     @Override
     public void generateBcProductsFromSupplier(List<MaisonProduct> updatedMaisonProductList) throws Exception {
+        //Process Discontinued catalog
+        processDiscontinuedCatalog(updatedMaisonProductList);
+
         List<BcProductData> updatedBcProductDataList = new ArrayList<>();
-        for (MaisonProduct maisonProd : updatedMaisonProductList) {
-            BcProductData byProductSku = bigCommerceApiService.findByProductSku(maisonProd.getProductCode());
+        List<MaisonProduct> updatedCatalogList = updatedMaisonProductList
+                .stream()
+                .filter(MaisonProduct::isUpdated)
+                .collect(Collectors.toList());
+
+        updatedCatalogList.parallelStream().forEach(maisonProd -> {
+            Query query = new Query();
+            query.addCriteria(Criteria.where("sku").is(maisonProd.getProductCode()));
+            BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
 
             if (byProductSku == null) {
                 byProductSku = new BcProductData();
@@ -196,29 +94,30 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
 
                 byProductSku.setSupplier(Supplier.MAISON.getName());
                 byProductSku.setType(BcConstants.TYPE);
-                byProductSku.setWeight(20);
+                byProductSku.setWeight(0);
                 byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 byProductSku.setAvailability(BcConstants.PREORDER);
-                if(maisonProd.getStockQuantity() > 0) {
+                if (maisonProd.getStockQuantity() > 0) {
                     byProductSku.setAvailability(BcConstants.AVAILABLE);
                 }
 
-                byProductSku.setBrandId(brandApiRepository.findByName(Supplier.SELLER_BRAND.getName()).get().getId());
-                if (maisonProd.getPackingSpec() != null) {
+                Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
+                if (byName.isPresent()) {
+                    byProductSku.setBrandId(byName.get().getId());
+                }
+                if (maisonProd.getMaterial() != null) {
                     int index = 0;
-                    if (maisonProd.getPackingSpec().contains("Kg")) {
-                        index = maisonProd.getPackingSpec().indexOf("Kg");
-                    } else if (maisonProd.getPackingSpec().contains("KG")) {
-                        index = maisonProd.getPackingSpec().indexOf("KG");
+                    if (maisonProd.getMaterial().contains("Kg")) {
+                        index = maisonProd.getMaterial().indexOf("Kg");
+                    } else if (maisonProd.getMaterial().contains("KG")) {
+                        index = maisonProd.getMaterial().indexOf("KG");
                     }
                     if (index > 0) {
-                        String weight = maisonProd.getPackingSpec().substring(index - 3, index);
-                        if (weight != null){
-                            weight = weight.replaceAll(" ","").replaceAll(":","");
-                            double dWeight = Double.parseDouble(weight);
-                            if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
-                                byProductSku.setWeight((int)dWeight);
-                            }
+                        String weight = maisonProd.getMaterial().substring(index - 3, index);
+                        weight = weight.replaceAll(" ", "").replaceAll(":", "");
+                        double dWeight = Double.parseDouble(weight);
+                        if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
+                            byProductSku.setWeight((int) dWeight);
                         }
 
                     }
@@ -226,19 +125,20 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 if (maisonProd.getMaterial() != null) {
                     byProductSku.setDescription(maisonProd.getMaterial().replaceAll(",", ""));
                 }
-                byProductSku.setDescription(byProductSku.getDescription() + " " + maisonProd.getSize() + " " + maisonProd.getPackingSpec());
+                byProductSku.setDescription(byProductSku.getDescription() + " " + getDimensions(maisonProd.getSize()));
+                byProductSku.setAvailabilityDescription(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
+                byProductSku.setAvailability(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
 
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
-
                 updatedBcProductDataList.add(bcProductData);
             } else {
+                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
                 setPriceAndQuantity(maisonProd, byProductSku);
                 assignCategories(byProductSku, maisonProd.getTitle());
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
-
                 updatedBcProductDataList.add(bcProductData);
             }
-        }
+        });
         updateBigCommerceProducts(updatedBcProductDataList);
     }
 
@@ -250,15 +150,14 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
     }
 
     private void assignCategories(BcProductData data, String title) {
-        List<Integer> categories = new ArrayList<>();
-
+        Set<Integer> categories = new HashSet<>();
+        categories.add(Category.FURNITURE.getCategoryCode());
         for (Category category : Category.values()) {
-            if (title.contains(category.getCategoryWord())) {
+            if (title.toLowerCase().contains(category.getCategoryWord().toLowerCase())) {
                 categories.add(category.getCategoryCode());
             }
         }
-        categories.add(Category.FURNITURE.getCategoryCode());
-        data.setCategories(categories);
+        data.setCategories(categories.parallelStream().collect(Collectors.toList()));
     }
 
 
@@ -267,36 +166,36 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
         List<BcProductData> duplicateRecords = new ArrayList<>();
-        HttpEntity<BcProductData> request = null;
-        BigCommerceApiProduct result;
-        for (BcProductData product : updatedBcProductDataList) {
+        AtomicReference<HttpEntity<BcProductData>> request = new AtomicReference<>();
+        AtomicReference<BigCommerceApiProduct> result = new AtomicReference<>();
+
+        updatedBcProductDataList.parallelStream().forEach(product -> {
             try {
-                request = new HttpEntity<>(product, bigCommerceApiService.getHttpHeaders());
+                Objects.requireNonNull(request).set(new HttpEntity<>(product, bigCommerceApiService.getHttpHeaders()));
                 if (product.getId() == null) {
-                    logger.info(request.getBody().getName());
-                    result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
-                    BcProductData resultData = result.getData();
+                    LOGGER.info(Objects.requireNonNull(request.get().getBody()).getName());
+                    Objects.requireNonNull(result).set(restTemplate.postForObject(uri, request, BigCommerceApiProduct.class));
+                    BcProductData resultData = result.get().getData();
                     resultData.set_id(product.get_id());
                     resultData = bigCommerceApiService.update(resultData);
                     updateImage(resultData, restTemplate);
-                    logger.info("Successfully sent Maison Product to Big Commerce for the product id {}, and sku {}", resultData.getId(), resultData.getSku());
+                    LOGGER.info("Successfully sent Maison Product to Big Commerce for the product id {}, and sku {}", resultData.getId(), resultData.getSku());
                 } else {
                     String url = uri + "/" + product.getId();
-                    ResponseEntity<BigCommerceApiProduct> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, request, BigCommerceApiProduct.class);
-                    BcProductData data = responseEntity.getBody().getData();
-                    logger.info("Successfully updated the Maison Product on Big Commerce for the product id {}, and sku {}", data.getId(), data.getSku());
+                    ResponseEntity<BigCommerceApiProduct> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, request.get(), BigCommerceApiProduct.class);
+                    BcProductData data = Objects.requireNonNull(responseEntity.getBody()).getData();
+                    LOGGER.info("Successfully updated the Maison Product on Big Commerce for the product id {}, and sku {}", data.getId(), data.getSku());
                 }
             } catch (Exception duplicateRecordException) {
-                logger.error("Duplicate record found with the name {}", request.getBody().getName());
                 duplicateRecords.add(product);
-                continue;
             }
-        }
+
+        });
+
         if (!duplicateRecords.isEmpty()) {
-            logger.info("Found duplicate products while processing maison products. Processing the duplicate products by updating the name attribute");
-            //processDuplicateRecords(duplicateRecords);
+            duplicateRecords.forEach(record -> LOGGER.info("Found duplicate product with sku {} and product name {} ", record.getSku(), record.getName()));
         }
-        logger.info("Successfully Updated Relavant Products");
+        LOGGER.info("Successfully Updated Maison Products to Big Commerce");
     }
 
 
@@ -310,24 +209,26 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         } else {
             decimalPrice = new BigDecimal(maisonProd.getMspPrice());
         }
-        decimalPrice = decimalPrice.add(new BigDecimal(1));
+        decimalPrice = Objects.requireNonNull(decimalPrice).add(new BigDecimal(1));
         return decimalPrice.intValue();
 
     }
 
 
-    private void setDimensions(BigCommerceCsvProduct bigCommerceCsvProduct, String size) {
+    private String getDimensions(String size) {
         StringTokenizer st = new StringTokenizer(size, "x");
+        StringBuilder stringBuilder = new StringBuilder();
         while (st.hasMoreTokens()) {
             String nextString = st.nextToken();
             if (nextString.contains("H")) {
-                bigCommerceCsvProduct.setProductHeight(nextString.replaceAll("H", "") + "cm");
+                stringBuilder.append(nextString.replaceAll("H", "")).append("cm ");
             } else if (nextString.contains("W")) {
-                bigCommerceCsvProduct.setProductWidth(nextString.replaceAll("W", "") + "cm");
+                stringBuilder.append(nextString.replaceAll("W", "")).append("cm ");
             } else if (nextString.contains("D")) {
-                bigCommerceCsvProduct.setProductDepth(nextString.replaceAll("D", "") + "cm");
+                stringBuilder.append(nextString.replaceAll("D", "")).append("cm ");
             }
         }
+        return stringBuilder.toString();
     }
 
     private String getProductAvailability(double tradePrice, int stockQty) {
@@ -350,63 +251,59 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
     }
 
     private void updateImage(BcProductData data, RestTemplate restTemplate) throws Exception {
-        MaisonProduct maisonProduct = maisonService.findByProductSku(data.getSku());
-        List<String> images = Arrays.asList(maisonProduct.getImages().split(","));
-        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT + "/" + data.getId() + "/images");
-        BcProductImageData imageData;
-        HttpEntity<BcProductImageData> request = null;
-        boolean ifFirstImage = true;
-        int sortOrder = 1;
-        int imageDesriptionCount = 1;
-        BigCommerceApiImage bigCommerceApiImage;
-        List<String> filteredImagesList = images.stream().filter(image -> StringUtils.isNotEmpty(image)).collect(Collectors.toList());
-        for (String image : filteredImagesList) {
-            try {
-                imageData = new BcProductImageData();
-                imageData.setId(data.getId());
-                imageData.setSortOrder(sortOrder++);
-                imageData.setIsThumbnail(ifFirstImage);
-                imageData.setDescription("Image_" + imageDesriptionCount++);
-                imageData.setImageUrl(image);
-                request = new HttpEntity<>(imageData, bigCommerceApiService.getHttpHeaders());
-                bigCommerceApiImage = restTemplate.postForObject(uri, request, BigCommerceApiImage.class);
-                bigCommerceImageApiService.create(bigCommerceApiImage.getData());
-                ifFirstImage = false;
-            } catch (Exception ex) {
-                logger.error("Exception occurred while processing images for the product id {}", data.getId());
-                continue;
+        Optional<MaisonProduct> maisonProduct = maisonService.findByProductSku(data.getSku());
+        if (maisonProduct.isPresent()) {
+            MaisonProduct product = maisonProduct.get();
+            List<String> images = Arrays.asList(product.getImages().split(","));
+            URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT + "/" + data.getId() + "/images");
+            BcProductImageData imageData;
+            HttpEntity<BcProductImageData> request;
+            boolean ifFirstImage = true;
+            int sortOrder = 1;
+            int imageDesriptionCount = 1;
+            BigCommerceApiImage bigCommerceApiImage;
+            List<String> filteredImagesList = images.stream().filter(StringUtils::isNotEmpty).collect(Collectors.toList());
+            for (String image : filteredImagesList) {
+                try {
+                    imageData = new BcProductImageData();
+                    imageData.setId(data.getId());
+                    imageData.setSortOrder(sortOrder++);
+                    imageData.setIsThumbnail(ifFirstImage);
+                    imageData.setDescription("Image_" + imageDesriptionCount++);
+                    imageData.setImageUrl(image);
+                    request = new HttpEntity<>(imageData, bigCommerceApiService.getHttpHeaders());
+                    bigCommerceApiImage = restTemplate.postForObject(uri, request, BigCommerceApiImage.class);
+                    bigCommerceImageApiService.create(Objects.requireNonNull(bigCommerceApiImage).getData());
+                    ifFirstImage = false;
+                } catch (Exception ex) {
+                    LOGGER.error("Exception occurred while processing images for the product id {}", data.getId());
+                    continue;
+                }
             }
         }
     }
 
 
-    private void processDuplicateRecords(List<BcProductData> duplicateRecords) throws Exception {
-        logger.info("Started processing duplicate records for Maison");
+    private void processDiscontinuedCatalog(List<MaisonProduct> productList) throws URISyntaxException {
+        List<MaisonProduct> discontinuedList = productList
+                .stream()
+                .filter(MaisonProduct::isDiscontinued)
+                .collect(Collectors.toList());
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
-        HttpEntity<BcProductData> request = null;
-        List<BcProductData> duplicateRecords1 = new ArrayList<>();
-        BigCommerceApiProduct result = null;
-        for (BcProductData data : duplicateRecords) {
-            logger.info("Started processing duplicate record for product sku {} and product name {}", data.getSku(), data.getName());
-            MaisonProduct byProductSku = maisonService.findByProductSku(data.getSku());
-            byProductSku.setTitle(byProductSku.getTitle() + " " + byProductSku.getProductCode());
-            MaisonProduct updatedMaisonProduct = maisonService.update(byProductSku);
-            data.setName(updatedMaisonProduct.getTitle());
-            try {
-                request = new HttpEntity<>(data, bigCommerceApiService.getHttpHeaders());
-                logger.info(request.getBody().getName());
-                result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
-                BcProductData bcProductData = bigCommerceApiService.create(result.getData());
-                updateImage(bcProductData, restTemplate);
-            } catch (Exception exception) {
-                logger.error("Duplicate record found with the name {}", request.getBody().getName());
-                continue;
+        HttpEntity<BcProductData> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
+
+        Query query = new Query();
+        for (MaisonProduct artisanProduct : discontinuedList) {
+            query.addCriteria(Criteria.where("sku").is(artisanProduct.getProductCode()));
+            BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
+            if (Objects.requireNonNull(byProductSku).getId() != null) {
+                String url = uri + "/" + byProductSku.getId();
+                restTemplate.exchange(url, HttpMethod.DELETE, request, Void.class);
+                bigCommerceApiService.delete(byProductSku.get_id());
+                LOGGER.info("Successfully Deleted product from Big Commerce due to discontinue, product id {} and product sku {}", byProductSku.getId(), byProductSku.getSku());
             }
-
         }
-
-        logger.info("Successfully finished processing the duplicate records for Maison");
     }
 
 }

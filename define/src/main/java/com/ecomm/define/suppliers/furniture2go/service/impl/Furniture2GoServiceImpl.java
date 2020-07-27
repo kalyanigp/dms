@@ -4,17 +4,16 @@ import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.exception.FileNotFoundException;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
-import com.ecomm.define.suppliers.furniture2go.domain.Furniture2GoImage;
 import com.ecomm.define.suppliers.furniture2go.domain.Furniture2GoPrice;
 import com.ecomm.define.suppliers.furniture2go.domain.Furniture2GoProduct;
 import com.ecomm.define.suppliers.furniture2go.domain.Furniture2GoStock;
+import com.ecomm.define.suppliers.furniture2go.feedgenerator.Furniture2GoMasterFeedMaker;
 import com.ecomm.define.suppliers.furniture2go.repository.Furniture2GoProductRepository;
 import com.ecomm.define.suppliers.furniture2go.service.Furniture2GoService;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
-import org.apache.commons.collections4.map.HashedMap;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +51,7 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Furniture2GoServiceImpl.class);
 
-    private final  MongoOperations mongoOperations;
+    private final MongoOperations mongoOperations;
 
     @Value("${bigcommerce.f2g.profit.percentage.high}")
     private String profitPercentHigh;
@@ -65,6 +64,8 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
     @Value("${bigcommerce.f2g.profit.limit.low}")
     private String lowerLimitHDPrice;
+
+    private List<Furniture2GoProduct> newCatalogList = new ArrayList<>();
 
 
     @Override
@@ -138,6 +139,10 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
                 List<Furniture2GoProduct> furniture2GoProducts = csvToBean.parse();
                 furniture2GoProducts.stream().parallel().forEach(this::insertOrUpdate);
                 processDiscontinuedCatalog(furniture2GoProducts);
+
+                //Process & Save Images
+                Map<String, List<String>> catalogImages = Furniture2GoMasterFeedMaker.getCatalogImages(newCatalogList);
+                saveImages(catalogImages);
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
             }
@@ -208,6 +213,7 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
                 } else {
                     hdPrice = new BigDecimal(priceValue.substring(1));
                 }
+                product.setHdPrice(hdPrice);
                 hdPriceBeforeVat = hdPrice;
                 //add 20% VAT
                 hdPrice = hdPrice.add(DefineUtils.getVat(hdPrice, new BigDecimal(vatPercent)));
@@ -220,7 +226,7 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
                     hdPrice = hdPrice.add(DefineUtils.percentage(hdPrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
                 }
 
-                if (!Objects.equals(product.getPrice(), hdPrice)) {
+                if (product.getPrice().compareTo(hdPrice) != 0) {
                     product.setUpdated(Boolean.TRUE);
                     product.setPrice(hdPrice);
                     update(product);
@@ -233,12 +239,12 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
     }
 
 
-    private void saveImage(Map<String, List<String>> images) {
+    private void saveImages(Map<String, List<String>> images) {
         for (Map.Entry<String, List<String>> entry : images.entrySet()) {
             Optional<Furniture2GoProduct> byProductSku = findByProductSku(entry.getKey());
             if (byProductSku.isPresent()) {
                 Furniture2GoProduct furniture2GoProduct = byProductSku.get();
-                if(!furniture2GoProduct.getImages().equals(entry.getValue())) {
+                if (!furniture2GoProduct.getImages().equals(entry.getValue())) {
                     furniture2GoProduct.setImages(entry.getValue());
                     furniture2GoProduct.setUpdated(Boolean.TRUE);
                     update(furniture2GoProduct);
@@ -262,58 +268,6 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
                 }
             }
         }
-    }
-
-    @Override
-    public void uploadProductImages(MultipartFile file) {
-        LOGGER.info("started uploading furniture2Go catalog images from file - {}", file.getOriginalFilename());
-
-        // validate file
-        if (file.isEmpty()) {
-            throw new FileNotFoundException("Please select a valid CSV file to upload.");
-        } else {
-
-            // parse CSV file to create a list of `Product` objects
-            try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-
-                // create csv bean reader
-                CsvToBean<Furniture2GoImage> csvToBean = new CsvToBeanBuilder(reader)
-                        .withIgnoreEmptyLine(true)
-                        .withType(Furniture2GoImage.class)
-                        .withIgnoreLeadingWhiteSpace(true)
-                        .build();
-
-                // convert `CsvToBean` object to list of Furniture2GoPrice
-                List<Furniture2GoImage> furniture2GoImages = csvToBean.parse();
-                saveImage(populateImagesMap(furniture2GoImages));
-
-            } catch (Exception ex) {
-                LOGGER.error("Error while processing CSV File" + ex.getMessage());
-            }
-        }
-    }
-
-    private Map<String, List<String>> populateImagesMap(List<Furniture2GoImage> furniture2GoImages) {
-        Map<String, List<String>> imagesMap = new HashedMap<>();
-        for (Furniture2GoImage imageObj : furniture2GoImages) {
-            List<String> images = new ArrayList<>();
-            images.add(imageObj.getImageURL1());
-            images.add(imageObj.getImageURL2());
-            images.add(imageObj.getImageURL3());
-            images.add(imageObj.getImageURL4());
-            images.add(imageObj.getImageURL5());
-            images.add(imageObj.getImageURL6());
-            images.add(imageObj.getImageURL7());
-            images.add(imageObj.getImageURL8());
-            images.add(imageObj.getImageURL9());
-            images.add(imageObj.getImageURL10());
-            images.add(imageObj.getImageURL11());
-            images.add(imageObj.getImageURL12());
-            images.add(imageObj.getImageURL13());
-            images.add(imageObj.getImageURL14());
-            imagesMap.put(imageObj.getSku(), images);
-        }
-        return imagesMap;
     }
 
     @Override
@@ -354,7 +308,9 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
             update(furnitureTogoProduct);
         } else {
             furniture2GoProduct.setDiscontinued(Boolean.FALSE);
-            repository.insert(furniture2GoProduct);
+            furniture2GoProduct.setUpdated(Boolean.TRUE);
+            Furniture2GoProduct insertedNewCatalog = repository.insert(furniture2GoProduct);
+            newCatalogList.add(insertedNewCatalog);
         }
     }
 

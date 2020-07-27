@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,7 +20,7 @@ import java.util.List;
 public class ArtisanMasterFeedMaker {
     private final static Logger LOGGER = LoggerFactory.getLogger(ArtisanMasterFeedMaker.class);
 
-    public List<ArtisanProduct> processMasterData(InputStream fileStream) throws FileNotFoundException {
+    public List<ArtisanProduct> processMasterData(InputStream fileStream) {
         String line = "";
         String cvsSplitBy = ",";
 
@@ -34,20 +33,6 @@ public class ArtisanMasterFeedMaker {
         String height = "";
         String depth = "";
         String weight = "";
-        String imageURL1 = "";
-        String imageURL2 = "";
-        String imageURL3 = "";
-        String imageURL4 = "";
-        String imageURL5 = "";
-        String imageURL6 = "";
-        String imageURL7 = "";
-        String imageURL8 = "";
-        String imageURL9 = "";
-        String imageURL10 = "";
-        String imageURL11 = "";
-        String imageURL12 = "";
-        String imageURL13 = "";
-        String imageURL14 = "";
 
         List<ArtisanProduct> artisanProductList = new ArrayList<ArtisanProduct>();
 
@@ -96,51 +81,20 @@ public class ArtisanMasterFeedMaker {
                         productDesc = productDesc.concat("Origin " + ArtisanURLReader.findOrigin(doc));
 
                         productDesc = productDesc.concat("Features \n ");
-                        productDesc = productDesc.concat(ArtisanURLReader.findBulletPoint(doc, 1) + "\n");
-                        productDesc = productDesc.concat(ArtisanURLReader.findBulletPoint(doc, 2) + "\n");
-                        productDesc = productDesc.concat(ArtisanURLReader.findBulletPoint(doc, 3) + "\n");
-                        productDesc = productDesc.concat(ArtisanURLReader.findBulletPoint(doc, 4) + "\n");
-                        productDesc = productDesc.concat(ArtisanURLReader.findBulletPoint(doc, 5) + "\n");
-                        productDesc = productDesc.concat(ArtisanURLReader.findBulletPoint(doc, 6) + "\n");
-
+                        for (int i = 1; i <= 6; i++) {
+                            productDesc = productDesc.concat(ArtisanURLReader.findBulletPoint(doc, i) + "\n");
+                        }
                         artisanProduct.setDescription(productDesc);
-
-                        imageURL1 = ArtisanURLReader.findImageURL(doc, 0);
-                        imageURL2 = ArtisanURLReader.findImageURL(doc, 1);
-                        imageURL3 = ArtisanURLReader.findImageURL(doc, 2);
-                        imageURL4 = ArtisanURLReader.findImageURL(doc, 3);
-                        imageURL5 = ArtisanURLReader.findImageURL(doc, 4);
-                        imageURL6 = ArtisanURLReader.findImageURL(doc, 5);
-                        imageURL7 = ArtisanURLReader.findImageURL(doc, 6);
-                        imageURL8 = ArtisanURLReader.findImageURL(doc, 7);
-                        imageURL9 = ArtisanURLReader.findImageURL(doc, 8);
-                        imageURL10 = ArtisanURLReader.findImageURL(doc, 9);
-                        imageURL11 = ArtisanURLReader.findImageURL(doc, 10);
-                        imageURL12 = ArtisanURLReader.findImageURL(doc, 11);
-                        imageURL13 = ArtisanURLReader.findImageURL(doc, 12);
-                        imageURL14 = ArtisanURLReader.findImageURL(doc, 13);
                         List<String> images = new ArrayList<>();
-                        images.add(imageURL1);
-                        images.add(imageURL2);
-                        images.add(imageURL3);
-                        images.add(imageURL4);
-                        images.add(imageURL5);
-                        images.add(imageURL6);
-                        images.add(imageURL7);
-                        images.add(imageURL8);
-                        images.add(imageURL9);
-                        images.add(imageURL10);
-                        images.add(imageURL11);
-                        images.add(imageURL12);
-                        images.add(imageURL13);
-                        images.add(imageURL14);
+
+                        for (int i = 0; i <= 13; i++) {
+                            images.add(ArtisanURLReader.findImageURL(doc, i));
+                        }
                         artisanProduct.setImages(images);
 
-                        // titles.add(new String[]{sku, productTitle, productDesc, material, origin, ean, width, height, depth, weight, packagedWeight, bp1, bp2, bp3, bp4, bp5, bp6, imageURL1, imageURL2, imageURL3, imageURL4, imageURL5, imageURL6, imageURL7, imageURL8, imageURL9, imageURL10, imageURL11, imageURL12, imageURL13, imageURL14);
                         if (productTitle.length() == 0) {
                             System.out.println("Product Not Available" + productCode[0]);
                         } else {
-                            // writer.writeNext(new String[]{sku, productTitle, productDesc, material, origin, ean, width, height, depth, weight, packagedWeight, bp1, bp2, bp3, bp4, bp5, bp6, imageURL1, imageURL2, imageURL3, imageURL4, imageURL5, imageURL6, imageURL7, imageURL8, imageURL9, imageURL10, imageURL11, imageURL12, imageURL13, imageURL14});
                             artisanProductList.add(artisanProduct);
                             System.out.println("added" + artisanProduct.getSku());
                         }

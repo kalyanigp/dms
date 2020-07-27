@@ -15,6 +15,6 @@ public class MaisonProductPredicates {
     }
 
     public static Predicate<MaisonProduct> isPriceQuantityChanged(String productCode, String msp, int stockQty) {
-        return maisonProduct -> (maisonProduct.getProductCode().equals(productCode)) && (!maisonProduct.getMspPrice().equals(msp) || maisonProduct.getStockQuantity() != stockQty);
+        return maisonProduct -> (maisonProduct.getProductCode().equals(productCode)) && (!maisonProduct.getProductCode().equals(msp) || maisonProduct.getStockQuantity() != stockQty);
     }
 }

@@ -225,11 +225,13 @@ public class ArtisanServiceImpl implements ArtisanService {
         query.addCriteria(Criteria.where("sku").is(artisanProduct.getSku()));
         ArtisanProduct product = mongoOperations.findOne(query, ArtisanProduct.class);
         if (product != null) {
-            Update update = new Update();
-            update.set("updated", Boolean.TRUE);
-            update.set("discontinued", Boolean.FALSE);
-            UpdateResult updatedProduct = mongoOperations.updateFirst(query, update, ArtisanProduct.class);
-            LOGGER.info("Successfully updated Artisan Product SKU {} and ProductName {}", artisanProduct.getSku(), artisanProduct.getProductName());
+            if(product.compareTo(artisanProduct) != 0) {
+                Update update = new Update();
+                update.set("discontinued", Boolean.FALSE);
+                update.set("updated", Boolean.TRUE);
+                UpdateResult updatedProduct = mongoOperations.updateFirst(query, update, ArtisanProduct.class);
+                LOGGER.info("Successfully updated Artisan Product SKU {} and ProductName {}", artisanProduct.getSku(), artisanProduct.getProductName());
+            }
         } else {
             artisanProduct.setDiscontinued(Boolean.FALSE);
             artisanProduct.setUpdated(Boolean.TRUE);
@@ -280,13 +282,4 @@ public class ArtisanServiceImpl implements ArtisanService {
         UpdateResult updateResult = mongoOperations.updateMulti(updateModifiedCatalogQuery, update, ArtisanProduct.class);
         LOGGER.info("Total number of products modified Updated flag to false is, {}", updateResult.getModifiedCount());
     }
-
-
-
-
-
-
-
-
-
 }
