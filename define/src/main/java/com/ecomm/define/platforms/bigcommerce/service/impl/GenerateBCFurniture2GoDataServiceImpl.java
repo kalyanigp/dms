@@ -12,7 +12,6 @@ import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiProduct;
 import com.ecomm.define.platforms.bigcommerce.repository.BigcBrandApiRepository;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceImageApiService;
-import com.ecomm.define.platforms.bigcommerce.service.BigCommerceService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
 import com.ecomm.define.platforms.commons.BCUtils;
 import com.ecomm.define.suppliers.commons.Supplier;
@@ -51,19 +50,13 @@ import static com.ecomm.define.platforms.bigcommerce.service.impl.GenerateBCMais
 public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataService<Furniture2GoProduct> {
 
 
-    @Autowired
-    BigCommerceService bigCommerceService;
-    @Autowired
-    BigCommerceApiService bigCommerceApiService;
-    @Autowired
-    BigCommerceImageApiService bigCommerceImageApiService;
-    @Autowired
-    BigCommerceProductApiController bigCommerceProductApiController;
-    @Autowired
-    BigcBrandApiRepository brandApiRepository;
+    private final BigCommerceApiService bigCommerceApiService;
 
-    @Autowired
-    Furniture2GoService furniture2GoService;
+    private final BigCommerceImageApiService bigCommerceImageApiService;
+
+    private final BigcBrandApiRepository brandApiRepository;
+
+    private final Furniture2GoService furniture2GoService;
 
     @Value("${bigcommerce.f2g.profit.limit.high}")
     private String higherLimitHDPrice;
@@ -72,6 +65,14 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
     private String percentageLow;
 
     private final Logger LOGGER = LoggerFactory.getLogger(BigCommerceProductApiController.class);
+
+    @Autowired
+    public GenerateBCFurniture2GoDataServiceImpl(BigCommerceApiService bigCommerceApiService, BigCommerceImageApiService bigCommerceImageApiService, BigcBrandApiRepository brandApiRepository, Furniture2GoService furniture2GoService) {
+        this.bigCommerceApiService = bigCommerceApiService;
+        this.bigCommerceImageApiService = bigCommerceImageApiService;
+        this.brandApiRepository = brandApiRepository;
+        this.furniture2GoService = furniture2GoService;
+    }
 
 
     @Override

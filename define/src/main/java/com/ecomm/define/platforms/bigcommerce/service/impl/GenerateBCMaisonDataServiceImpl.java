@@ -6,12 +6,11 @@ import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductImageData;
 import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiImage;
 import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiProduct;
-import com.ecomm.define.platforms.bigcommerce.ennum.Category;
 import com.ecomm.define.platforms.bigcommerce.repository.BigcBrandApiRepository;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceImageApiService;
-import com.ecomm.define.platforms.bigcommerce.service.BigCommerceService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
+import com.ecomm.define.platforms.commons.BCUtils;
 import com.ecomm.define.suppliers.commons.Supplier;
 import com.ecomm.define.suppliers.maison.domain.MaisonProduct;
 import com.ecomm.define.suppliers.maison.service.MaisonService;
@@ -34,11 +33,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -88,7 +85,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
             if (byProductSku == null) {
                 byProductSku = new BcProductData();
                 setPriceAndQuantity(maisonProd, byProductSku);
-                assignCategories(byProductSku, maisonProd.getTitle());
+                byProductSku.setCategories(BCUtils.assignCategories( maisonProd.getTitle()));
                 byProductSku.setSku(maisonProd.getProductCode());
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
 
@@ -134,7 +131,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
             } else {
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
                 setPriceAndQuantity(maisonProd, byProductSku);
-                assignCategories(byProductSku, maisonProd.getTitle());
+                byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             }
@@ -149,20 +146,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         byProductSku.setInventoryLevel(maisonProd.getStockQuantity() < 0 ? 0 : maisonProd.getStockQuantity());
     }
 
-    private void assignCategories(BcProductData data, String title) {
-        Set<Integer> categories = new HashSet<>();
-        categories.add(Category.FURNITURE.getCategoryCode());
-        for (Category category : Category.values()) {
-            if (title.toLowerCase().contains(category.getCategoryWord().toLowerCase())) {
-                categories.add(category.getCategoryCode());
-            }
-        }
-        data.setCategories(categories.parallelStream().collect(Collectors.toList()));
-    }
-
-
     private void updateBigCommerceProducts(List<BcProductData> updatedBcProductDataList) throws Exception {
-
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
         List<BcProductData> duplicateRecords = new ArrayList<>();
