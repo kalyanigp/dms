@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -34,7 +35,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -110,7 +110,7 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
 
     @Autowired // inject furniture2GoDataService
-    public Furniture2GoServiceImpl(@Qualifier("furniture2GoDataService") GenerateBCDataService generateBCDataService, Furniture2GoProductRepository repository, BigCommerceApiService bigCommerceApiService, MongoOperations mongoOperations) {
+    public Furniture2GoServiceImpl(@Lazy @Qualifier("furniture2GoDataService") GenerateBCDataService generateBCDataService, Furniture2GoProductRepository repository, BigCommerceApiService bigCommerceApiService, MongoOperations mongoOperations) {
         this.generateBCDataService = generateBCDataService;
         this.repository = repository;
         this.mongoOperations = mongoOperations;
