@@ -2,6 +2,8 @@ package com.ecomm.define.suppliers.markharris.feedgenerator;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,6 +16,7 @@ import java.util.stream.Collectors;
  * Created by vamshikirangullapelly on 08/07/2020.
  */
 public class MarkHarrisURLReader {
+    private final static Logger LOGGER = LoggerFactory.getLogger(MarkHarrisURLReader.class);
 
     public static String generateProductURL(String url) {
         String productURL = "";
@@ -33,7 +36,7 @@ public class MarkHarrisURLReader {
     public static Document getDocument(String url) {
         Document document = null;
         try {
-            document = Jsoup.connect(url).get();
+            document = Jsoup.connect(url).timeout(60000).get();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -50,8 +53,7 @@ public class MarkHarrisURLReader {
         List<String> urlTokens = getTokens(wholeData);
         for (String token:urlTokens){
             if (token.startsWith("\"full\"")){
-                imageURLList.add(token.substring(8,token.length()-1));
-                System.out.println(token.substring(8,token.length()-1));
+                imageURLList.add(token.substring(8, token.length() - 1));
             }
         }
         return imageURLList;

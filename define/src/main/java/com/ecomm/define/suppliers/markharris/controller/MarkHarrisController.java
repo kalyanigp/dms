@@ -8,6 +8,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.bson.types.ObjectId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,10 +32,11 @@ public class MarkHarrisController {
 
     @Autowired
     private MarkHarrisService markHarrisService;
+    private static final Logger LOGGER = LoggerFactory.getLogger(MarkHarrisController.class);
 
-    @ApiOperation(value = "Retrieves All Artisan Products From DB", response = Iterable.class)
+    @ApiOperation(value = "Retrieves All MarkHarris Products From DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully retrieved all Artisan products"),
+            @ApiResponse(code = 200, message = "Successfully retrieved all MarkHarris products"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
@@ -44,9 +47,9 @@ public class MarkHarrisController {
         return markHarrisService.findAll();
     }
 
-    @ApiOperation(value = "Retrieves artisan Product by ID From DB", response = Iterable.class)
+    @ApiOperation(value = "Retrieves MarkHarris Product by ID From DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully retrieved Artisan product by ID from DB"),
+            @ApiResponse(code = 200, message = "Successfully retrieved MarkHarris product by ID from DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
@@ -62,20 +65,54 @@ public class MarkHarrisController {
     }
 
 
-    @ApiOperation(value = "Uploads Mark Harris Price Deatils from CSV File to DB", response = Iterable.class)
+    @ApiOperation(value = "Uploads Mark Harris Price Details from CSV File to DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Mark Harris Products Images to DB"),
+            @ApiResponse(code = 200, message = "Successfully uploaded Mark Harris Products Prices to DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     }
     )
-    @PostMapping("/markharris/upload-artisan-price")
-    public ResponseEntity<String> uploadArtisanPriceCSVFile(@RequestParam("file") MultipartFile file) {
+    @PostMapping("/markharris/uploadPrice")
+    public ResponseEntity<String> uploadMarkHarrisPriceCSVFile(@RequestParam("file") MultipartFile file) {
+        LOGGER.info("Started uploading Price data from CSV");
         markHarrisService.uploadProductPrice(file);
+        LOGGER.info("Finished uploading Price data from CSV");
+        return ResponseEntity.ok().body("Successfully updated Price Feed");
+    }
+
+
+    @ApiOperation(value = "Uploads Mark Harris Stock Details from CSV File to DB", response = Iterable.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully uploaded Mark Harris Products Stock to DB"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    }
+    )
+    @PostMapping("/markharris/uploadStock")
+    public ResponseEntity<String> uploadMarkHarrisStockCSVFile(@RequestParam("file") MultipartFile file) {
+        LOGGER.info("Started uploading Stock data from CSV");
+        markHarrisService.uploadProductStockList(file);
+        LOGGER.info("Finished uploading Stock data from CSV");
         return ResponseEntity.ok().body("Successfully updated Stock Feed");
     }
 
+    @ApiOperation(value = "Uploads Mark Harris Products from CSV File to DB", response = Iterable.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully uploaded Mark Harris Products Stock to DB"),
+            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
+            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
+            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
+    }
+    )
+    @PostMapping("/markharris/uploadProducts")
+    public ResponseEntity<String> uploadMarkHarrisCSVFile(@RequestParam("file") MultipartFile file) {
+        LOGGER.info("Started uploading Master product data from CSV");
+        markHarrisService.uploadProducts(file);
+        LOGGER.info("Finished uploading Master product data from CSV");
+        return ResponseEntity.ok().body("Successfully updated Products");
+    }
 
 
     @ApiOperation(value = "Uploads Mark Harris Products from CSV File to DB", response = Iterable.class)
@@ -86,26 +123,28 @@ public class MarkHarrisController {
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     }
     )
-    @PostMapping("/markharris/upload-artisan-products")
-    public ResponseEntity<String> uploadArtisanCSVFile(@RequestParam("file") MultipartFile file) {
-        markHarrisService.uploadProducts(file);
+    @PostMapping("/markharris/uploadImages")
+    public ResponseEntity<String> uploadMarkHarrisImagesCSVFile(@RequestParam("file") MultipartFile file) {
+        LOGGER.info("Started uploading Master product Images from CSV");
+        markHarrisService.uploadImages(file);
+        LOGGER.info("Finished uploading Master product Images from CSV");
         return ResponseEntity.ok().body("Successfully updated Products");
     }
 
 
-    @ApiOperation(value = "Uploads Artisan Catalogue to BigCommerce by reading data from ArtisanProduct table", response = Iterable.class)
+    @ApiOperation(value = "Uploads MarkHarris Catalogue to BigCommerce by reading data from markHarrisProduct table", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Artisan Products to BigCommerce from ArtisanProduct table"),
+            @ApiResponse(code = 200, message = "Successfully uploaded MarkHarris Products to BigCommerce from MarkHarrisProduct table"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
     }
     )
     @PostMapping("/markharris/bc/products")
-    public ResponseEntity<String> uploadArtisanCataloguetoBigCommerce() throws Exception {
+    public ResponseEntity<String> uploadMarkHarrisCataloguetoBigCommerce() throws Exception {
+        LOGGER.info("Started uploading MarkHarris products to BigCommerce");
         markHarrisService.uploadCatalogueToBigCommerce();
-        return ResponseEntity.ok().body("Successfully Artisan Catalogue to BigCommerce");
+        LOGGER.info("Finished uploading MarkHarris products to BigCommerce");
+        return ResponseEntity.ok().body("Successfully MarkHarris Catalogue to BigCommerce");
     }
-
-
 }

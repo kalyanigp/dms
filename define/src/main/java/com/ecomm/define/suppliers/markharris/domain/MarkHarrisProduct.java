@@ -3,6 +3,7 @@ package com.ecomm.define.suppliers.markharris.domain;
 import com.opencsv.bean.CsvBindByName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -16,85 +17,59 @@ import java.util.List;
  * Created by vamshikirangullapelly on 18/04/2020.
  */
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
 @Document(collection = "markHarrisProduct")
 public class MarkHarrisProduct {
 
     @Id
     public ObjectId _id;
-
     @Indexed(unique = true)
-    @CsvBindByName(column = "SKU")
+    @CsvBindByName(column = "Supplier Part Number")
     private String sku;
-
-    @CsvBindByName(column = "Range")
-    private String range;
-
-
-    @CsvBindByName(column = "ProductName")
-    private String productName;
-
-    @CsvBindByName(column = "Description")
-    private String description;
-
-    @CsvBindByName(column = "Finish")
-    private String finish;
-
-    @CsvBindByName(column = "EAN")
+    @CsvBindByName(column = "EAN Code")
     private String ean;
+    @CsvBindByName(column = "Product Name")
+    private String productName;
+    @CsvBindByName(column = "Actual Product Weight")
+    private String weight;
+    @CsvBindByName(column = "Product Min Length/Depth")
+    private String minLengthOrDepth;
+    @CsvBindByName(column = "Product Max Length/Depth")
+    private String maxLengthOrDepth;
+    @CsvBindByName(column = "Product Min Width")
+    private String minWidth;
+    @CsvBindByName(column = "Product Max Width")
+    private String maxWidth;
+    @CsvBindByName(column = "Product Min Height")
+    private String minHeight;
+    @CsvBindByName(column = "Product Max Height")
+    private String maxHeight;
+    @CsvBindByName(column = "Paragraph description (if exist)")
+    private String description;
+    @CsvBindByName(column = "Assembly Required? (Y/N)")
+    private String assemblyRequired;
+    @CsvBindByName(column = "Distressed Finish? (Y/N)")
+    private String distressedFinish;
+    @CsvBindByName(column = "Ship Type ")
+    private String shipType;
+    @CsvBindByName(column = "Supplier Lead Time in Business Day Hours")
+    private String supplierLeadTime;
 
 
-    @CsvBindByName(column = "Width")
-    private BigDecimal width;
-
-    @CsvBindByName(column = "Height")
-    private BigDecimal height;
-
-    @CsvBindByName(column = "Depth")
     private BigDecimal depth;
-
-    @CsvBindByName(column = "Weight")
-    private BigDecimal weight;
-
-    @CsvBindByName(column = "NoOfBoxes")
-    private int noOfBoxes;
-
-    @CsvBindByName(column = "BP1")
-    private String bp1;
-
-    @CsvBindByName(column = "BP2")
-    private String bp2;
-
-    @CsvBindByName(column = "BP3")
-    private String bp3;
-
-    @CsvBindByName(column = "BP4")
-    private String bp4;
-
-    @CsvBindByName(column = "BP5")
-    private String bp5;
-
-    @CsvBindByName(column = "BP6")
-    private String bp6;
-
-    @CsvBindByName(column = "AssemblyInstructions")
-    private String assemblyInstructions;
-
+    private BigDecimal width;
+    private BigDecimal height;
     private BigDecimal price;
-
     private int stockLevel;
-
     private List<String> images;
-
     private boolean updated;
-
     private boolean isDiscontinued;
 
+    private String stockStatus;
+    private String nextArrival;
 
-    public MarkHarrisProduct() {
-    }
-
-    public int compareTo(MarkHarrisProduct catalog){
+    public int compareTo(MarkHarrisProduct catalog) {
         int compare = Comparator.comparing(MarkHarrisProduct::getSku)
                 .thenComparing(MarkHarrisProduct::getProductName)
                 .thenComparing(MarkHarrisProduct::getDescription)

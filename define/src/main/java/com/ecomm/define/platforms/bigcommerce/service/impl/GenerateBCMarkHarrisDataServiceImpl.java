@@ -52,7 +52,7 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
     private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
     private final Logger LOGGER = LoggerFactory.getLogger(GenerateBCMarkHarrisDataServiceImpl.class);
     @Autowired
-    private MarkHarrisService artisanService;
+    private MarkHarrisService markHarrisService;
 
     @Autowired
     private BigCommerceApiService bigCommerceApiService;
@@ -82,36 +82,36 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                 .stream()
                 .filter(MarkHarrisProduct::isUpdated)
                 .collect(Collectors.toList());
-        for (MarkHarrisProduct artisanProduct : updatedCatalogList) {
+        for (MarkHarrisProduct markHarrisProduct : updatedCatalogList) {
             Query query = new Query();
-            query.addCriteria(Criteria.where("sku").is(artisanProduct.getSku()));
+            query.addCriteria(Criteria.where("sku").is(markHarrisProduct.getSku()));
             BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
 
             if (byProductSku == null) {
                 byProductSku = new BcProductData();
-                setPriceAndQuantity(artisanProduct, byProductSku);
-                assignCategories(byProductSku, artisanProduct.getDescription());
-                byProductSku.setSku(artisanProduct.getSku());
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
+                setPriceAndQuantity(markHarrisProduct, byProductSku);
+                assignCategories(byProductSku, markHarrisProduct.getDescription());
+                byProductSku.setSku(markHarrisProduct.getSku());
+                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
 
-                byProductSku.setSupplier(Supplier.ARTISAN.getName());
+                byProductSku.setSupplier(Supplier.MAR_HARRIS.getName());
                 byProductSku.setType(BcConstants.TYPE);
-                byProductSku.setWeight(Objects.requireNonNull(artisanProduct.getWeight().intValue()));
-                byProductSku.setHeight(Objects.requireNonNull(artisanProduct.getHeight().intValue()));
-                byProductSku.setWidth(Objects.requireNonNull(artisanProduct.getWidth().intValue()));
-                byProductSku.setDepth(Objects.requireNonNull(artisanProduct.getDepth().intValue()));
+                byProductSku.setWeight(Objects.requireNonNull(Integer.parseInt(markHarrisProduct.getWeight())));
+                byProductSku.setHeight(Objects.requireNonNull(markHarrisProduct.getHeight().intValue()));
+                byProductSku.setWidth(Objects.requireNonNull(markHarrisProduct.getWidth().intValue()));
+                byProductSku.setDepth(Objects.requireNonNull(markHarrisProduct.getDepth().intValue()));
                 byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
                 if (byName.isPresent()) {
                     byProductSku.setBrandId(byName.get().getId());
                 }
-                byProductSku.setDescription(artisanProduct.getDescription());
+                byProductSku.setDescription(markHarrisProduct.getDescription());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
-                setPriceAndQuantity(artisanProduct, byProductSku);
-                assignCategories(byProductSku, artisanProduct.getDescription());
+                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
+                setPriceAndQuantity(markHarrisProduct, byProductSku);
+                assignCategories(byProductSku, markHarrisProduct.getDescription());
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             }
@@ -130,8 +130,8 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
         HttpEntity<BcProductData> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
 
         Query query = new Query();
-        for (MarkHarrisProduct artisanProduct : discontinuedList) {
-        query.addCriteria(Criteria.where("sku").is(artisanProduct.getSku()));
+        for (MarkHarrisProduct markHarrisProduct : discontinuedList) {
+        query.addCriteria(Criteria.where("sku").is(markHarrisProduct.getSku()));
             BcProductData byProductSku = mongoOperations.findOne(query,BcProductData.class);
             if (Objects.requireNonNull(byProductSku).getId() != null) {
                 String url = uri + "/" + byProductSku.getId();
@@ -159,12 +159,12 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                     resultData.set_id(product.get_id());
                     resultData = bigCommerceApiService.update(resultData);
                     updateImage(resultData, restTemplate);
-                    LOGGER.info("Successfully sent Artisan Product to Big Commerce for the product id {}, and sku {}", resultData.getId(), resultData.getSku());
+                    LOGGER.info("Successfully sent Mark Harris Product to Big Commerce for the product id {}, and sku {}", resultData.getId(), resultData.getSku());
                 } else {
                     String url = uri + "/" + product.getId();
                     ResponseEntity<BigCommerceApiProduct> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, request, BigCommerceApiProduct.class);
                     BcProductData data = Objects.requireNonNull(responseEntity.getBody()).getData();
-                    LOGGER.info("Successfully updated the Artisan Product on Big Commerce for the product id {}, and sku {}", data.getId(), data.getSku());
+                    LOGGER.info("Successfully updated the Mark Harris Product on Big Commerce for the product id {}, and sku {}", data.getId(), data.getSku());
                 }
             } catch (Exception duplicateRecordException) {
                 LOGGER.error("Duplicate record found with the name {}", Objects.requireNonNull(request.getBody()).getName());
@@ -175,14 +175,14 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
         if (!duplicateRecords.isEmpty()) {
             LOGGER.info("Found duplicate products while processing maison products. Processing the duplicate products by updating the name attribute");
         }
-        LOGGER.info("Successfully Updated Artisan Catalog to BigCommerce");
+        LOGGER.info("Successfully Updated Mark Harris Catalog to BigCommerce");
     }
 
     private void updateImage(BcProductData data, RestTemplate restTemplate) throws Exception {
-        Optional<MarkHarrisProduct> byProductSku = artisanService.findByProductSku(data.getSku());
+        Optional<MarkHarrisProduct> byProductSku = markHarrisService.findByProductSku(data.getSku());
         if (byProductSku.isPresent()) {
-            MarkHarrisProduct artisanProduct = byProductSku.get();
-            List<String> imagesList = artisanProduct.getImages();
+            MarkHarrisProduct markHarrisProduct = byProductSku.get();
+            List<String> imagesList = markHarrisProduct.getImages();
 
             URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT + "/" + data.getId() + "/images");
             if (checkImagesNotExists(uri, restTemplate)) {
@@ -223,17 +223,17 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
     }
 
 
-    private void setPriceAndQuantity(MarkHarrisProduct artisanProduct, BcProductData byProductSku) {
-        evaluatePrice(artisanProduct, byProductSku);
-        byProductSku.setInventoryLevel(Math.max(artisanProduct.getStockLevel(), 0));
+    private void setPriceAndQuantity(MarkHarrisProduct markHarrisProduct, BcProductData byProductSku) {
+        evaluatePrice(markHarrisProduct, byProductSku);
+        byProductSku.setInventoryLevel(Math.max(markHarrisProduct.getStockLevel(), 0));
         byProductSku.setAvailability(BcConstants.PREORDER);
-        if (artisanProduct.getStockLevel() > 0) {
+        if (markHarrisProduct.getStockLevel() > 0) {
             byProductSku.setAvailability(BcConstants.AVAILABLE);
         }
     }
 
-    private void evaluatePrice(MarkHarrisProduct artisanProduct, BcProductData byProductSku) {
-        BigDecimal originalPrice = artisanProduct.getPrice();
+    private void evaluatePrice(MarkHarrisProduct markHarrisProduct, BcProductData byProductSku) {
+        BigDecimal originalPrice = markHarrisProduct.getPrice();
         if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
             byProductSku.setPrice(originalPrice.intValue());
             if (originalPrice.compareTo(new BigDecimal(higherLimitHDPrice)) > 0) {

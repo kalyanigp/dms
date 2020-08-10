@@ -57,6 +57,16 @@ public class SpringFoxConfig {
                 .apiInfo(apiEndPointsInfo());
     }
 
+    @Bean
+    public Docket swaggerMarkHarrisApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("MarkHarris")
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.ecomm.define.suppliers.markharris.controller"))
+                .build()
+                .apiInfo(apiEndPointsInfo());
+    }
+
     private ApiInfo apiEndPointsInfo() {
         return new ApiInfoBuilder().title("Spring Boot REST API")
                 .description("Define Furniture Product Management System REST API")

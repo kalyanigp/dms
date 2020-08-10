@@ -29,6 +29,10 @@ public interface MarkHarrisService {
     //List<Furniture2GoProduct> getUpdatedProductList(List<Furniture2GoProduct> newList, List<Furniture2GoProduct> oldList);
     void uploadProducts(MultipartFile file);
 
+    void uploadImages();
+
+    void uploadImages(MultipartFile file);
+
     void uploadProductPrice(MultipartFile file);
 
     void uploadProductStockList(MultipartFile file);
