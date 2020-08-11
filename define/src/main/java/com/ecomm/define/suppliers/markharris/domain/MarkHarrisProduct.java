@@ -57,9 +57,9 @@ public class MarkHarrisProduct {
     private String supplierLeadTime;
 
 
-    private BigDecimal depth;
-    private BigDecimal width;
-    private BigDecimal height;
+    private String depth;
+    private String width;
+    private String height;
     private BigDecimal price;
     private int stockLevel;
     private List<String> images;
@@ -68,6 +68,7 @@ public class MarkHarrisProduct {
 
     private String stockStatus;
     private String nextArrival;
+    private String assembled;
 
     public int compareTo(MarkHarrisProduct catalog) {
         int compare = Comparator.comparing(MarkHarrisProduct::getSku)

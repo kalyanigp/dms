@@ -6,9 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-
-import java.math.BigDecimal;
 
 /**
  * Created by vamshikirangullapelly on 06/07/2020.
@@ -21,7 +18,7 @@ public class MarkHarrisPrice {
     @Id
     public ObjectId _id;
 
-    @CsvBindByName(column = "sku")
+    @CsvBindByName(column = "PRODUCT CODE")
     private String sku;
 
     @CsvBindByName(column = "NEW TRADE PRICE EXCL. VAT")
@@ -31,12 +28,16 @@ public class MarkHarrisPrice {
     private String range;
 
     @CsvBindByName(column = "LENGTH")
-    private BigDecimal length;
+    private String length;
 
     @CsvBindByName(column = "WIDTH")
-    private BigDecimal width;
+    private String width;
 
     @CsvBindByName(column = "HEIGHT")
-    private BigDecimal height;
+    private String height;
+
+
+    @CsvBindByName(column = "ASSEMBLED")
+    private String assembled;
 
 }
