@@ -23,6 +23,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -58,6 +61,8 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
     private final Furniture2GoService furniture2GoService;
 
+    private MongoOperations mongoOperations;
+
     @Value("${bigcommerce.f2g.profit.limit.high}")
     private String higherLimitHDPrice;
 
@@ -66,12 +71,15 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
     private final Logger LOGGER = LoggerFactory.getLogger(BigCommerceProductApiController.class);
 
+
     @Autowired
-    public GenerateBCFurniture2GoDataServiceImpl(BigCommerceApiService bigCommerceApiService, BigCommerceImageApiService bigCommerceImageApiService, BigcBrandApiRepository brandApiRepository, Furniture2GoService furniture2GoService) {
+    public GenerateBCFurniture2GoDataServiceImpl(BigCommerceApiService bigCommerceApiService, BigCommerceImageApiService bigCommerceImageApiService,
+                                                 BigcBrandApiRepository brandApiRepository, Furniture2GoService furniture2GoService, MongoOperations mongoOperations) {
         this.bigCommerceApiService = bigCommerceApiService;
         this.bigCommerceImageApiService = bigCommerceImageApiService;
         this.brandApiRepository = brandApiRepository;
         this.furniture2GoService = furniture2GoService;
+        this.mongoOperations = mongoOperations;
     }
 
 
@@ -88,12 +96,15 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
                 .collect(Collectors.toList());
 
         updatedCatalogList.parallelStream().forEach(furniture2GoProduct -> {
-            BcProductData byProductSku = bigCommerceApiService.findByProductSku(furniture2GoProduct.getSku());
+            Query query = new Query();
+            query.addCriteria(Criteria.where("sku").is(BcConstants.FURNITURE_2_GO + furniture2GoProduct.getSku()));
+            BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
+
             if (byProductSku == null) {
                 byProductSku = new BcProductData();
                 setPriceAndQuantity(furniture2GoProduct, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(furniture2GoProduct.getDescription()));
-                byProductSku.setSku(furniture2GoProduct.getSku());
+                byProductSku.setSku(BcConstants.FURNITURE_2_GO + furniture2GoProduct.getSku());
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + furniture2GoProduct.getProductName() + " " + furniture2GoProduct.getFinish());
 
                 byProductSku.setSupplier(Supplier.FURNITURE2GO.getName());
@@ -136,7 +147,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         HttpEntity<BcProductData> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
 
         for (Furniture2GoProduct furniture2GoProduct : discontinuedList) {
-            BcProductData byProductSku = bigCommerceApiService.findByProductSku(furniture2GoProduct.getSku());
+            BcProductData byProductSku = bigCommerceApiService.findByProductSku(BcConstants.FURNITURE_2_GO + furniture2GoProduct.getSku());
             if (byProductSku.getId() != null) {
                 String url = uri + "/" + byProductSku.getId();
                 restTemplate.exchange(url, HttpMethod.DELETE, request, Void.class);
@@ -192,8 +203,10 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         evaluatePrice(furniture2GoProduct, byProductSku);
         byProductSku.setInventoryLevel(Math.max(furniture2GoProduct.getStockLevel(), 0));
         byProductSku.setAvailability(BcConstants.PREORDER);
+        byProductSku.setAvailabilityDescription("Usually dispatches on or after "+furniture2GoProduct.getStockArrivalDate());
         if (furniture2GoProduct.getStockLevel() > 0) {
             byProductSku.setAvailability(BcConstants.AVAILABLE);
+            byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
         }
     }
 
@@ -255,6 +268,10 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
             }
         } else {
             dimensionsDescription.append("Usually dispatches in next 10 working days");
+        }
+
+        if(furniture2GoProduct.getAssemblyInstructions() != null && !furniture2GoProduct.getAssemblyInstructions().isEmpty()) {
+            dimensionsDescription.append(" Assembly Instructions - "+furniture2GoProduct.getAssemblyInstructions());
         }
         byProductSku.setDescription(furniture2GoProduct.getDescription() + " " + dimensionsDescription.toString());
     }

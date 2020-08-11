@@ -3,6 +3,9 @@ package com.ecomm.define.platforms.bigcommerce.constants;
 public class BcConstants {
     public static String MAISON_CODE = "MREP";
     public static String FURNITURE_2_GO = "ROYAL";
+    public static String ARTISAN = "IND";
+    public static String MARK_HARRIS = "PRI";
+    public static String HILL_INTERIOR = "INT";
     public static final String INVENTORY_TRACKING = "product";
     public static final String TYPE = "physical";
     public static final String PREORDER = "preorder";
