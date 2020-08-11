@@ -2,19 +2,17 @@ package com.ecomm.define.platforms.bigcommerce.service.impl;
 
 import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
-import com.ecomm.define.platforms.bigcommerce.controller.BigCommerceProductApiController;
 import com.ecomm.define.platforms.bigcommerce.domain.BcBrandData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductImageData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductImageDataList;
 import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiImage;
 import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiProduct;
-import com.ecomm.define.platforms.bigcommerce.ennum.Category;
 import com.ecomm.define.platforms.bigcommerce.repository.BigcBrandApiRepository;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceImageApiService;
-import com.ecomm.define.platforms.bigcommerce.service.BigCommerceService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
+import com.ecomm.define.platforms.commons.BCUtils;
 import com.ecomm.define.suppliers.artisan.domain.ArtisanProduct;
 import com.ecomm.define.suppliers.artisan.service.ArtisanService;
 import com.ecomm.define.suppliers.commons.Supplier;
@@ -37,11 +35,9 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -92,7 +88,8 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
             if (byProductSku == null) {
                 byProductSku = new BcProductData();
                 setPriceAndQuantity(artisanProduct, byProductSku);
-                assignCategories(byProductSku, artisanProduct.getDescription());
+                byProductSku.setCategories(BCUtils.assignCategories(artisanProduct.getProductName()));
+
                 byProductSku.setSku(BcConstants.ARTISAN + artisanProduct.getSku());
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
                 StringBuilder discriptionBuilder = new StringBuilder("");
@@ -102,42 +99,41 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
 
                 byProductSku.setSupplier(Supplier.ARTISAN.getName());
                 byProductSku.setType(BcConstants.TYPE);
-                if(artisanProduct.getWeight() != null) {
+                if (artisanProduct.getWeight() != null) {
                     int weight = artisanProduct.getWeight().intValue();
                     byProductSku.setWeight(weight);
-                    discriptionBuilder.append(" Weight : "+weight+"kg");
+                    discriptionBuilder.append(" Weight : " + weight + "kg");
                 }
-                if(artisanProduct.getHeight() != null) {
+                if (artisanProduct.getHeight() != null) {
                     int height = artisanProduct.getHeight().intValue();
                     byProductSku.setHeight(height);
-                    discriptionBuilder.append(" Height : "+height+"mm");
+                    discriptionBuilder.append(" Height : " + height + "mm");
                 }
-                if(artisanProduct.getWidth() != null) {
+                if (artisanProduct.getWidth() != null) {
                     int width = artisanProduct.getWidth().intValue();
                     byProductSku.setWidth(width);
-                    discriptionBuilder.append(" Width : "+width+"mm");
+                    discriptionBuilder.append(" Width : " + width + "mm");
                 }
-                if(artisanProduct.getDepth() != null) {
+                if (artisanProduct.getDepth() != null) {
                     int depth = artisanProduct.getDepth().intValue();
                     byProductSku.setDepth(depth);
-                    discriptionBuilder.append(" Depth : "+depth +"mm)");
+                    discriptionBuilder.append(" Depth : " + depth + "mm)");
                 }
-                discriptionBuilder.append("Assembly Instructions - "+artisanProduct.getAssemblyInstructions());
+                discriptionBuilder.append("Assembly Instructions - " + artisanProduct.getAssemblyInstructions());
 
                 byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
                 if (byName.isPresent()) {
                     byProductSku.setBrandId(byName.get().getId());
                 }
-
-
                 byProductSku.setDescription(artisanProduct.getDescription());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
                 setPriceAndQuantity(artisanProduct, byProductSku);
-                assignCategories(byProductSku, artisanProduct.getDescription());
+                byProductSku.setCategories(BCUtils.assignCategories(artisanProduct.getProductName()));
+
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             }
@@ -157,8 +153,8 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
 
         Query query = new Query();
         for (ArtisanProduct artisanProduct : discontinuedList) {
-        query.addCriteria(Criteria.where("sku").is(BcConstants.ARTISAN + artisanProduct.getSku()));
-            BcProductData byProductSku = mongoOperations.findOne(query,BcProductData.class);
+            query.addCriteria(Criteria.where("sku").is(BcConstants.ARTISAN + artisanProduct.getSku()));
+            BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
             if (Objects.requireNonNull(byProductSku).getId() != null) {
                 String url = uri + "/" + byProductSku.getId();
                 restTemplate.exchange(url, HttpMethod.DELETE, request, Void.class);
@@ -270,17 +266,4 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
             }
         }
     }
-
-    private void assignCategories(BcProductData data, String title) {
-        Set<Integer> categories = new HashSet<>();
-        categories.add(Category.FURNITURE.getCategoryCode());
-        for (Category category : Category.values()) {
-            if (title.toLowerCase().contains(category.getCategoryWord().toLowerCase())) {
-                categories.add(category.getCategoryCode());
-            }
-        }
-        data.setCategories(categories.parallelStream().collect(Collectors.toList()));
-    }
-
-
 }

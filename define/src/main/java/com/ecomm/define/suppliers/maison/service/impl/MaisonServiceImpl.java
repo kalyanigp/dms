@@ -110,11 +110,13 @@ public class MaisonServiceImpl implements MaisonService {
                 if(maisonProduct.compareTo(catalog) != 0) {
                     maisonProduct.setDiscontinued(Boolean.FALSE);
                     mongoOperations.save(maisonProduct);
+                    LOGGER.info("Updated Maison Product "+catalog.getProductCode());
                 }
             } else {
                 catalog.setDiscontinued(Boolean.FALSE);
                 catalog.setUpdated(Boolean.TRUE);
                 mongoOperations.insert(catalog);
+                LOGGER.info("Inserted Maison Product "+catalog.getProductCode());
             }
         });
         LOGGER.info("Successfully updated Maison Products to DB");

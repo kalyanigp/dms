@@ -8,11 +8,11 @@ import com.ecomm.define.platforms.bigcommerce.domain.BcProductImageData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductImageDataList;
 import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiImage;
 import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiProduct;
-import com.ecomm.define.platforms.bigcommerce.ennum.Category;
 import com.ecomm.define.platforms.bigcommerce.repository.BigcBrandApiRepository;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceImageApiService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
+import com.ecomm.define.platforms.commons.BCUtils;
 import com.ecomm.define.suppliers.commons.Supplier;
 import com.ecomm.define.suppliers.markharris.domain.MarkHarrisProduct;
 import com.ecomm.define.suppliers.markharris.service.MarkHarrisService;
@@ -35,11 +35,9 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -62,7 +60,6 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
 
     @Autowired
     private BigcBrandApiRepository brandApiRepository;
-
     @Autowired
     private MongoOperations mongoOperations;
 
@@ -92,7 +89,7 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                 if (byProductSku == null) {
                     byProductSku = new BcProductData();
                     setPriceAndQuantity(markHarrisProduct, byProductSku);
-                    assignCategories(byProductSku, markHarrisProduct.getDescription());
+                    byProductSku.setCategories(BCUtils.assignCategories(markHarrisProduct.getProductName()));
                     byProductSku.setSku(BcConstants.MARK_HARRIS + markHarrisProduct.getSku());
                     byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
 
@@ -127,19 +124,19 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                     }
                     additionalDescription.append("(Product Dimensions - ");
                     if (markHarrisProduct.getMaxHeight() != null && !markHarrisProduct.getMaxHeight().isEmpty()) {
-                        additionalDescription.append(" Maximum Height - " + markHarrisProduct.getMaxHeight()+"mm");
+                        additionalDescription.append(" Maximum Height - " + markHarrisProduct.getMaxHeight() + "mm");
                     }
                     if (markHarrisProduct.getMinHeight() != null && !markHarrisProduct.getMinHeight().isEmpty()) {
-                        additionalDescription.append(" Minimum Height - " + markHarrisProduct.getMinHeight()+"mm");
+                        additionalDescription.append(" Minimum Height - " + markHarrisProduct.getMinHeight() + "mm");
                     }
                     if (markHarrisProduct.getMaxWidth() != null && !markHarrisProduct.getMaxWidth().isEmpty()) {
-                        additionalDescription.append(" Maximum Width -  " + markHarrisProduct.getMaxWidth()+"mm");
+                        additionalDescription.append(" Maximum Width -  " + markHarrisProduct.getMaxWidth() + "mm");
                     }
                     if (markHarrisProduct.getMinWidth() != null && !markHarrisProduct.getMinWidth().isEmpty()) {
-                        additionalDescription.append(" Minimum Width -  " + markHarrisProduct.getMinWidth()+"mm");
+                        additionalDescription.append(" Minimum Width -  " + markHarrisProduct.getMinWidth() + "mm");
                     }
                     if (markHarrisProduct.getMaxLengthOrDepth() != null && !markHarrisProduct.getMaxLengthOrDepth().isEmpty()) {
-                        additionalDescription.append(" Maximum Length/Depth -  " + markHarrisProduct.getMaxLengthOrDepth()+"mm");
+                        additionalDescription.append(" Maximum Length/Depth -  " + markHarrisProduct.getMaxLengthOrDepth() + "mm");
                     }
                     if (markHarrisProduct.getMinLengthOrDepth() != null && !markHarrisProduct.getMinLengthOrDepth().isEmpty()) {
                         additionalDescription.append(" Minimum Length/Depth -  " + markHarrisProduct.getMinLengthOrDepth() + "mm");
@@ -161,7 +158,7 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                 } else {
                     byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
                     setPriceAndQuantity(markHarrisProduct, byProductSku);
-                    assignCategories(byProductSku, markHarrisProduct.getDescription());
+                    byProductSku.setCategories(BCUtils.assignCategories(markHarrisProduct.getProductName()));
                     BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                     updatedBcProductDataList.add(bcProductData);
                     LOGGER.info("Successfully updated BCProductData for {}", markHarrisProduct.getSku());
@@ -299,16 +296,4 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
             }
         }
     }
-
-    private void assignCategories(BcProductData data, String title) {
-        Set<Integer> categories = new HashSet<>();
-        categories.add(Category.FURNITURE.getCategoryCode());
-        for (Category category : Category.values()) {
-            if (title.toLowerCase().contains(category.getCategoryWord().toLowerCase())) {
-                categories.add(category.getCategoryCode());
-            }
-        }
-        data.setCategories(categories.parallelStream().collect(Collectors.toList()));
-    }
-
 }

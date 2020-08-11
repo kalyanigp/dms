@@ -60,17 +60,12 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
     private final BigcBrandApiRepository brandApiRepository;
 
     private final Furniture2GoService furniture2GoService;
-
+    private final Logger LOGGER = LoggerFactory.getLogger(BigCommerceProductApiController.class);
     private MongoOperations mongoOperations;
-
     @Value("${bigcommerce.f2g.profit.limit.high}")
     private String higherLimitHDPrice;
-
     @Value("${bigcommerce.f2g.profit.percentage.low}")
     private String percentageLow;
-
-    private final Logger LOGGER = LoggerFactory.getLogger(BigCommerceProductApiController.class);
-
 
     @Autowired
     public GenerateBCFurniture2GoDataServiceImpl(BigCommerceApiService bigCommerceApiService, BigCommerceImageApiService bigCommerceImageApiService,
@@ -103,7 +98,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
             if (byProductSku == null) {
                 byProductSku = new BcProductData();
                 setPriceAndQuantity(furniture2GoProduct, byProductSku);
-                byProductSku.setCategories(BCUtils.assignCategories(furniture2GoProduct.getDescription()));
+                byProductSku.setCategories(BCUtils.assignCategories(furniture2GoProduct.getProductName()));
                 byProductSku.setSku(BcConstants.FURNITURE_2_GO + furniture2GoProduct.getSku());
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + furniture2GoProduct.getProductName() + " " + furniture2GoProduct.getFinish());
 
@@ -122,7 +117,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + furniture2GoProduct.getProductName() + " " + furniture2GoProduct.getFinish());
                 setPriceAndQuantity(furniture2GoProduct, byProductSku);
                 evaluateDescription(furniture2GoProduct, byProductSku);
-                byProductSku.setCategories(BCUtils.assignCategories(furniture2GoProduct.getDescription()));
+                byProductSku.setCategories(BCUtils.assignCategories(furniture2GoProduct.getProductName()));
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             }
@@ -203,7 +198,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         evaluatePrice(furniture2GoProduct, byProductSku);
         byProductSku.setInventoryLevel(Math.max(furniture2GoProduct.getStockLevel(), 0));
         byProductSku.setAvailability(BcConstants.PREORDER);
-        byProductSku.setAvailabilityDescription("Usually dispatches on or after "+furniture2GoProduct.getStockArrivalDate());
+        byProductSku.setAvailabilityDescription("Usually dispatches on or after " + furniture2GoProduct.getStockArrivalDate());
         if (furniture2GoProduct.getStockLevel() > 0) {
             byProductSku.setAvailability(BcConstants.AVAILABLE);
             byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
@@ -270,8 +265,8 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
             dimensionsDescription.append("Usually dispatches in next 10 working days");
         }
 
-        if(furniture2GoProduct.getAssemblyInstructions() != null && !furniture2GoProduct.getAssemblyInstructions().isEmpty()) {
-            dimensionsDescription.append(" Assembly Instructions - "+furniture2GoProduct.getAssemblyInstructions());
+        if (furniture2GoProduct.getAssemblyInstructions() != null && !furniture2GoProduct.getAssemblyInstructions().isEmpty()) {
+            dimensionsDescription.append(" Assembly Instructions - " + furniture2GoProduct.getAssemblyInstructions());
         }
         byProductSku.setDescription(furniture2GoProduct.getDescription() + " " + dimensionsDescription.toString());
     }
