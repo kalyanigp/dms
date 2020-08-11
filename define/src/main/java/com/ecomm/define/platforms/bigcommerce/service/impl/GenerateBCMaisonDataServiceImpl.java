@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.StringTokenizer;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -85,7 +84,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
             if (byProductSku == null) {
                 byProductSku = new BcProductData();
                 setPriceAndQuantity(maisonProd, byProductSku);
-                byProductSku.setCategories(BCUtils.assignCategories( maisonProd.getTitle()));
+                byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
                 byProductSku.setSku(maisonProd.getProductCode());
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
 
@@ -124,14 +123,15 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 }
                 byProductSku.setDescription(byProductSku.getDescription() + " " + getDimensions(maisonProd.getSize()));
                 byProductSku.setAvailabilityDescription(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
-                byProductSku.setAvailability(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
-
+                byProductSku.setMpn(maisonProd.getProductCode());
+                byProductSku.setPageTitle(maisonProd.getTitle());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
                 setPriceAndQuantity(maisonProd, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
+                byProductSku.setAvailabilityDescription(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             }
@@ -150,30 +150,35 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         RestTemplate restTemplate = new RestTemplate();
         URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
         List<BcProductData> duplicateRecords = new ArrayList<>();
-        AtomicReference<HttpEntity<BcProductData>> request = new AtomicReference<>();
-        AtomicReference<BigCommerceApiProduct> result = new AtomicReference<>();
+
+        //AtomicReference<HttpEntity<BcProductData>> request = new AtomicReference<>();
+        //AtomicReference<BigCommerceApiProduct> result = new AtomicReference<>();
+
 
         updatedBcProductDataList.parallelStream().forEach(product -> {
             try {
-                Objects.requireNonNull(request).set(new HttpEntity<>(product, bigCommerceApiService.getHttpHeaders()));
+                BigCommerceApiProduct result;
+                HttpEntity<BcProductData> request = new HttpEntity<>(product, bigCommerceApiService.getHttpHeaders());
+
                 if (product.getId() == null) {
-                    LOGGER.info(Objects.requireNonNull(request.get().getBody()).getName());
-                    Objects.requireNonNull(result).set(restTemplate.postForObject(uri, request, BigCommerceApiProduct.class));
-                    BcProductData resultData = result.get().getData();
+                    LOGGER.info(Objects.requireNonNull(request.getBody()).getName());
+
+                    result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
+                    BcProductData resultData = Objects.requireNonNull(result).getData();
                     resultData.set_id(product.get_id());
                     resultData = bigCommerceApiService.update(resultData);
                     updateImage(resultData, restTemplate);
                     LOGGER.info("Successfully sent Maison Product to Big Commerce for the product id {}, and sku {}", resultData.getId(), resultData.getSku());
                 } else {
                     String url = uri + "/" + product.getId();
-                    ResponseEntity<BigCommerceApiProduct> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, request.get(), BigCommerceApiProduct.class);
+                    ResponseEntity<BigCommerceApiProduct> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, request, BigCommerceApiProduct.class);
                     BcProductData data = Objects.requireNonNull(responseEntity.getBody()).getData();
                     LOGGER.info("Successfully updated the Maison Product on Big Commerce for the product id {}, and sku {}", data.getId(), data.getSku());
                 }
             } catch (Exception duplicateRecordException) {
+                LOGGER.error("Exception while uploading " + product.getSku(), duplicateRecordException.getStackTrace());
                 duplicateRecords.add(product);
             }
-
         });
 
         if (!duplicateRecords.isEmpty()) {
@@ -185,10 +190,11 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
 
     private int evaluatePrice(MaisonProduct maisonProd) {
         BigDecimal decimalPrice = null;
-        if (StringUtils.isEmpty(maisonProd.getMspPrice()) || "N/A".equals(maisonProd.getMspPrice())) {
+        System.out.println(maisonProd.getProductCode() + "*****" + maisonProd.getMspPrice());
+        if (StringUtils.isEmpty(maisonProd.getMspPrice()) || "N/A".equals(maisonProd.getMspPrice()) || "0".equals(maisonProd.getMspPrice())) {
             if (!StringUtils.isEmpty(maisonProd.getTradePrice())) {
                 decimalPrice = new BigDecimal(maisonProd.getTradePrice());
-                decimalPrice = decimalPrice.multiply(BigDecimal.valueOf(2));
+                decimalPrice = decimalPrice.multiply(BigDecimal.valueOf(2.5));
             }
         } else {
             decimalPrice = new BigDecimal(maisonProd.getMspPrice());
