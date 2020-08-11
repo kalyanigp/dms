@@ -52,9 +52,8 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
 
     private final MongoOperations mongoOperations;
 
-    private List<MarkHarrisProduct> newCatalogList = new ArrayList<>();
 
-    @Value("${bigcommerce.artisan.profit.percentage.high}")
+    @Value("${bigcommerce.markharris.profit.percentage.high}")
     private String profitPercentHigh;
 
     @Autowired // inject markHarrisData
@@ -132,10 +131,6 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
                 // convert `CsvToBean` object to list of MarkHarrisProduct
                 List<MarkHarrisProduct> markHarrisProducts = csvToBean.parse();
                 markHarrisProducts.parallelStream().forEach(this::insertOrUpdate);
-                //Process Images
-                //Map<String, List<String>> catalogImages = MarkHarrisFeedMaker.getCatalogImages(repository.findAll());
-                //saveImages(catalogImages);
-
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
             }
@@ -242,7 +237,7 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
                     hdPrice = new BigDecimal(priceValue.substring(1));
                 }
 
-                //add 20% VAT plus 30% Profit
+                //add 20% VAT plus 50% Profit
                 hdPrice = hdPrice.add(DefineUtils.getVat(hdPrice, new BigDecimal(profitPercentHigh)));
 
                 if (!Objects.equals(product.getPrice(), hdPrice)) {
@@ -329,18 +324,6 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
             repository.save(markHarrisProd);
         }
     }
-
-
-    /*private void processDiscontinuedCatalog() {
-        List<MarkHarrisProduct> dbCatalog = findAll();
-        dbCatalog.parallelStream().forEach(catalog -> {
-            if (catalog.getStockLevel() == 0 && catalog.getStockStatus().equals("Discontinued")) {
-                catalog.setUpdated(Boolean.TRUE);
-                catalog.setDiscontinued(Boolean.TRUE);
-                repository.save(catalog);
-            }
-        });
-    }*/
 
     @Override
     public void uploadCatalogueToBigCommerce() throws Exception {

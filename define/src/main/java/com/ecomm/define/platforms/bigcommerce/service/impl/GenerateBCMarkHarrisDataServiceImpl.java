@@ -62,22 +62,21 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
 
     @Autowired
     private BigcBrandApiRepository brandApiRepository;
+
     @Autowired
     private MongoOperations mongoOperations;
 
-    @Value("${bigcommerce.f2g.profit.limit.high}")
+    @Value("${bigcommerce.markharris.profit.limit.high}")
     private String higherLimitHDPrice;
 
-    @Value("${bigcommerce.f2g.profit.percentage.low}")
+    @Value("${bigcommerce.markharris.profit.percentage.low}")
     private String percentageLow;
 
     @Override
     public void generateBcProductsFromSupplier(List<MarkHarrisProduct> productList) {
         try {
-
-
             //Process Discontinued catalog
-            //processDiscontinuedCatalog(productList);
+            processDiscontinuedCatalog(productList);
 
             //Process updated catalog, if there is any updates available in price & stock & images.
             List<BcProductData> updatedBcProductDataList = new ArrayList<>();
@@ -86,61 +85,90 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                     .filter(MarkHarrisProduct::isUpdated)
                     .collect(Collectors.toList());
             for (MarkHarrisProduct markHarrisProduct : updatedCatalogList) {
-                if (!markHarrisProduct.isDiscontinued() && (markHarrisProduct.getPrice() != null && markHarrisProduct.getPrice().compareTo(BigDecimal.ZERO) > 0)) {
-                    Query query = new Query();
-                    query.addCriteria(Criteria.where("sku").is(markHarrisProduct.getSku()));
-                    BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
+                Query query = new Query();
+                query.addCriteria(Criteria.where("sku").is(BcConstants.MARK_HARRIS + markHarrisProduct.getSku()));
+                BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
 
-                    if (byProductSku == null) {
-                        byProductSku = new BcProductData();
-                        setPriceAndQuantity(markHarrisProduct, byProductSku);
-                        assignCategories(byProductSku, markHarrisProduct.getDescription());
-                        byProductSku.setSku(markHarrisProduct.getSku());
-                        byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
+                if (byProductSku == null) {
+                    byProductSku = new BcProductData();
+                    setPriceAndQuantity(markHarrisProduct, byProductSku);
+                    assignCategories(byProductSku, markHarrisProduct.getDescription());
+                    byProductSku.setSku(BcConstants.MARK_HARRIS + markHarrisProduct.getSku());
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
 
-                        byProductSku.setSupplier(Supplier.MAR_HARRIS.getName());
-                        byProductSku.setType(BcConstants.TYPE);
+                    byProductSku.setSupplier(Supplier.MAR_HARRIS.getName());
+                    byProductSku.setType(BcConstants.TYPE);
 
-                        if (!markHarrisProduct.getWeight().isEmpty()) {
-                            byProductSku.setWeight(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getWeight()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
-                        }
-                        if (!markHarrisProduct.getMaxHeight().isEmpty()) {
-                            byProductSku.setHeight(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxHeight()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
+                    if (!markHarrisProduct.getWeight().isEmpty()) {
+                        byProductSku.setWeight(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getWeight()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
+                    }
+                    if (!markHarrisProduct.getMaxHeight().isEmpty()) {
+                        byProductSku.setHeight(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxHeight()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
 
-                        }
-
-                        if (!markHarrisProduct.getMaxWidth().isEmpty()) {
-                            byProductSku.setWidth(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxWidth()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
-
-                        }
-                        if (!markHarrisProduct.getMaxLengthOrDepth().isEmpty()) {
-
-                            byProductSku.setDepth(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxLengthOrDepth()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
-                        }
-
-                        byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
-                        Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
-                        if (byName.isPresent()) {
-                            byProductSku.setBrandId(byName.get().getId());
-                        }
-                        if (markHarrisProduct.getDescription() != null) {
-                            byProductSku.setDescription(markHarrisProduct.getDescription());
-                        }
-                        BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
-                        updatedBcProductDataList.add(bcProductData);
-                        LOGGER.info("Succesfully created BCProductData for {}", markHarrisProduct.getSku());
-                    } else {
-                        byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
-                        setPriceAndQuantity(markHarrisProduct, byProductSku);
-                        assignCategories(byProductSku, markHarrisProduct.getDescription());
-                        BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
-                        updatedBcProductDataList.add(bcProductData);
-                        LOGGER.info("Succesfully updated BCProductData for {}", markHarrisProduct.getSku());
                     }
 
+                    if (!markHarrisProduct.getMaxWidth().isEmpty()) {
+                        byProductSku.setWidth(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxWidth()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
+
+                    }
+                    if (!markHarrisProduct.getMaxLengthOrDepth().isEmpty()) {
+
+                        byProductSku.setDepth(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxLengthOrDepth()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
+                    }
+
+                    byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
+                    Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
+                    if (byName.isPresent()) {
+                        byProductSku.setBrandId(byName.get().getId());
+                    }
+                    StringBuilder additionalDescription = new StringBuilder("");
+                    if (markHarrisProduct.getDescription() != null) {
+                        additionalDescription.append(markHarrisProduct.getDescription());
+                    }
+                    additionalDescription.append("(Product Dimensions - ");
+                    if (markHarrisProduct.getMaxHeight() != null && !markHarrisProduct.getMaxHeight().isEmpty()) {
+                        additionalDescription.append(" Maximum Height - " + markHarrisProduct.getMaxHeight()+"mm");
+                    }
+                    if (markHarrisProduct.getMinHeight() != null && !markHarrisProduct.getMinHeight().isEmpty()) {
+                        additionalDescription.append(" Minimum Height - " + markHarrisProduct.getMinHeight()+"mm");
+                    }
+                    if (markHarrisProduct.getMaxWidth() != null && !markHarrisProduct.getMaxWidth().isEmpty()) {
+                        additionalDescription.append(" Maximum Width -  " + markHarrisProduct.getMaxWidth()+"mm");
+                    }
+                    if (markHarrisProduct.getMinWidth() != null && !markHarrisProduct.getMinWidth().isEmpty()) {
+                        additionalDescription.append(" Minimum Width -  " + markHarrisProduct.getMinWidth()+"mm");
+                    }
+                    if (markHarrisProduct.getMaxLengthOrDepth() != null && !markHarrisProduct.getMaxLengthOrDepth().isEmpty()) {
+                        additionalDescription.append(" Maximum Length/Depth -  " + markHarrisProduct.getMaxLengthOrDepth()+"mm");
+                    }
+                    if (markHarrisProduct.getMinLengthOrDepth() != null && !markHarrisProduct.getMinLengthOrDepth().isEmpty()) {
+                        additionalDescription.append(" Minimum Length/Depth -  " + markHarrisProduct.getMinLengthOrDepth() + "mm");
+                    }
+                    additionalDescription.append(")");
+
+                    if (markHarrisProduct.getWeight() != null && !markHarrisProduct.getWeight().isEmpty()) {
+                        additionalDescription.append(" Product Weight -  " + markHarrisProduct.getWeight() + "kg ");
+                    }
+
+                    if (markHarrisProduct.getAssembled() != null && !markHarrisProduct.getAssembled().isEmpty()) {
+                        additionalDescription.append(" Assembly Instructions : " + markHarrisProduct.getAssembled());
+                    }
+
+                    byProductSku.setDescription(additionalDescription.toString());
+                    BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
+                    updatedBcProductDataList.add(bcProductData);
+                    LOGGER.info("Successfully created BCProductData for {}", markHarrisProduct.getSku());
+                } else {
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
+                    setPriceAndQuantity(markHarrisProduct, byProductSku);
+                    assignCategories(byProductSku, markHarrisProduct.getDescription());
+                    BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
+                    updatedBcProductDataList.add(bcProductData);
+                    LOGGER.info("Successfully updated BCProductData for {}", markHarrisProduct.getSku());
                 }
             }
             updateBigCommerceProducts(updatedBcProductDataList);
+
         } catch (Exception ex) {
             LOGGER.error(ex.getCause().getMessage());
         }
@@ -157,9 +185,8 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
         HttpEntity<BcProductData> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
 
         discontinuedList.parallelStream().forEach(markHarrisProduct -> {
-
             Query query = new Query();
-            query.addCriteria(Criteria.where("sku").is(markHarrisProduct.getSku()));
+            query.addCriteria(Criteria.where("sku").is(BcConstants.MARK_HARRIS + markHarrisProduct.getSku()));
             BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
             if (byProductSku != null && byProductSku.getId() != null) {
                 String url = uri + "/" + byProductSku.getId();
@@ -168,8 +195,6 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                 LOGGER.info("Successfully Deleted product from Big Commerce due to discontinue, product id {} and product sku {}", byProductSku.getId(), byProductSku.getSku());
             }
         });
-
-
     }
 
     private void updateBigCommerceProducts(List<BcProductData> updatedBcProductDataList) throws Exception {
@@ -257,8 +282,10 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
         evaluatePrice(markHarrisProduct, byProductSku);
         byProductSku.setInventoryLevel(Math.max(markHarrisProduct.getStockLevel(), 0));
         byProductSku.setAvailability(BcConstants.PREORDER);
+        byProductSku.setAvailabilityDescription("Usually dispatches on or after " + markHarrisProduct.getNextArrival());
         if (markHarrisProduct.getStockLevel() > 0) {
             byProductSku.setAvailability(BcConstants.AVAILABLE);
+            byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
         }
     }
 
@@ -283,6 +310,5 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
         }
         data.setCategories(categories.parallelStream().collect(Collectors.toList()));
     }
-
 
 }
