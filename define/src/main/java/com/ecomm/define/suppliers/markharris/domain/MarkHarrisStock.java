@@ -18,12 +18,12 @@ public class MarkHarrisStock {
     @CsvBindByName(column = "ProductName2")
     private String productName2;
 
-    @CsvBindByName(column = "Current stock")
+    @CsvBindByName(column = "CURRENT STOCK")
     private Integer stockQuantity;
 
     @CsvBindByName(column = "Status")
     private String status;
 
-    @CsvBindByName(column = "Date 2")
+    @CsvBindByName(column = "1ST RESTOCK DATE")
     private String arrivalDate;
 }

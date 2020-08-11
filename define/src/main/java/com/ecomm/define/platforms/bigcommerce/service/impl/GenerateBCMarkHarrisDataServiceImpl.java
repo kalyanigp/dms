@@ -72,51 +72,78 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
     private String percentageLow;
 
     @Override
-    public void generateBcProductsFromSupplier(List<MarkHarrisProduct> productList) throws Exception {
-        //Process Discontinued catalog
-        processDiscontinuedCatalog(productList);
+    public void generateBcProductsFromSupplier(List<MarkHarrisProduct> productList) {
+        try {
 
-        //Process updated catalog, if there is any updates available in price & stock & images.
-        List<BcProductData> updatedBcProductDataList = new ArrayList<>();
-        List<MarkHarrisProduct> updatedCatalogList = productList
-                .stream()
-                .filter(MarkHarrisProduct::isUpdated)
-                .collect(Collectors.toList());
-        for (MarkHarrisProduct markHarrisProduct : updatedCatalogList) {
-            Query query = new Query();
-            query.addCriteria(Criteria.where("sku").is(markHarrisProduct.getSku()));
-            BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
 
-            if (byProductSku == null) {
-                byProductSku = new BcProductData();
-                setPriceAndQuantity(markHarrisProduct, byProductSku);
-                assignCategories(byProductSku, markHarrisProduct.getDescription());
-                byProductSku.setSku(markHarrisProduct.getSku());
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
+            //Process Discontinued catalog
+            //processDiscontinuedCatalog(productList);
 
-                byProductSku.setSupplier(Supplier.MAR_HARRIS.getName());
-                byProductSku.setType(BcConstants.TYPE);
-                byProductSku.setWeight(Objects.requireNonNull(Integer.parseInt(markHarrisProduct.getWeight())));
-                byProductSku.setHeight(Objects.requireNonNull(markHarrisProduct.getHeight().intValue()));
-                byProductSku.setWidth(Objects.requireNonNull(markHarrisProduct.getWidth().intValue()));
-                byProductSku.setDepth(Objects.requireNonNull(markHarrisProduct.getDepth().intValue()));
-                byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
-                Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
-                if (byName.isPresent()) {
-                    byProductSku.setBrandId(byName.get().getId());
+            //Process updated catalog, if there is any updates available in price & stock & images.
+            List<BcProductData> updatedBcProductDataList = new ArrayList<>();
+            List<MarkHarrisProduct> updatedCatalogList = productList
+                    .stream()
+                    .filter(MarkHarrisProduct::isUpdated)
+                    .collect(Collectors.toList());
+            for (MarkHarrisProduct markHarrisProduct : updatedCatalogList) {
+                if (!markHarrisProduct.isDiscontinued() && (markHarrisProduct.getPrice() != null && markHarrisProduct.getPrice().compareTo(BigDecimal.ZERO) > 0)) {
+                    Query query = new Query();
+                    query.addCriteria(Criteria.where("sku").is(markHarrisProduct.getSku()));
+                    BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
+
+                    if (byProductSku == null) {
+                        byProductSku = new BcProductData();
+                        setPriceAndQuantity(markHarrisProduct, byProductSku);
+                        assignCategories(byProductSku, markHarrisProduct.getDescription());
+                        byProductSku.setSku(markHarrisProduct.getSku());
+                        byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
+
+                        byProductSku.setSupplier(Supplier.MAR_HARRIS.getName());
+                        byProductSku.setType(BcConstants.TYPE);
+
+                        if (!markHarrisProduct.getWeight().isEmpty()) {
+                            byProductSku.setWeight(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getWeight()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
+                        }
+                        if (!markHarrisProduct.getMaxHeight().isEmpty()) {
+                            byProductSku.setHeight(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxHeight()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
+
+                        }
+
+                        if (!markHarrisProduct.getMaxWidth().isEmpty()) {
+                            byProductSku.setWidth(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxWidth()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
+
+                        }
+                        if (!markHarrisProduct.getMaxLengthOrDepth().isEmpty()) {
+
+                            byProductSku.setDepth(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxLengthOrDepth()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
+                        }
+
+                        byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
+                        Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
+                        if (byName.isPresent()) {
+                            byProductSku.setBrandId(byName.get().getId());
+                        }
+                        if (markHarrisProduct.getDescription() != null) {
+                            byProductSku.setDescription(markHarrisProduct.getDescription());
+                        }
+                        BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
+                        updatedBcProductDataList.add(bcProductData);
+                        LOGGER.info("Succesfully created BCProductData for {}", markHarrisProduct.getSku());
+                    } else {
+                        byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
+                        setPriceAndQuantity(markHarrisProduct, byProductSku);
+                        assignCategories(byProductSku, markHarrisProduct.getDescription());
+                        BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
+                        updatedBcProductDataList.add(bcProductData);
+                        LOGGER.info("Succesfully updated BCProductData for {}", markHarrisProduct.getSku());
+                    }
+
                 }
-                byProductSku.setDescription(markHarrisProduct.getDescription());
-                BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
-                updatedBcProductDataList.add(bcProductData);
-            } else {
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
-                setPriceAndQuantity(markHarrisProduct, byProductSku);
-                assignCategories(byProductSku, markHarrisProduct.getDescription());
-                BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
-                updatedBcProductDataList.add(bcProductData);
             }
+            updateBigCommerceProducts(updatedBcProductDataList);
+        } catch (Exception ex) {
+            LOGGER.error(ex.getCause().getMessage());
         }
-        updateBigCommerceProducts(updatedBcProductDataList);
     }
 
 
@@ -129,17 +156,20 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
         URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
         HttpEntity<BcProductData> request = new HttpEntity<>(null, bigCommerceApiService.getHttpHeaders());
 
-        Query query = new Query();
-        for (MarkHarrisProduct markHarrisProduct : discontinuedList) {
-        query.addCriteria(Criteria.where("sku").is(markHarrisProduct.getSku()));
-            BcProductData byProductSku = mongoOperations.findOne(query,BcProductData.class);
-            if (Objects.requireNonNull(byProductSku).getId() != null) {
+        discontinuedList.parallelStream().forEach(markHarrisProduct -> {
+
+            Query query = new Query();
+            query.addCriteria(Criteria.where("sku").is(markHarrisProduct.getSku()));
+            BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
+            if (byProductSku != null && byProductSku.getId() != null) {
                 String url = uri + "/" + byProductSku.getId();
                 restTemplate.exchange(url, HttpMethod.DELETE, request, Void.class);
                 bigCommerceApiService.delete(byProductSku.get_id());
                 LOGGER.info("Successfully Deleted product from Big Commerce due to discontinue, product id {} and product sku {}", byProductSku.getId(), byProductSku.getSku());
             }
-        }
+        });
+
+
     }
 
     private void updateBigCommerceProducts(List<BcProductData> updatedBcProductDataList) throws Exception {

@@ -46,10 +46,8 @@ import java.util.Optional;
 @Service
 public class MarkHarrisServiceImpl implements MarkHarrisService {
 
-    private final MarkHarrisProductRepository repository;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(MarkHarrisServiceImpl.class);
-
+    private final MarkHarrisProductRepository repository;
     private final GenerateBCDataService generateBCDataService;
 
     private final MongoOperations mongoOperations;
@@ -170,7 +168,7 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
                     Query query = new Query();
                     query.addCriteria(Criteria.where("sku").is(image.getSku()));
                     MarkHarrisProduct product = mongoOperations.findOne(query, MarkHarrisProduct.class);
-                    if(product != null && product.getImages()==null) {
+                    if (product != null && product.getImages() == null) {
                         List<String> images = new ArrayList<>();
                         images.add(image.getImageURL1());
                         images.add(image.getImageURL2());
@@ -191,7 +189,6 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
 
                     }
                 });
-
 
 
             } catch (Exception ex) {
@@ -265,10 +262,11 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
         query.addCriteria(Criteria.where("sku").is(stock.getSku()));
         Update update = new Update().inc("matches", 1).set("stockLevel", stock.getStockQuantity()).set("stockStatus", stock.getStatus()).set("nextArrival", stock.getArrivalDate());
         if (stock.getStockQuantity() == 0 && stock.getStatus().equals("Discontinued")) {
-            update.set("isDiscontinued", Boolean.TRUE).set("updated", Boolean.TRUE);
+            update.set("discontinued", Boolean.TRUE).set("isDiscontinued", Boolean.TRUE).set("updated", Boolean.TRUE);
         }
         MarkHarrisProduct andModify = mongoOperations.findAndModify(query, update, new FindAndModifyOptions().returnNew(false).upsert(false), MarkHarrisProduct.class);
         LOGGER.info("Catalog has been updated with stock for sku {}, product name {}", Objects.requireNonNull(andModify).getSku(), andModify.getProductName());
+        //System.out.println("++++++++++++++++++++++++++++++SKU "+ stock.getSku() + "Status "+ stock.getStatus() + "Stock "+ stock.getStockQuantity());
     }
 
     @Override
@@ -308,13 +306,11 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
         query.addCriteria(Criteria.where("sku").is(markHarrisProduct.getSku()));
         MarkHarrisProduct product = mongoOperations.findOne(query, MarkHarrisProduct.class);
         if (product != null) {
-            if (product.compareTo(markHarrisProduct) != 0) {
-                Update update = new Update();
-                update.set("discontinued", Boolean.FALSE);
-                update.set("updated", Boolean.TRUE);
-                UpdateResult updatedProduct = mongoOperations.updateFirst(query, update, MarkHarrisProduct.class);
-                LOGGER.info("Successfully updated MarkHarris Product SKU {} and ProductName {}", markHarrisProduct.getSku(), markHarrisProduct.getProductName());
-            }
+            Update update = new Update();
+            update.set("discontinued", Boolean.FALSE);
+            update.set("updated", Boolean.TRUE);
+            UpdateResult updatedProduct = mongoOperations.updateFirst(query, update, MarkHarrisProduct.class);
+            LOGGER.info("Successfully updated MarkHarris Product SKU {} and ProductName {}", markHarrisProduct.getSku(), markHarrisProduct.getProductName());
         } else {
             markHarrisProduct.setDiscontinued(Boolean.FALSE);
             markHarrisProduct.setUpdated(Boolean.TRUE);
@@ -325,7 +321,11 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
         //Process Images
         MarkHarrisProduct markHarrisProd = mongoOperations.findOne(query, MarkHarrisProduct.class);
         if (markHarrisProd.getImages() == null || Objects.requireNonNull(markHarrisProd).getImages().isEmpty()) {
-            markHarrisProd.setImages(MarkHarrisFeedMaker.getCatalogImages(markHarrisProd));
+            List<String> catalogImages = MarkHarrisFeedMaker.getCatalogImages(markHarrisProd);
+            if (catalogImages != null && catalogImages.isEmpty()) {
+                LOGGER.info("Images are null or empty for the sku {} {}", markHarrisProd.getSku(), markHarrisProd.getProductName());
+            }
+            markHarrisProd.setImages(catalogImages);
             repository.save(markHarrisProd);
         }
     }
@@ -378,8 +378,11 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
                 if (imagesList != null && !imagesList.isEmpty()) {
                     product.setImages(imagesList);
                     product.setUpdated(Boolean.TRUE);
-                    repository.save(product);
+                } else {
+                    product.setUpdated(Boolean.TRUE);
+                    product.setDiscontinued(Boolean.TRUE);
                 }
+                repository.save(product);
             }
         });
 
