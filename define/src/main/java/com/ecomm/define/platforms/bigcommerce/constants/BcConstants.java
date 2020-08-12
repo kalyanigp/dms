@@ -10,4 +10,5 @@ public class BcConstants {
     public static final String TYPE = "physical";
     public static final String PREORDER = "preorder";
     public static final String AVAILABLE = "available";
+    public static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
 }

@@ -262,6 +262,16 @@ public class BcProductData {
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
+    private List<String> imageList;
+
+    public List<String> getImageList() {
+        return imageList;
+    }
+
+    public void setImageList(List<String> imageList) {
+        this.imageList = imageList;
+    }
+
     @JsonProperty("id")
     public Integer getId() {
         return id;
