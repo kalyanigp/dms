@@ -260,10 +260,6 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
         BigDecimal originalPrice = artisanProduct.getPrice();
         if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
             byProductSku.setPrice(originalPrice.intValue());
-            if (originalPrice.compareTo(new BigDecimal(higherLimitHDPrice)) > 0) {
-                BigDecimal retailPrice = originalPrice.add(DefineUtils.percentage(originalPrice, new BigDecimal(percentageLow)));
-                byProductSku.setRetailPrice(retailPrice.intValue());
-            }
         }
     }
 }
