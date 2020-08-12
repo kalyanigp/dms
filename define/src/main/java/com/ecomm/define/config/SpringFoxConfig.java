@@ -58,6 +58,16 @@ public class SpringFoxConfig {
     }
 
     @Bean
+    public Docket swaggerHillInteriorApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("HillInterior")
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.ecomm.define.suppliers.hillinterior.controller"))
+                .build()
+                .apiInfo(apiEndPointsInfo());
+    }
+
+    @Bean
     public Docket swaggerMarkHarrisApi() {
         return new Docket(DocumentationType.SWAGGER_2)
                 .groupName("MarkHarris")
