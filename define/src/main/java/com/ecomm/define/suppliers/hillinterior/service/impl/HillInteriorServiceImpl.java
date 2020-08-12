@@ -1,5 +1,6 @@
 package com.ecomm.define.suppliers.hillinterior.service.impl;
 
+import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.exception.FileNotFoundException;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
@@ -27,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -48,8 +50,11 @@ public class HillInteriorServiceImpl implements HillInteriorService {
 
     private final MongoOperations mongoOperations;
 
-    @Value("${bigcommerce.artisan.profit.percentage.high}")
+    @Value("${bigcommerce.hillinterior.profit.percentage.high}")
     private String profitPercentHigh;
+
+    @Value("${bigcommerce.f2g.vat.percentage}")
+    private String vatPercent;
 
     @Autowired // inject hillInteriorDataService
     public HillInteriorServiceImpl(@Lazy @Qualifier("hillInteriorDataService") GenerateBCDataService generateBCDataService
@@ -135,12 +140,14 @@ public class HillInteriorServiceImpl implements HillInteriorService {
                 Update update = new Update();
                 update.set("discontinued", Boolean.FALSE);
                 update.set("updated", Boolean.TRUE);
+                update.set("price",evaluatePrice(product));
                 UpdateResult updatedProduct = mongoOperations.updateFirst(query, update, HillInteriorProduct.class);
                 LOGGER.info("Successfully updated HillInterior Product SKU {} and ProductName {}", hillInteriorProduct.getSku(), hillInteriorProduct.getProductName());
             }
         } else {
             hillInteriorProduct.setDiscontinued(Boolean.FALSE);
             hillInteriorProduct.setUpdated(Boolean.TRUE);
+            hillInteriorProduct.setPrice(evaluatePrice(hillInteriorProduct));
             HillInteriorProduct insertedProduct = mongoOperations.insert(hillInteriorProduct);
             LOGGER.info("Successfully created HillInterior Product SKU {} and ProductName {}", insertedProduct.getSku(), insertedProduct.getProductName());
         }
@@ -187,5 +194,15 @@ public class HillInteriorServiceImpl implements HillInteriorService {
         update.set("updated", false);
         UpdateResult updateResult = mongoOperations.updateMulti(updateModifiedCatalogQuery, update, HillInteriorProduct.class);
         LOGGER.info("Total number of products modified Updated flag to false is, {}", updateResult.getModifiedCount());
+    }
+
+
+    private BigDecimal evaluatePrice(HillInteriorProduct hillInteriorProduct) {
+        BigDecimal price = hillInteriorProduct.getPrice();
+        if(price != null && price.intValue() > 0) {
+            price.add(DefineUtils.getVat(price, new BigDecimal(vatPercent)));
+            price.add(DefineUtils.percentage(price, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
+        }
+        return price;
     }
 }

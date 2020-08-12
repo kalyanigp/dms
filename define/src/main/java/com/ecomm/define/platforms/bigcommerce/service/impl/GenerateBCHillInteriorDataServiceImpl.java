@@ -1,6 +1,5 @@
 package com.ecomm.define.platforms.bigcommerce.service.impl;
 
-import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
 import com.ecomm.define.platforms.bigcommerce.domain.BcBrandData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
@@ -21,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -49,25 +47,25 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
 
     private static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
     private final Logger LOGGER = LoggerFactory.getLogger(GenerateBCHillInteriorDataServiceImpl.class);
-    @Autowired
-    private HillInteriorService hillInteriorService;
+
+    private final HillInteriorService hillInteriorService;
+
+    private final BigCommerceApiService bigCommerceApiService;
+
+    private final BigCommerceImageApiService bigCommerceImageApiService;
+
+    private final BigcBrandApiRepository brandApiRepository;
+
+    private final MongoOperations mongoOperations;
 
     @Autowired
-    private BigCommerceApiService bigCommerceApiService;
-
-    @Autowired
-    private BigCommerceImageApiService bigCommerceImageApiService;
-
-    @Autowired
-    private BigcBrandApiRepository brandApiRepository;
-    @Autowired
-    private MongoOperations mongoOperations;
-
-    @Value("${bigcommerce.f2g.profit.limit.high}")
-    private String higherLimitHDPrice;
-
-    @Value("${bigcommerce.f2g.profit.percentage.low}")
-    private String percentageLow;
+    public GenerateBCHillInteriorDataServiceImpl(HillInteriorService hillInteriorService, BigCommerceApiService bigCommerceApiService, BigCommerceImageApiService bigCommerceImageApiService, BigcBrandApiRepository brandApiRepository, MongoOperations mongoOperations) {
+        this.hillInteriorService = hillInteriorService;
+        this.bigCommerceApiService = bigCommerceApiService;
+        this.bigCommerceImageApiService = bigCommerceImageApiService;
+        this.brandApiRepository = brandApiRepository;
+        this.mongoOperations = mongoOperations;
+    }
 
     @Override
     public void generateBcProductsFromSupplier(List<HillInteriorProduct> productList) throws Exception {
@@ -80,7 +78,9 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
                 .stream()
                 .filter(HillInteriorProduct::isUpdated)
                 .collect(Collectors.toList());
-        for (HillInteriorProduct hillInteriorProduct : updatedCatalogList) {
+
+
+        updatedCatalogList.parallelStream().forEach(hillInteriorProduct -> {
             Query query = new Query();
             query.addCriteria(Criteria.where("sku").is(BcConstants.HILL_INTERIOR + hillInteriorProduct.getSku()));
             BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
@@ -92,41 +92,47 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
 
                 byProductSku.setSku(BcConstants.HILL_INTERIOR + hillInteriorProduct.getSku());
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + hillInteriorProduct.getProductName());
-                StringBuilder discriptionBuilder = new StringBuilder("");
-                discriptionBuilder.append(hillInteriorProduct.getDescription());
+                StringBuilder discriptionBuilder = new StringBuilder();
+                if (hillInteriorProduct.getDescription() != null && !hillInteriorProduct.getDescription().isEmpty()) {
+                    discriptionBuilder.append(hillInteriorProduct.getDescription());
+                }
                 discriptionBuilder.append("Dimensions - (");
-
 
                 byProductSku.setSupplier(Supplier.HILL_INTERIORS.getName());
                 byProductSku.setType(BcConstants.TYPE);
                 if (hillInteriorProduct.getWeight() != null) {
                     int weight = hillInteriorProduct.getWeight().intValue();
                     byProductSku.setWeight(weight);
-                    discriptionBuilder.append(" Weight : " + weight + "kg");
+                    discriptionBuilder.append(" Weight : ").append(weight).append("kg");
                 }
                 if (hillInteriorProduct.getHeight() != null) {
                     int height = hillInteriorProduct.getHeight().intValue();
                     byProductSku.setHeight(height);
-                    discriptionBuilder.append(" Height : " + height + "mm");
+                    discriptionBuilder.append(" Height : ").append(height).append("mm");
                 }
                 if (hillInteriorProduct.getWidth() != null) {
                     int width = hillInteriorProduct.getWidth().intValue();
                     byProductSku.setWidth(width);
-                    discriptionBuilder.append(" Width : " + width + "mm");
+                    discriptionBuilder.append(" Width : ").append(width).append("mm");
                 }
                 if (hillInteriorProduct.getDepth() != null) {
                     int depth = hillInteriorProduct.getDepth().intValue();
                     byProductSku.setDepth(depth);
-                    discriptionBuilder.append(" Depth : " + depth + "mm)");
+                    discriptionBuilder.append(" Depth : ").append(depth).append("mm)");
                 }
-                discriptionBuilder.append("Finish - " + hillInteriorProduct.getFinish());
+                if (hillInteriorProduct.getFinish() != null && !hillInteriorProduct.getFinish().isEmpty()) {
+                    discriptionBuilder.append("Finish - ").append(hillInteriorProduct.getFinish());
+                }
+                if (hillInteriorProduct.getColour() != null && !hillInteriorProduct.getColour().isEmpty()) {
+                    discriptionBuilder.append("Colour - ").append(hillInteriorProduct.getFinish());
+                }
 
                 byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
                 if (byName.isPresent()) {
                     byProductSku.setBrandId(byName.get().getId());
                 }
-                byProductSku.setDescription(hillInteriorProduct.getDescription());
+                byProductSku.setDescription(discriptionBuilder.toString());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
@@ -137,7 +143,8 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             }
-        }
+
+        });
         updateBigCommerceProducts(updatedBcProductDataList);
     }
 
@@ -249,10 +256,10 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
         evaluatePrice(hillInteriorProduct, byProductSku);
         byProductSku.setInventoryLevel(Math.max(hillInteriorProduct.getStockLevel(), 0));
         byProductSku.setAvailability(BcConstants.PREORDER);
-        byProductSku.setAvailabilityDescription("Usually dispatches in 6 to 8 weeks.");
+        byProductSku.setAvailabilityDescription("Usually dispatches on or after " + hillInteriorProduct.getStockExpectedOn());
         if (hillInteriorProduct.getStockLevel() > 0) {
             byProductSku.setAvailability(BcConstants.AVAILABLE);
-            byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
+            byProductSku.setAvailabilityDescription("Usually dispatches in 5 to 7 working days.");
         }
     }
 
@@ -260,10 +267,6 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
         BigDecimal originalPrice = hillInteriorProduct.getPrice();
         if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
             byProductSku.setPrice(originalPrice.intValue());
-            if (originalPrice.compareTo(new BigDecimal(higherLimitHDPrice)) > 0) {
-                BigDecimal retailPrice = originalPrice.add(DefineUtils.percentage(originalPrice, new BigDecimal(percentageLow)));
-                byProductSku.setRetailPrice(retailPrice.intValue());
-            }
         }
     }
 }
