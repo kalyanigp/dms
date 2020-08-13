@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.ecomm.define.suppliers.furniture2go.constants.Furniture2GoConstants.FURNITURE_2_GO_FEED_URL;
+
 /**
  * Created by vamshikirangullapelly on 07/07/2020.
  */
@@ -18,7 +20,7 @@ public class Furniture2GoMasterFeedMaker {
         LOGGER.info("Started Processing Hill Interior Image URLs");
         List<String> images = new ArrayList<>();
         try {
-            String productURL = Furniture2GoURLReader.generateProductURL("https://furniture-to-go.co.uk/catalogsearch/result/?q=" + product.getSku());
+            String productURL = Furniture2GoURLReader.generateProductURL(FURNITURE_2_GO_FEED_URL + product.getSku());
             if (productURL.length() > 0) {
                 Document doc = Furniture2GoURLReader.getDocument(productURL);
                 images = Furniture2GoURLReader.findImageURL(doc);

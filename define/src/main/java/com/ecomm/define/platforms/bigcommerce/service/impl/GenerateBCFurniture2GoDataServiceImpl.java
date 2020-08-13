@@ -57,6 +57,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
     @Override
     public void generateBcProductsFromSupplier(List<Furniture2GoProduct> productList) throws Exception {
+        LOGGER.info("Started generating Furniture2Go Product to BigCommerce");
         //Process Discontinued catalog
         processDiscontinuedCatalog(productList);
 
@@ -102,6 +103,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
             }
         });
         bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList);
+        LOGGER.info("Finished generating Furniture2Go Product to BigCommerce");
     }
 
     /**
@@ -110,12 +112,14 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
      * @param productList
      * @throws URISyntaxException
      */
-    private void processDiscontinuedCatalog(List<Furniture2GoProduct> productList) throws URISyntaxException {
+    private void processDiscontinuedCatalog(List<Furniture2GoProduct> productList) {
+        LOGGER.info("Started processing discontinued products of Furniture2Go in BigCommerce");
         List<Furniture2GoProduct> discontinuedList = productList
                 .stream()
                 .filter(Furniture2GoProduct::isDiscontinued)
                 .collect(Collectors.toList());
         discontinuedList.parallelStream().forEach(furniture2GoProduct -> bigCommerceApiService.processDiscontinuedCatalog(BcConstants.FURNITURE_2_GO + furniture2GoProduct.getSku()));
+        LOGGER.info("Finished processing discontinued products of Furniture2Go in BigCommerce");
     }
 
     private void setPriceAndQuantity(Furniture2GoProduct furniture2GoProduct, BcProductData byProductSku) {
