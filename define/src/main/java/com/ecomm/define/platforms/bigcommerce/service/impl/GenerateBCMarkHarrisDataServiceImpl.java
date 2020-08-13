@@ -21,7 +21,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -36,9 +35,9 @@ import java.util.stream.Collectors;
 public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataService<MarkHarrisProduct> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(GenerateBCMarkHarrisDataServiceImpl.class);
-    private BigCommerceApiService bigCommerceApiService;
-    private BigcBrandApiRepository brandApiRepository;
-    private MongoOperations mongoOperations;
+    private final BigCommerceApiService bigCommerceApiService;
+    private final BigcBrandApiRepository brandApiRepository;
+    private final MongoOperations mongoOperations;
     @Value("${bigcommerce.markharris.profit.limit.high}")
     private String higherLimitHDPrice;
     @Value("${bigcommerce.markharris.profit.percentage.low}")
@@ -101,37 +100,37 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                     if (byName.isPresent()) {
                         byProductSku.setBrandId(byName.get().getId());
                     }
-                    StringBuilder additionalDescription = new StringBuilder("");
+                    StringBuilder additionalDescription = new StringBuilder();
                     if (markHarrisProduct.getDescription() != null) {
                         additionalDescription.append(markHarrisProduct.getDescription());
                     }
                     additionalDescription.append("(Product Dimensions - ");
                     if (markHarrisProduct.getMaxHeight() != null && !markHarrisProduct.getMaxHeight().isEmpty()) {
-                        additionalDescription.append(" Maximum Height - " + markHarrisProduct.getMaxHeight() + "mm");
+                        additionalDescription.append(" Maximum Height - ").append(markHarrisProduct.getMaxHeight()).append("mm");
                     }
                     if (markHarrisProduct.getMinHeight() != null && !markHarrisProduct.getMinHeight().isEmpty()) {
-                        additionalDescription.append(" Minimum Height - " + markHarrisProduct.getMinHeight() + "mm");
+                        additionalDescription.append(" Minimum Height - ").append(markHarrisProduct.getMinHeight()).append("mm");
                     }
                     if (markHarrisProduct.getMaxWidth() != null && !markHarrisProduct.getMaxWidth().isEmpty()) {
-                        additionalDescription.append(" Maximum Width -  " + markHarrisProduct.getMaxWidth() + "mm");
+                        additionalDescription.append(" Maximum Width -  ").append(markHarrisProduct.getMaxWidth()).append("mm");
                     }
                     if (markHarrisProduct.getMinWidth() != null && !markHarrisProduct.getMinWidth().isEmpty()) {
-                        additionalDescription.append(" Minimum Width -  " + markHarrisProduct.getMinWidth() + "mm");
+                        additionalDescription.append(" Minimum Width -  ").append(markHarrisProduct.getMinWidth()).append("mm");
                     }
                     if (markHarrisProduct.getMaxLengthOrDepth() != null && !markHarrisProduct.getMaxLengthOrDepth().isEmpty()) {
-                        additionalDescription.append(" Maximum Length/Depth -  " + markHarrisProduct.getMaxLengthOrDepth() + "mm");
+                        additionalDescription.append(" Maximum Length/Depth -  ").append(markHarrisProduct.getMaxLengthOrDepth()).append("mm");
                     }
                     if (markHarrisProduct.getMinLengthOrDepth() != null && !markHarrisProduct.getMinLengthOrDepth().isEmpty()) {
-                        additionalDescription.append(" Minimum Length/Depth -  " + markHarrisProduct.getMinLengthOrDepth() + "mm");
+                        additionalDescription.append(" Minimum Length/Depth -  ").append(markHarrisProduct.getMinLengthOrDepth()).append("mm");
                     }
                     additionalDescription.append(")");
 
                     if (markHarrisProduct.getWeight() != null && !markHarrisProduct.getWeight().isEmpty()) {
-                        additionalDescription.append(" Product Weight -  " + markHarrisProduct.getWeight() + "kg ");
+                        additionalDescription.append(" Product Weight -  ").append(markHarrisProduct.getWeight()).append("kg ");
                     }
 
                     if (markHarrisProduct.getAssembled() != null && !markHarrisProduct.getAssembled().isEmpty()) {
-                        additionalDescription.append(" Assembly Instructions : " + markHarrisProduct.getAssembled());
+                        additionalDescription.append(" Assembly Instructions : ").append(markHarrisProduct.getAssembled());
                     }
 
                     byProductSku.setDescription(additionalDescription.toString());
@@ -155,7 +154,7 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
     }
 
 
-    private void processDiscontinuedCatalog(List<MarkHarrisProduct> productList) throws URISyntaxException {
+    private void processDiscontinuedCatalog(List<MarkHarrisProduct> productList) {
         List<MarkHarrisProduct> discontinuedList = productList
                 .stream()
                 .filter(MarkHarrisProduct::isDiscontinued)

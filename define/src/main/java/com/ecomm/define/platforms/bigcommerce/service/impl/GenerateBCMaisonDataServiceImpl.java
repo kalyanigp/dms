@@ -65,7 +65,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
 
         updatedCatalogList.parallelStream().forEach(maisonProd -> {
             Query query = new Query();
-            query.addCriteria(Criteria.where("sku").is(MAISON_CODE+maisonProd.getProductCode()));
+            query.addCriteria(Criteria.where("sku").is(MAISON_CODE + maisonProd.getProductCode()));
             BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
 
             if (byProductSku == null) {
@@ -73,7 +73,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 setPriceAndQuantity(maisonProd, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
                 byProductSku.setImageList(Arrays.asList(maisonProd.getImages().split(",")));
-                byProductSku.setSku(MAISON_CODE+maisonProd.getProductCode());
+                byProductSku.setSku(MAISON_CODE + maisonProd.getProductCode());
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
 
                 byProductSku.setSupplier(Supplier.MAISON.getName());
@@ -90,8 +90,8 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                     byProductSku.setBrandId(byName.get().getId());
                 }
                 String packingSpec = maisonProd.getPackingSpec();
-                packingSpec = packingSpec.toLowerCase();
                 if (packingSpec != null) {
+                    packingSpec = packingSpec.toLowerCase();
                     int index = 0;
                     if (packingSpec.contains("kg")) {
                         index = packingSpec.indexOf("kg");
@@ -107,7 +107,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                             }
                         }
                     } catch (Exception ex) {
-                        LOGGER.error("Exception while calculating weight for sku {}", byProductSku.getSku() + ex.getStackTrace());
+                        LOGGER.error("Exception while calculating weight for sku {}", byProductSku.getSku() + Arrays.toString(ex.getStackTrace()));
                     }
                 }
                 if (maisonProd.getMaterial() != null) {
@@ -173,9 +173,9 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 } else {
                     st = new StringTokenizer(size.substring(0, size.indexOf("CM")), "x");
                 }
-                String height = "";
-                String width = "";
-                String depth = "";
+                String height;
+                String width;
+                String depth;
                 while (st.hasMoreTokens()) {
                     String nextString = st.nextToken();
 

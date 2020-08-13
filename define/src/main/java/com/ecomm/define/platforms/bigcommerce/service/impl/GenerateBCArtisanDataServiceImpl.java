@@ -34,9 +34,9 @@ import java.util.stream.Collectors;
 public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<ArtisanProduct> {
 
     private final Logger LOGGER = LoggerFactory.getLogger(GenerateBCArtisanDataServiceImpl.class);
-    private BigCommerceApiService bigCommerceApiService;
-    private BigcBrandApiRepository brandApiRepository;
-    private MongoOperations mongoOperations;
+    private final BigCommerceApiService bigCommerceApiService;
+    private final BigcBrandApiRepository brandApiRepository;
+    private final MongoOperations mongoOperations;
 
     @Value("${bigcommerce.f2g.profit.limit.high}")
     private String higherLimitHDPrice;
@@ -86,31 +86,31 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                 if (artisanProduct.getWeight() != null) {
                     int weight = artisanProduct.getWeight().intValue();
                     byProductSku.setWeight(weight);
-                    discriptionBuilder.append(" Weight : " + weight + "kg");
+                    discriptionBuilder.append(" Weight : ").append(weight).append("kg");
                 }
                 if (artisanProduct.getHeight() != null) {
                     int height = artisanProduct.getHeight().intValue();
                     byProductSku.setHeight(height);
-                    discriptionBuilder.append(" Height : " + height + "mm");
+                    discriptionBuilder.append(" Height : ").append(height).append("mm");
                 }
                 if (artisanProduct.getWidth() != null) {
                     int width = artisanProduct.getWidth().intValue();
                     byProductSku.setWidth(width);
-                    discriptionBuilder.append(" Width : " + width + "mm");
+                    discriptionBuilder.append(" Width : ").append(width).append("mm");
                 }
                 if (artisanProduct.getDepth() != null) {
                     int depth = artisanProduct.getDepth().intValue();
                     byProductSku.setDepth(depth);
-                    discriptionBuilder.append(" Depth : " + depth + "mm)");
+                    discriptionBuilder.append(" Depth : ").append(depth).append("mm)");
                 }
-                discriptionBuilder.append("Assembly Instructions - " + artisanProduct.getAssemblyInstructions());
+                discriptionBuilder.append("Assembly Instructions - ").append(artisanProduct.getAssemblyInstructions());
 
                 byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
                 if (byName.isPresent()) {
                     byProductSku.setBrandId(byName.get().getId());
                 }
-                byProductSku.setDescription(artisanProduct.getDescription());
+                byProductSku.setDescription(discriptionBuilder.toString());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
@@ -126,7 +126,7 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
     }
 
 
-    private void processDiscontinuedCatalog(List<ArtisanProduct> productList) throws URISyntaxException {
+    private void processDiscontinuedCatalog(List<ArtisanProduct> productList) {
         List<ArtisanProduct> discontinuedList = productList
                 .stream()
                 .filter(ArtisanProduct::isDiscontinued)

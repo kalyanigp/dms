@@ -40,7 +40,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
     private final BigCommerceApiService bigCommerceApiService;
     private final BigcBrandApiRepository brandApiRepository;
     private final Logger LOGGER = LoggerFactory.getLogger(BigCommerceProductApiController.class);
-    private MongoOperations mongoOperations;
+    private final MongoOperations mongoOperations;
     @Value("${bigcommerce.f2g.profit.limit.high}")
     private String higherLimitHDPrice;
     @Value("${bigcommerce.f2g.profit.percentage.low}")
@@ -56,7 +56,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
 
     @Override
-    public void generateBcProductsFromSupplier(List<Furniture2GoProduct> productList) throws Exception {
+    public void generateBcProductsFromSupplier(List<Furniture2GoProduct> productList) {
         LOGGER.info("Started generating Furniture2Go Product to BigCommerce");
         //Process Discontinued catalog
         processDiscontinuedCatalog(productList);
@@ -194,7 +194,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         }
 
         if (furniture2GoProduct.getAssemblyInstructions() != null && !furniture2GoProduct.getAssemblyInstructions().isEmpty()) {
-            dimensionsDescription.append(" Assembly Instructions - " + furniture2GoProduct.getAssemblyInstructions());
+            dimensionsDescription.append(" Assembly Instructions - ").append(furniture2GoProduct.getAssemblyInstructions());
         }
         byProductSku.setDescription(furniture2GoProduct.getDescription() + " " + dimensionsDescription.toString());
     }
