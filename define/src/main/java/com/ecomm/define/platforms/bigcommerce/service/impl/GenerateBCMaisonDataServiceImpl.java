@@ -87,27 +87,33 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 if (byName.isPresent()) {
                     byProductSku.setBrandId(byName.get().getId());
                 }
-                if (maisonProd.getMaterial() != null) {
+                String packingSpec = maisonProd.getPackingSpec();
+                packingSpec = packingSpec.toLowerCase();
+                if (packingSpec != null) {
                     int index = 0;
-                    if (maisonProd.getMaterial().contains("Kg")) {
-                        index = maisonProd.getMaterial().indexOf("Kg");
-                    } else if (maisonProd.getMaterial().contains("KG")) {
-                        index = maisonProd.getMaterial().indexOf("KG");
+                    if (packingSpec.contains("kg")) {
+                        index = packingSpec.indexOf("kg");
                     }
-                    if (index > 0) {
-                        String weight = maisonProd.getMaterial().substring(index - 3, index);
-                        weight = weight.replaceAll(" ", "").replaceAll(":", "");
-                        double dWeight = Double.parseDouble(weight);
-                        if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
-                            byProductSku.setWeight((int) dWeight);
+                    try {
+                        if (index > 0) {
+                            String weight = packingSpec.substring(index - 3, index);
+                            weight = weight.replaceAll(" ", "").replaceAll(":", "");
+                            weight = weight.replaceAll("[^\\d.]", "");
+                            double dWeight = Double.parseDouble(weight);
+                            if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
+                                byProductSku.setWeight((int) dWeight);
+                            }
                         }
-
+                    } catch (Exception ex) {
+                        LOGGER.error("Exception while calculating weight for sku {}", byProductSku.getSku() + ex.getStackTrace());
                     }
                 }
                 if (maisonProd.getMaterial() != null) {
                     byProductSku.setDescription(maisonProd.getMaterial().replaceAll(",", ""));
                 }
-                byProductSku.setDescription(byProductSku.getDescription() + " " + getDimensions(maisonProd.getSize()));
+                findDimesions(byProductSku, maisonProd.getSize());
+
+                byProductSku.setDescription(byProductSku.getDescription() + " " + maisonProd.getSize() + " " + packingSpec);
                 byProductSku.setAvailabilityDescription(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
                 byProductSku.setMpn(maisonProd.getProductCode());
                 byProductSku.setPageTitle(maisonProd.getTitle());
@@ -136,7 +142,6 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
 
     private int evaluatePrice(MaisonProduct maisonProd) {
         BigDecimal decimalPrice = null;
-        System.out.println(maisonProd.getProductCode() + "*****" + maisonProd.getMspPrice());
         if (StringUtils.isEmpty(maisonProd.getMspPrice()) || "N/A".equals(maisonProd.getMspPrice()) || "0".equals(maisonProd.getMspPrice())) {
             if (!StringUtils.isEmpty(maisonProd.getTradePrice())) {
                 decimalPrice = new BigDecimal(maisonProd.getTradePrice());
@@ -151,20 +156,81 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
     }
 
 
-    private String getDimensions(String size) {
-        StringTokenizer st = new StringTokenizer(size, "x");
-        StringBuilder stringBuilder = new StringBuilder();
-        while (st.hasMoreTokens()) {
-            String nextString = st.nextToken();
-            if (nextString.contains("H")) {
-                stringBuilder.append(nextString.replaceAll("H", "")).append("cm ");
-            } else if (nextString.contains("W")) {
-                stringBuilder.append(nextString.replaceAll("W", "")).append("cm ");
-            } else if (nextString.contains("D")) {
-                stringBuilder.append(nextString.replaceAll("D", "")).append("cm ");
+    private void findDimesions(BcProductData byProductSku, String size) {
+
+        StringTokenizer st;
+        size = size.replaceAll("Tile Size", "");
+        size = size.replaceAll("Height", "");
+        size = size.replaceAll("Size", "");
+        size = size.replaceAll("Frame", "");
+
+        try {
+            if (size.indexOf("H") == size.lastIndexOf("H")) {
+                size = size.replaceAll("cm", "CM");
+                if (size.contains("X")) {
+                    st = new StringTokenizer(size.substring(0, size.indexOf("CM")), "X");
+                } else {
+                    st = new StringTokenizer(size.substring(0, size.indexOf("CM")), "x");
+                }
+                String height = "";
+                String width = "";
+                String depth = "";
+                while (st.hasMoreTokens()) {
+                    String nextString = st.nextToken();
+
+                    if (nextString.contains("H")) {
+                        height = nextString.replaceAll("H", "");
+                        height = height.replaceAll(" ", "");
+                        height = height.replaceAll("cm", "");
+                        if (height.contains(".")) {
+                            height = height.substring(0, height.indexOf("."));
+                        }
+                        if (height.contains("-")) {
+                            height = height.substring(0, height.indexOf("-"));
+                        }
+                        if (height.contains("(")) {
+                            height = height.substring(0, height.indexOf("("));
+                        }
+                        height = height.replaceAll("[^\\d.]", "");
+                        byProductSku.setHeight(Double.valueOf(height).intValue());
+                    } else if (nextString.contains("W")) {
+                        width = nextString.replaceAll("W", "");
+                        width = width.replaceAll(" ", "");
+                        width = width.replaceAll("cm", "");
+                        width = width.replaceAll("[^\\d.]", "");
+
+                        if (width.contains(".")) {
+                            width = width.substring(0, width.indexOf("."));
+                        }
+                        if (width.contains("-")) {
+                            width = width.substring(0, width.indexOf("-"));
+                        }
+                        byProductSku.setWidth(Double.valueOf(width).intValue());
+                    } else if (nextString.contains("D") || nextString.contains("L")) {
+                        depth = nextString.replaceAll("D", "");
+                        depth = depth.replaceAll("L", "");
+                        depth = depth.replaceAll(" ", "");
+                        depth = depth.replaceAll("[^\\d.]", "");
+
+                        if (depth.contains("cm")) {
+
+                            depth = depth.substring(0, depth.indexOf("cm"));
+                        }
+                        if (depth.contains(".")) {
+                            depth = depth.substring(0, depth.indexOf("."));
+                        }
+                        if (depth.contains("-")) {
+                            depth = depth.substring(0, depth.indexOf("-"));
+                        }
+
+                        depth = depth.replaceAll("cm", "");
+                        byProductSku.setDepth(Double.valueOf(depth).intValue());
+                    }
+                }
             }
+        } catch (Exception ex) {
+            LOGGER.error("Exception while finding dimensions for sku {}", byProductSku.getSku() + ex.getMessage());
         }
-        return stringBuilder.toString();
     }
 
     private String getProductAvailability(double tradePrice, int stockQty) {
@@ -175,10 +241,8 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 return "Usually dispatches in 5 days";
             } else if (tradePrice <= 300) {
                 return "Usually dispatches in 10 days";
-
             } else if (tradePrice <= 700) {
                 return "Usually dispatches in 15 days";
-
             } else if (tradePrice > 700) {
                 return "Usually dispatches in 25 days";
             }
