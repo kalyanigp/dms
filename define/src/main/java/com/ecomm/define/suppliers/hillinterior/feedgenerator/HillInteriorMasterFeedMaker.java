@@ -15,12 +15,13 @@ import java.util.List;
 public class HillInteriorMasterFeedMaker {
     private final static Logger LOGGER = LoggerFactory.getLogger(HillInteriorMasterFeedMaker.class);
 
-    public static List<String> getCatalogImages(HillInteriorProduct hillInteriorProduct) {
+    public static List<String> getProductImages(HillInteriorProduct hillInteriorProduct) {
+
         LOGGER.info("Started Processing Hill Interior Image URLs");
         List<String> images = new ArrayList<>();
         try {
             String productURL = HillInteriorURLReader.generateProductURL(HillInteriorConstants.FEEDMAKER_URL + hillInteriorProduct.getSku());
-            if (productURL.length() > 0) {
+            if (productURL !=null && !productURL.isEmpty()) {
                 Document doc = HillInteriorURLReader.getDocument(productURL);
                 images = HillInteriorURLReader.addImages(doc);
             }

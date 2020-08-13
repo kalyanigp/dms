@@ -21,12 +21,10 @@ public class HillInteriorURLReader {
                 productURL = doc.getElementsByClass("product-link clearfix").get(0).getElementsByAttribute("href").toString();
                 productURL = productURL.substring(9, productURL.indexOf("\" class"));
             }
-            //System.out.println("Product Link *** "+links.get(81).getElementsByAttribute("href").attr("href").toString());
-           // productURL = links.get(81).getElementsByAttribute("href").attr("href").toString();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return HillInteriorConstants.BASE_URL+productURL;
+        return HillInteriorConstants.BASE_URL + productURL;
     }
 
     public static Document getDocument(String url) {
@@ -41,18 +39,14 @@ public class HillInteriorURLReader {
     }
 
 
-
     public static List<String> addImages(Document doc) {
         String imageURL = "";
         List<String> images = new ArrayList<String>();
-            imageURL = doc.select("div[id*=product-album-main").select("a[href]").toString();
-        if (imageURL.length()>8) {
-            imageURL = imageURL.substring(8, imageURL.indexOf("rel="));
+        imageURL = doc.select("div[id*=product-album-main").select("a[href]").toString();
+        if (imageURL.length() > 8) {
+            imageURL = imageURL.substring(9, imageURL.indexOf("rel=")-2);
         }
-            images.add(imageURL);
-         System.out.print(imageURL+ "**");
-
-        // Elements links = doc.getElementsByClass("download-highres");
+        images.add(imageURL);
 
         findMoreURLs(doc, images, "zoom1");
         findMoreURLs(doc, images, "zoom2");
@@ -64,20 +58,16 @@ public class HillInteriorURLReader {
     private static void findMoreURLs(Document doc, List<String> images, String zoom) {
         String fullURL;
         String partURL;
-        if (doc.getElementById(zoom) != null){
+        if (doc.getElementById(zoom) != null) {
             fullURL = doc.getElementById(zoom).select("a[href]").toString();
-            partURL = fullURL.substring(fullURL.indexOf("smallimage: ")+13,fullURL.indexOf("largeimage: ")-2);
+            partURL = fullURL.substring(fullURL.indexOf("smallimage: ") + 13, fullURL.indexOf("largeimage: ") - 2);
             images.add(partURL);
-            System.out.print(partURL + "**");
 
-            partURL = fullURL.substring(fullURL.indexOf("largeimage: ")+13,fullURL.indexOf("}\">")-1);
+            partURL = fullURL.substring(fullURL.indexOf("largeimage: ") + 13, fullURL.indexOf("}\">") - 1);
             images.add(partURL);
-            System.out.print(partURL+ "**");
 
-            partURL = fullURL.substring(fullURL.indexOf("<img data-src=")+15,fullURL.indexOf("\" alt="));
+            partURL = fullURL.substring(fullURL.indexOf("<img data-src=") + 15, fullURL.indexOf("\" alt="));
             images.add(partURL);
-            System.out.println(partURL);
-
         }
     }
 }

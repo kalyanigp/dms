@@ -168,10 +168,17 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         try {
             if (size.indexOf("H") == size.lastIndexOf("H")) {
                 size = size.replaceAll("cm", "CM");
+                size = size.replaceAll("mm", "MM");
+
+                int unit = size.indexOf("CM");
+                if (size.contains("MM"))
+                {
+                    unit = size.indexOf("MM");
+                }
                 if (size.contains("X")) {
-                    st = new StringTokenizer(size.substring(0, size.indexOf("CM")), "X");
+                    st = new StringTokenizer(size.substring(0, unit), "X");
                 } else {
-                    st = new StringTokenizer(size.substring(0, size.indexOf("CM")), "x");
+                    st = new StringTokenizer(size.substring(0, unit), "x");
                 }
                 String height;
                 String width;
@@ -183,6 +190,8 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                         height = nextString.replaceAll("H", "");
                         height = height.replaceAll(" ", "");
                         height = height.replaceAll("cm", "");
+                        height = height.replaceAll("mm", "");
+
                         if (height.contains(".")) {
                             height = height.substring(0, height.indexOf("."));
                         }
@@ -198,6 +207,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                         width = nextString.replaceAll("W", "");
                         width = width.replaceAll(" ", "");
                         width = width.replaceAll("cm", "");
+                        width = width.replaceAll("mm", "");
                         width = width.replaceAll("[^\\d.]", "");
 
                         if (width.contains(".")) {
@@ -214,8 +224,12 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                         depth = depth.replaceAll("[^\\d.]", "");
 
                         if (depth.contains("cm")) {
-
                             depth = depth.substring(0, depth.indexOf("cm"));
+                            depth = depth.replaceAll("cm", "");
+                        }
+                        if (depth.contains("mm")) {
+                            depth = depth.substring(0, depth.indexOf("mm"));
+                            depth = depth.replaceAll("mm", "");
                         }
                         if (depth.contains(".")) {
                             depth = depth.substring(0, depth.indexOf("."));
@@ -223,8 +237,6 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                         if (depth.contains("-")) {
                             depth = depth.substring(0, depth.indexOf("-"));
                         }
-
-                        depth = depth.replaceAll("cm", "");
                         byProductSku.setDepth(Double.valueOf(depth).intValue());
                     }
                 }

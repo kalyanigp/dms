@@ -32,6 +32,10 @@ public class DefineUtils {
         return base.multiply(pct).divide(ONE_HUNDRED);
     }
 
+    public static BigDecimal multiply(BigDecimal value1, BigDecimal value2) {
+        return value1.multiply(value2);
+    }
+
     public static BigDecimal getVat(BigDecimal base, BigDecimal pct) {
         return base.multiply(pct).divide(ONE_HUNDRED);
     }
