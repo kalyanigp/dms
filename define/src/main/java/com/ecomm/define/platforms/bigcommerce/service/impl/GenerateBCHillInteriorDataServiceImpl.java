@@ -130,7 +130,7 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
     }
 
 
-    private void processDiscontinuedCatalog(List<HillInteriorProduct> productList) throws URISyntaxException {
+    private void processDiscontinuedCatalog(List<HillInteriorProduct> productList) {
         List<HillInteriorProduct> discontinuedList = productList
                 .stream()
                 .filter(HillInteriorProduct::isDiscontinued)
