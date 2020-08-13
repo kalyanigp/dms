@@ -12,30 +12,37 @@ import java.util.stream.Collectors;
 public class BCUtils {
     public static List<Integer> assignCategories(String title) {
         Set<Integer> categories = new HashSet<>();
-        boolean categoryAssigned = false;
         for (Category category : Category.values()) {
-            if (category.getCategoryWord().contains(" "))
-            {
+            if(!(title.toLowerCase().contains("dining chair") || title.toLowerCase().contains("dining table")
+                    || title.toLowerCase().contains("coffee table") || title.toLowerCase().contains("side table"))
+                    || title.toLowerCase().contains("console table") || title.toLowerCase().contains("dressing table")
+                    || title.toLowerCase().contains("sofa bed")) {
                 if (title.toLowerCase().contains(category.getCategoryWord().toLowerCase())) {
                     categories.add(category.getCategoryCode());
-                    categoryAssigned = true;
                 }
-            }
-            for(String token:getTokensInTitle(title)){
-                if (category.getCategoryWord().equalsIgnoreCase(token)) {
-                    categories.add(category.getCategoryCode());
-                    categoryAssigned = true;
+            } else {
+                if (category.getCategoryWord().contains(" ")) {
+                    for (String token : getTokensinWord(category.getCategoryWord())) {
+                        if (title.contains(token)) {
+                            categories.add(category.getCategoryCode());
+                        }
+                    }
+                }
+                for (String token : getTokensinWord(title)) {
+                    if (category.getCategoryWord().equalsIgnoreCase(token)) {
+                        categories.add(category.getCategoryCode());
+                    }
                 }
             }
         }
-        if (!categoryAssigned)
+        if (categories.size() == 0)
         {
             categories.add(Category.FURNITURE.getCategoryCode());
         }
         return categories.parallelStream().collect(Collectors.toList());
     }
 
-    private static List<String> getTokensInTitle(String str) {
+    private static List<String> getTokensinWord(String str) {
         return Collections.list(new StringTokenizer(str, " ")).stream()
                 .map(token -> (String) token)
                 .collect(Collectors.toList());

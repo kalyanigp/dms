@@ -9,6 +9,7 @@ public enum Category {
     LIVING(27, "Living"),
     LIVING_SOFAS(28, "Sofa"),
     LIVING_ARMCHAIRS(29, "ArmChair"),
+    LIVING_CHAIRS(29, "Chair"),
     LIVING_CHAISE(28, "Chaise"),
     LIVING_CHAISE_SOFA(29, "Chaise"),
     LIVING_SOFA_BEDS(30, "Sofa Bed"),
@@ -18,6 +19,7 @@ public enum Category {
     SOFAS_ARMCHAIRS(35, "ArmChair"),
     SA_SOFAS(36, "Sofa"),
     SA_ARMCHAIRS(37, "Armchair"),
+    SA_CHAIRS(37, "Chair"),
     SA_VELVET(37, "Velvet Chair"),
     SA_SOFABEDS(39, "Sofa Bed"),
     SA_FOOTSTOOLS(40, "Foot Stool"),
@@ -40,6 +42,7 @@ public enum Category {
     BEDROOM_FURNITURE(50, "Bedroom"),
     BB_BEDROOM_FURNITURE(50, "Bathroom"),
     BB_TOILET_FURNITURE(50, "Toilet"),
+    BB_TOWEL_FURNITURE(50, "Towel"),
     KIDS_ROOM(51, "Kid"),
     KR_BUNK_BEDS(52, "Bunk Bed"),
     KR_MID_SLEEPERS(53, "Mid Sleeper"),
@@ -52,6 +55,7 @@ public enum Category {
     CARPET(58, "Carpet"),
     HF_DECORATIONS(59, "Decoration"),
     HF_WING_DECORATIONS(59, "Wing"),
+    HF_WINGS_DECORATIONS(59, "Wings"),
     HF_LANTERB(59, "Lantern"),
     HF_CURTAIN_HOLDER(59, "Curtain Holder"),
     HF_WALLLIGHT(59, "Wall Light"),
@@ -60,7 +64,7 @@ public enum Category {
     HF_STAGE(59, "Stag"),
     HF_SCULPTURE(59, "Sculpture"),
     HF_CANOPY(58, "Canopy"),
-    HF_WALL_CANOPY(59, "Canopy"),
+    HF_WALL_CANOPY(58, "Canopy"),
     HOME_OFFICE(60, "Home Office"),
     OFFICE(60, " Office"),
     HO_BOOKCASES(61, "Bookcase"),
@@ -99,8 +103,8 @@ public enum Category {
     ALUMINIUM(89,"Aluminium"),
     BEDSIDES(90,"Bedside"),
     CHEST_OF_DRAWERS(91,"Chest"),
-    ART_SUPPLIES(92,"Easel");
-
+    ART_SUPPLIES(92,"Easel"),
+    ART_STAND(92,"Stand");
     private final int categoryCode;
     private final String categoryWord;
 
