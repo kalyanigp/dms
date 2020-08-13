@@ -100,7 +100,6 @@ public class BcProductData {
 
     @Id
     public ObjectId _id;
-    @JsonIgnore
     public String supplier;
 
     @JsonProperty("id")
@@ -262,6 +261,16 @@ public class BcProductData {
     private List<Object> parentRelations = null;
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+
+    private List<String> imageList;
+
+    public List<String> getImageList() {
+        return imageList;
+    }
+
+    public void setImageList(List<String> imageList) {
+        this.imageList = imageList;
+    }
 
     @JsonProperty("id")
     public Integer getId() {

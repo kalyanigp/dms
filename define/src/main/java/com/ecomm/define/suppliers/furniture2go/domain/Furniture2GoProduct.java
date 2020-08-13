@@ -1,5 +1,6 @@
 package com.ecomm.define.suppliers.furniture2go.domain;
 
+import com.ecomm.define.suppliers.artisan.domain.ArtisanProduct;
 import com.opencsv.bean.CsvBindByName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,6 +11,8 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Created by vamshikirangullapelly on 18/04/2020.
@@ -84,47 +87,34 @@ public class Furniture2GoProduct {
     @CsvBindByName(column = "AssemblyInstructions")
     private String assemblyInstructions;
 
+    private List<String> images;
 
-    @CsvBindByName(column = "Image URL1")
-    private String imageURL1;
-
-    @CsvBindByName(column = "Image URL2")
-    private String imageURL2;
-
-    @CsvBindByName(column = "Image URL3")
-    private String imageURL3;
-
-    @CsvBindByName(column = "Image URL4")
-    private String imageURL4;
-
-    @CsvBindByName(column = "Image URL5")
-    private String imageURL5;
-
-    @CsvBindByName(column = "Image URL6")
-    private String imageURL6;
-
-    @CsvBindByName(column = "Image URL7")
-    private String imageURL7;
-
-    @CsvBindByName(column = "Image URL8")
-    private String imageURL8;
-
-    @CsvBindByName(column = "Image URL9")
-    private String imageURL9;
-
-    @CsvBindByName(column = "Image URL10")
-    private String imageURL10;
-
-    @CsvBindByName(column = "Image URL11")
-    private String imageURL11;
-
-    @CsvBindByName(column = "Image URL12")
-    private String imageURL12;
+    private BigDecimal hdPrice;
 
     private BigDecimal price;
 
     private int stockLevel;
 
     private boolean updated;
+
+    private boolean isDiscontinued;
+
+    private String stockArrivalDate;
+
+    public int comparePrice(Furniture2GoProduct catalog){
+        int compare = Comparator.comparing(Furniture2GoProduct::getSku)
+                .thenComparing(Furniture2GoProduct::getProductName)
+                .thenComparing(Furniture2GoProduct::getHdPrice)
+                .compare(this, catalog);
+        return compare;
+    }
+
+    public int compareStockLevel(Furniture2GoProduct catalog){
+        int compare = Comparator.comparing(Furniture2GoProduct::getSku)
+                .thenComparing(Furniture2GoProduct::getProductName)
+                .thenComparing(Furniture2GoProduct::getStockLevel)
+                .compare(this, catalog);
+        return compare;
+    }
 
 }

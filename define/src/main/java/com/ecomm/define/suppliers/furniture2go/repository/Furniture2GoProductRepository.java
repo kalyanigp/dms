@@ -22,4 +22,7 @@ public interface Furniture2GoProductRepository extends MongoRepository<Furniture
 
     @Query("{id : ?0}")
     Optional<Furniture2GoProduct> findById(String id);
+
+    @Query("{isDiscontinued : ?0}")
+    List<Furniture2GoProduct> findDiscontinued(boolean productName);
 }

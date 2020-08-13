@@ -21,12 +21,12 @@ public interface Furniture2GoService {
 
     List<Furniture2GoProduct> findAll();
 
+    List<Furniture2GoProduct> findDiscontinued(final boolean discontinued);
+
     Furniture2GoProduct update(Furniture2GoProduct furniture2GoProduct);
 
     void saveAll(List<Furniture2GoProduct> bcProductList);
 
-    //void delete(final ObjectId id);
-    //List<Furniture2GoProduct> getUpdatedProductList(List<Furniture2GoProduct> newList, List<Furniture2GoProduct> oldList);
     void uploadProducts(MultipartFile file);
 
     void uploadProductPrice(MultipartFile file);

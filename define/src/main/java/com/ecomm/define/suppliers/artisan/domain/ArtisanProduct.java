@@ -9,6 +9,8 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Created by vamshikirangullapelly on 18/04/2020.
@@ -78,50 +80,27 @@ public class ArtisanProduct {
     @CsvBindByName(column = "AssemblyInstructions")
     private String assemblyInstructions;
 
-
-    @CsvBindByName(column = "ImageURL1")
-    private String imageURL1;
-
-    @CsvBindByName(column = "ImageURL2")
-    private String imageURL2;
-
-    @CsvBindByName(column = "ImageURL3")
-    private String imageURL3;
-
-    @CsvBindByName(column = "ImageURL4")
-    private String imageURL4;
-
-    @CsvBindByName(column = "ImageURL5")
-    private String imageURL5;
-
-    @CsvBindByName(column = "ImageURL6")
-    private String imageURL6;
-
-    @CsvBindByName(column = "ImageURL7")
-    private String imageURL7;
-
-    @CsvBindByName(column = "ImageURL8")
-    private String imageURL8;
-
-    @CsvBindByName(column = "ImageURL9")
-    private String imageURL9;
-
-    @CsvBindByName(column = "ImageURL10")
-    private String imageURL10;
-
-    @CsvBindByName(column = "ImageURL11")
-    private String imageURL11;
-
-    @CsvBindByName(column = "ImageURL12")
-    private String imageURL12;
-
-    @CsvBindByName(column = "HD Prices")
     private BigDecimal price;
 
-    @CsvBindByName(column = "Qty On Hand")
     private int stockLevel;
+
+    private List<String> images;
+
+    private boolean updated;
+
+    private boolean isDiscontinued;
 
 
     public ArtisanProduct() {
+    }
+
+    public int compareTo(ArtisanProduct catalog){
+        int compare = Comparator.comparing(ArtisanProduct::getSku)
+                .thenComparing(ArtisanProduct::getProductName)
+                .thenComparing(ArtisanProduct::getDescription)
+                .thenComparing(ArtisanProduct::getPrice)
+                .thenComparing(ArtisanProduct::getStockLevel)
+                .compare(this, catalog);
+        return compare;
     }
 }

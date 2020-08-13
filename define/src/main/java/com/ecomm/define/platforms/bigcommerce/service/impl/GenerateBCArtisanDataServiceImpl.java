@@ -1,205 +1,155 @@
 package com.ecomm.define.platforms.bigcommerce.service.impl;
 
-import com.ecomm.define.platforms.bigcommerce.controller.BigCommerceProductApiController;
+import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
+import com.ecomm.define.platforms.bigcommerce.domain.BcBrandData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
-import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiProduct;
 import com.ecomm.define.platforms.bigcommerce.repository.BigcBrandApiRepository;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
-import com.ecomm.define.platforms.bigcommerce.service.BigCommerceImageApiService;
-import com.ecomm.define.platforms.bigcommerce.service.BigCommerceService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
-import com.ecomm.define.suppliers.artisan.service.ArtisanService;
+import com.ecomm.define.platforms.commons.BCUtils;
+import com.ecomm.define.suppliers.artisan.domain.ArtisanProduct;
+import com.ecomm.define.suppliers.commons.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.net.URI;
+import java.math.BigDecimal;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
  */
 @Service
 @Qualifier("artisanDataService")
-public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<BcProductData> {
+public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<ArtisanProduct> {
 
-    public static final String PRODUCTS_ENDPOINT = "/v3/catalog/products";
-    private final Logger logger = LoggerFactory.getLogger(BigCommerceProductApiController.class);
+    private final Logger LOGGER = LoggerFactory.getLogger(GenerateBCArtisanDataServiceImpl.class);
+    private BigCommerceApiService bigCommerceApiService;
+    private BigcBrandApiRepository brandApiRepository;
+    private MongoOperations mongoOperations;
+
+    @Value("${bigcommerce.f2g.profit.limit.high}")
+    private String higherLimitHDPrice;
+
+    @Value("${bigcommerce.f2g.profit.percentage.low}")
+    private String percentageLow;
+
+
     @Autowired
-    ArtisanService artisanService;
-    @Autowired
-    BigCommerceService bigCommerceService;
-    @Autowired
-    BigCommerceApiService bigCommerceApiService;
-    @Autowired
-    BigCommerceImageApiService bigCommerceImageApiService;
-    @Autowired
-    BigCommerceProductApiController bigCommerceProductApiController;
-    @Autowired
-    BigcBrandApiRepository brandApiRepository;
+    public GenerateBCArtisanDataServiceImpl(BigCommerceApiService bigCommerceApiService, BigcBrandApiRepository brandApiRepository, MongoOperations mongoOperations) {
+        this.bigCommerceApiService = bigCommerceApiService;
+        this.brandApiRepository = brandApiRepository;
+        this.mongoOperations = mongoOperations;
+    }
 
     @Override
-    public void generateBcProductsFromSupplier(List<BcProductData> bcProductDataList) throws Exception {
+    public void generateBcProductsFromSupplier(List<ArtisanProduct> productList) throws Exception {
+        //Process Discontinued catalog
+        processDiscontinuedCatalog(productList);
+
+        //Process updated catalog, if there is any updates available in price & stock & images.
         List<BcProductData> updatedBcProductDataList = new ArrayList<>();
-     /*   for (BcProductData bcProductData : bcProductDataList)
-        {
+        List<ArtisanProduct> updatedCatalogList = productList
+                .stream()
+                .filter(ArtisanProduct::isUpdated)
+                .collect(Collectors.toList());
+        for (ArtisanProduct artisanProduct : updatedCatalogList) {
+            Query query = new Query();
+            query.addCriteria(Criteria.where("sku").is(BcConstants.ARTISAN + artisanProduct.getSku()));
+            BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
 
-        } */
-        updateBigCommerceProducts(updatedBcProductDataList);
-    }
+            if (byProductSku == null) {
+                byProductSku = new BcProductData();
+                setPriceAndQuantity(artisanProduct, byProductSku);
+                byProductSku.setCategories(BCUtils.assignCategories(artisanProduct.getProductName()));
+                byProductSku.setImageList(artisanProduct.getImages());
 
-    private void updateBigCommerceProducts(List<BcProductData> updatedBcProductDataList) throws Exception {
+                byProductSku.setSku(BcConstants.ARTISAN + artisanProduct.getSku());
+                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
+                StringBuilder discriptionBuilder = new StringBuilder();
+                discriptionBuilder.append(artisanProduct.getDescription());
+                discriptionBuilder.append("Dimensions - (");
 
-        RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
-        List<BcProductData> duplicateRecords = new ArrayList<>();
-        HttpEntity<BcProductData> request = null;
-        BigCommerceApiProduct result;
-        for (BcProductData product : updatedBcProductDataList) {
-            try {
-                request = new HttpEntity<>(product, bigCommerceApiService.getHttpHeaders());
-                if (product.getId() == null) {
-                    logger.info(request.getBody().getName());
-                    result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
-                    BcProductData resultData = result.getData();
-                    resultData.set_id(product.get_id());
-                    resultData = bigCommerceApiService.update(resultData);
-                    //updateImage(resultData, restTemplate);
-                    logger.info("Successfully sent Artisan Product to Big Commerce for the product id {}, and sku {}", resultData.getId(), resultData.getSku());
-                } else {
-                    String url = uri + "/" + product.getId();
-                    ResponseEntity<BigCommerceApiProduct> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, request, BigCommerceApiProduct.class);
-                    BcProductData data = responseEntity.getBody().getData();
-                    logger.info("Successfully updated the Artisan Product on Big Commerce for the product id {}, and sku {}", data.getId(), data.getSku());
+
+                byProductSku.setSupplier(Supplier.ARTISAN.getName());
+                byProductSku.setType(BcConstants.TYPE);
+                if (artisanProduct.getWeight() != null) {
+                    int weight = artisanProduct.getWeight().intValue();
+                    byProductSku.setWeight(weight);
+                    discriptionBuilder.append(" Weight : " + weight + "kg");
                 }
-            } catch (Exception duplicateRecordException) {
-                logger.error("Duplicate record found with the name {}", request.getBody().getName());
-                duplicateRecords.add(product);
-                continue;
+                if (artisanProduct.getHeight() != null) {
+                    int height = artisanProduct.getHeight().intValue();
+                    byProductSku.setHeight(height);
+                    discriptionBuilder.append(" Height : " + height + "mm");
+                }
+                if (artisanProduct.getWidth() != null) {
+                    int width = artisanProduct.getWidth().intValue();
+                    byProductSku.setWidth(width);
+                    discriptionBuilder.append(" Width : " + width + "mm");
+                }
+                if (artisanProduct.getDepth() != null) {
+                    int depth = artisanProduct.getDepth().intValue();
+                    byProductSku.setDepth(depth);
+                    discriptionBuilder.append(" Depth : " + depth + "mm)");
+                }
+                discriptionBuilder.append("Assembly Instructions - " + artisanProduct.getAssemblyInstructions());
+
+                byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
+                Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
+                if (byName.isPresent()) {
+                    byProductSku.setBrandId(byName.get().getId());
+                }
+                byProductSku.setDescription(artisanProduct.getDescription());
+                BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
+                updatedBcProductDataList.add(bcProductData);
+            } else {
+                byProductSku.setImageList(artisanProduct.getImages());
+                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
+                setPriceAndQuantity(artisanProduct, byProductSku);
+                byProductSku.setCategories(BCUtils.assignCategories(artisanProduct.getProductName()));
+                BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
+                updatedBcProductDataList.add(bcProductData);
             }
         }
-        if (!duplicateRecords.isEmpty()) {
-            logger.info("Found duplicate products while processing maison products. Processing the duplicate products by updating the name attribute");
-            //processDuplicateRecords(duplicateRecords);
-        }
-        logger.info("Successfully Updated Relavant Products");
+        bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList);
     }
 
 
-   /* private int evaluatePrice(MaisonProduct maisonProd) {
-        BigDecimal decimalPrice = null;
-        if (StringUtils.isEmpty(maisonProd.getMspPrice()) || "N/A".equals(maisonProd.getMspPrice())) {
-            if (!StringUtils.isEmpty(maisonProd.getTradePrice())) {
-                decimalPrice = new BigDecimal(maisonProd.getTradePrice());
-                decimalPrice = decimalPrice.multiply(BigDecimal.valueOf(2));
-            }
-        } else {
-            decimalPrice = new BigDecimal(maisonProd.getMspPrice());
-        }
-        decimalPrice = decimalPrice.add(new BigDecimal(1));
-        return decimalPrice.intValue();
+    private void processDiscontinuedCatalog(List<ArtisanProduct> productList) throws URISyntaxException {
+        List<ArtisanProduct> discontinuedList = productList
+                .stream()
+                .filter(ArtisanProduct::isDiscontinued)
+                .collect(Collectors.toList());
 
+        discontinuedList.parallelStream().forEach(artisanProduct -> bigCommerceApiService.processDiscontinuedCatalog(BcConstants.ARTISAN + artisanProduct.getSku()));
     }
 
-
-    private void setDimensions(BigCommerceCsvProduct bigCommerceCsvProduct, String size) {
-        StringTokenizer st = new StringTokenizer(size, "x");
-        while (st.hasMoreTokens()) {
-            String nextString = st.nextToken();
-            if (nextString.contains("H")) {
-                bigCommerceCsvProduct.setProductHeight(nextString.replaceAll("H", "") + "cm");
-            } else if (nextString.contains("W")) {
-                bigCommerceCsvProduct.setProductWidth(nextString.replaceAll("W", "") + "cm");
-            } else if (nextString.contains("D")) {
-                bigCommerceCsvProduct.setProductDepth(nextString.replaceAll("D", "") + "cm");
-            }
+    private void setPriceAndQuantity(ArtisanProduct artisanProduct, BcProductData byProductSku) {
+        evaluatePrice(artisanProduct, byProductSku);
+        byProductSku.setInventoryLevel(Math.max(artisanProduct.getStockLevel(), 0));
+        byProductSku.setAvailability(BcConstants.PREORDER);
+        byProductSku.setAvailabilityDescription("Usually dispatches in 6 to 8 weeks.");
+        if (artisanProduct.getStockLevel() > 0) {
+            byProductSku.setAvailability(BcConstants.AVAILABLE);
+            byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
         }
     }
 
-    private String getProductAvailability(double tradePrice, int stockQty) {
-        if (stockQty > 0) {
-            if (tradePrice <= 50) {
-                return "Usually dispatches in 3 days";
-            } else if (tradePrice <= 150) {
-                return "Usually dispatches in 5 days";
-            } else if (tradePrice <= 300) {
-                return "Usually dispatches in 10 days";
-
-            } else if (tradePrice <= 700) {
-                return "Usually dispatches in 15 days";
-
-            } else if (tradePrice > 700) {
-                return "Usually dispatches in 25 days";
-            }
+    private void evaluatePrice(ArtisanProduct artisanProduct, BcProductData byProductSku) {
+        BigDecimal originalPrice = artisanProduct.getPrice();
+        if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
+            byProductSku.setPrice(originalPrice.intValue());
         }
-        return "Your Order will be considered as Back Order. Kindly contact us for delivery timelines";
     }
-
-    private void updateImage(BcProductData data, RestTemplate restTemplate) throws Exception {
-        ArtisanProduct maisonProduct = artisanService.findByProductSku(data.getSku());
-        /*
-        List<String> images = Arrays.asList(maisonProduct.getImages().split(","));
-        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT + "/" + data.getId() + "/images");
-        BcProductImageData imageData;
-        HttpEntity<BcProductImageData> request = null;
-        boolean ifFirstImage = true;
-        int sortOrder = 1;
-        int imageDesriptionCount = 1;
-        BigCommerceApiImage bigCommerceApiImage;
-        List<String> filteredImagesList = images.stream().filter(image -> StringUtils.isNotEmpty(image)).collect(Collectors.toList());
-        for (String image : filteredImagesList) {
-            try {
-                imageData = new BcProductImageData();
-                imageData.setId(data.getId());
-                imageData.setSortOrder(sortOrder++);
-                imageData.setIsThumbnail(ifFirstImage);
-                imageData.setDescription("Image_" + imageDesriptionCount++);
-                imageData.setImageUrl(image);
-                request = new HttpEntity<>(imageData, bigCommerceApiService.getHttpHeaders());
-                bigCommerceApiImage = restTemplate.postForObject(uri, request, BigCommerceApiImage.class);
-                bigCommerceImageApiService.create(bigCommerceApiImage.getData());
-                ifFirstImage = false;
-            } catch (Exception ex) {
-                logger.error("Exception occurred while processing images for the product id {}", data.getId());
-                continue;
-            }
-        } */
-   // }
-
-    private void processDuplicateRecords(List<BcProductData> duplicateRecords) throws Exception {
-        logger.info("Started processing duplicate records for Maison");
-        RestTemplate restTemplate = new RestTemplate();
-        URI uri = new URI(bigCommerceApiService.getBaseUrl() + bigCommerceApiService.getStoreHash() + PRODUCTS_ENDPOINT);
-        HttpEntity<BcProductData> request = null;
-        List<BcProductData> duplicateRecords1 = new ArrayList<>();
-        BigCommerceApiProduct result = null;
-    /*    for (BcProductData data : duplicateRecords) {
-            logger.info("Started processing duplicate record for product sku {} and product name {}", data.getSku(), data.getName());
-            MaisonProduct byProductSku = maisonService.findByProductSku(data.getSku());
-            byProductSku.setTitle(byProductSku.getTitle() + " " + byProductSku.getProductCode());
-            MaisonProduct updatedMaisonProduct = maisonService.update(byProductSku);
-            data.setName(updatedMaisonProduct.getTitle());
-            try {
-                request = new HttpEntity<>(data, bigCommerceApiService.getHttpHeaders());
-                logger.info(request.getBody().getName());
-                result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
-                BcProductData bcProductData = bigCommerceApiService.create(result.getData());
-                updateImage(bcProductData, restTemplate);
-            } catch (Exception exception) {
-                logger.error("Duplicate record found with the name {}", request.getBody().getName());
-                continue;
-            }
-
-        } */
-
-        logger.info("Successfully finished processing the duplicate records for Maison");
-    }
-
 }

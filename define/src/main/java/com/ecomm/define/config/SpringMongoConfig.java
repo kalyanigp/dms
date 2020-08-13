@@ -10,9 +10,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.data.mongodb.MongoDbFactory;
+import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import org.springframework.data.mongodb.core.SimpleMongoDbFactory;
+
+import java.net.UnknownHostException;
 
 /**
  * Spring MongoDB configuration file
@@ -31,6 +34,11 @@ public class SpringMongoConfig {
     public MongoTemplate mongoTemplate() {
         MongoTemplate mongoTemplate = new MongoTemplate(mongoDbFactory());
         return mongoTemplate;
+    }
+
+    @Bean
+    public MongoOperations mongoOperations() throws UnknownHostException {
+        return new MongoTemplate(mongoDbFactory());
     }
 
 }

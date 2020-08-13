@@ -8,6 +8,7 @@ public enum Supplier {
     ARTISAN("Artisan"),
     FURNITURE2GO("Furniture 2 Go"),
     HILL_INTERIORS("Hill Interiors"),
+    MAR_HARRIS("Mark Harris"),
     SELLER_BRAND("Define");
 
 

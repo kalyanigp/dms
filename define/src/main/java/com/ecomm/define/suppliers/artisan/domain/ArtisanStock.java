@@ -18,10 +18,10 @@ public class ArtisanStock {
     public ObjectId _id;
 
     @Indexed(unique = true)
-    @CsvBindByName(column = "SKU")
+    @CsvBindByName(column = "sku")
     private String sku;
 
-    @CsvBindByName(column = "Qty On Hand")
+    @CsvBindByName(column = "stock_quantity")
     private int stockLevel;
 
     public ArtisanStock() {

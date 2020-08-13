@@ -47,10 +47,40 @@ public class SpringFoxConfig {
                 .apiInfo(apiEndPointsInfo());
     }
 
+    @Bean
+    public Docket swaggerArtisanApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("Artisan")
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.ecomm.define.suppliers.artisan.controller"))
+                .build()
+                .apiInfo(apiEndPointsInfo());
+    }
+
+    @Bean
+    public Docket swaggerHillInteriorApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("HillInterior")
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.ecomm.define.suppliers.hillinterior.controller"))
+                .build()
+                .apiInfo(apiEndPointsInfo());
+    }
+
+    @Bean
+    public Docket swaggerMarkHarrisApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("MarkHarris")
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.ecomm.define.suppliers.markharris.controller"))
+                .build()
+                .apiInfo(apiEndPointsInfo());
+    }
+
     private ApiInfo apiEndPointsInfo() {
         return new ApiInfoBuilder().title("Spring Boot REST API")
                 .description("Define Furniture Product Management System REST API")
-                .contact(new Contact("Kalyani Annam", "www.thedefine.co.uk", "kalyani.annam@define.co.uk"))
+                .contact(new Contact("Kalyani Annam", "www.thedefine.co.uk", "kalyani.annam@thedefine.co.uk"))
                 .license("Apache 2.0")
                 .licenseUrl("http://www.apache.org/licenses/LICENSE-2.0.html")
                 .version("1.0.0")

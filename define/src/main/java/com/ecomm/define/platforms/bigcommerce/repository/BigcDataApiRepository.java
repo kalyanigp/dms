@@ -24,4 +24,5 @@ public interface BigcDataApiRepository extends MongoRepository<BcProductData, St
 
     @Query("{supplier : ?0}")
     List<BcProductData> findBySupplier(String supplier);
+
 }

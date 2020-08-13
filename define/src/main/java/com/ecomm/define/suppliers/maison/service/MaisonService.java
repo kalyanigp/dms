@@ -17,7 +17,7 @@ public interface MaisonService {
 
     Optional<MaisonProduct> findById(String id);
 
-    MaisonProduct findByProductSku(final String sku);
+    Optional<MaisonProduct> findByProductSku(final String sku);
 
     List<MaisonProduct> findAll();
 
@@ -27,7 +27,9 @@ public interface MaisonService {
 
     void delete(final ObjectId id);
 
-    List<MaisonProduct> getUpdatedProductList(List<MaisonProduct> newList, List<MaisonProduct> oldList);
+    void insertOrUpdate(List<MaisonProduct> newList);
 
     void uploadProducts(MultipartFile file);
+
+    void uploadMaisonCatalogueToBigCommerce() throws Exception;
 }

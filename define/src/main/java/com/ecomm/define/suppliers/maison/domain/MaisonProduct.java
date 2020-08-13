@@ -8,6 +8,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Comparator;
+
 /**
  * Created by vamshikirangullapelly on 18/04/2020.
  */
@@ -40,7 +42,20 @@ public class MaisonProduct {
     private String packingSpec;
     @CsvBindByName(column = "Images")
     private String images;
+    private boolean isUpdated;
+    private boolean isDiscontinued;
 
     public MaisonProduct() {
+    }
+
+
+    public int compareTo(MaisonProduct catalog) {
+        int compare = Comparator.comparing(MaisonProduct::getProductCode)
+                .thenComparing(MaisonProduct::getTitle)
+                .thenComparing(MaisonProduct::getTradePrice)
+                .thenComparing(MaisonProduct::getStockQuantity)
+                .thenComparing(MaisonProduct::getImages)
+                .compare(this, catalog);
+        return compare;
     }
 }
