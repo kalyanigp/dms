@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 public final class Furniture2GoConstants {
 
     BigDecimal MARGIN_PERCENT = new BigDecimal("30");
+    public static final String FURNITURE_2_GO_FEED_URL = "https://furniture-to-go.co.uk/catalogsearch/result/?q=";
 
 
 }

@@ -29,6 +29,8 @@ import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
+import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.MAISON_CODE;
+
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
  */
@@ -63,7 +65,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
 
         updatedCatalogList.parallelStream().forEach(maisonProd -> {
             Query query = new Query();
-            query.addCriteria(Criteria.where("sku").is(maisonProd.getProductCode()));
+            query.addCriteria(Criteria.where("sku").is(MAISON_CODE+maisonProd.getProductCode()));
             BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
 
             if (byProductSku == null) {
@@ -71,7 +73,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 setPriceAndQuantity(maisonProd, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
                 byProductSku.setImageList(Arrays.asList(maisonProd.getImages().split(",")));
-                byProductSku.setSku(maisonProd.getProductCode());
+                byProductSku.setSku(MAISON_CODE+maisonProd.getProductCode());
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
 
                 byProductSku.setSupplier(Supplier.MAISON.getName());
@@ -123,7 +125,6 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
                 setPriceAndQuantity(maisonProd, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
-                byProductSku.setImageList(Arrays.asList(maisonProd.getImages().split(",")));
                 byProductSku.setAvailabilityDescription(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
@@ -256,7 +257,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 .stream()
                 .filter(MaisonProduct::isDiscontinued)
                 .collect(Collectors.toList());
-        discontinuedList.parallelStream().forEach(maisonProduct -> bigCommerceApiService.processDiscontinuedCatalog(BcConstants.MAISON_CODE + maisonProduct.getProductCode()));
+        discontinuedList.parallelStream().forEach(maisonProduct -> bigCommerceApiService.processDiscontinuedCatalog(MAISON_CODE + maisonProduct.getProductCode()));
     }
 
 }

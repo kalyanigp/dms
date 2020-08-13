@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.MAISON_CODE;
-
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
@@ -146,7 +144,7 @@ public class MaisonServiceImpl implements MaisonService {
 
                 // Append MREP to the productCode as to avoid other sellers to trace our product details
                 maisonProducts.parallelStream().forEach(catalog ->
-                        catalog.setProductCode(MAISON_CODE+catalog.getProductCode()));
+                        catalog.setProductCode(catalog.getProductCode()));
                 insertOrUpdate(maisonProducts);
                 processDiscontinuedCatalog(maisonProducts);
 
