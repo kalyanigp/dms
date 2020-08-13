@@ -1,6 +1,5 @@
 package com.ecomm.define.platforms.bigcommerce.service.impl;
 
-import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductImageData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductImageDataList;
@@ -36,13 +35,11 @@ import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.PRODU
 public class BigCommerceApiServiceImpl implements BigCommerceApiService {
 
     private final Logger LOGGER = LoggerFactory.getLogger(BigCommerceApiServiceImpl.class);
-
+    private final RestTemplate restTemplate;
     @Autowired
     BigcDataApiRepository repository;
-
     @Autowired
     BigcImageDataApiRepository bigcImageDataApiRepository;
-
     @Value("${bigcommerce.access.token}")
     private String accessToken;
     @Value("${bigcommerce.client.id}")
@@ -51,7 +48,6 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
     private String storeHash;
     @Value("${bigcommerce.client.baseUrl}")
     private String baseUrl;
-    private final RestTemplate restTemplate;
 
     public BigCommerceApiServiceImpl() {
         restTemplate = new RestTemplate();
@@ -131,13 +127,14 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
         AtomicInteger processedProducts = new AtomicInteger();
         try {
             URI uri = new URI(getBaseUrl() + getStoreHash() + PRODUCTS_ENDPOINT);
-            productDataList.parallelStream().forEach(product -> {
+            productDataList.stream().forEach(product -> {
                 HttpEntity<BcProductData> request = new HttpEntity<>(product, getHttpHeaders());
                 if (product.getId() == null) {
                     LOGGER.info(Objects.requireNonNull(request.getBody()).getName());
                     BigCommerceApiProduct result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
                     BcProductData resultData = Objects.requireNonNull(result).getData();
                     resultData.set_id(product.get_id());
+                    resultData.setImageList(product.getImageList());
                     resultData = update(resultData);
                     updateImage(resultData);
                     LOGGER.info("Successfully Created Product in to Big Commerce for the product id {}, sku {} & name {}", resultData.getId(), resultData.getSku(), resultData.getName());
@@ -152,6 +149,8 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
             });
 
         } catch (Exception exception) {
+            LOGGER.error("Exception while uploading to Big Commerce ", exception.getMessage());
+            System.out.println(exception.getLocalizedMessage());
             failedProducts++;
         }
         LOGGER.info("Total products count - {}, Successfully processed count {} & Failed products count  {}", totalProducts, processedProducts, failedProducts);
@@ -187,18 +186,20 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                 int sortOrder = 1;
                 int imageDesriptionCount = 1;
                 BigCommerceApiImage bigCommerceApiImage;
-                List<String> filteredImagesList = bcProductData.getImageList().stream().filter(StringUtils::isNotEmpty).collect(Collectors.toList());
-                for (String image : filteredImagesList) {
-                    imageData = new BcProductImageData();
-                    imageData.setId(bcProductData.getId());
-                    imageData.setSortOrder(sortOrder++);
-                    imageData.setIsThumbnail(ifFirstImage);
-                    imageData.setDescription("Image_" + imageDesriptionCount++);
-                    imageData.setImageUrl(image);
-                    request = new HttpEntity<>(imageData, getHttpHeaders());
-                    bigCommerceApiImage = restTemplate.postForObject(uri, request, BigCommerceApiImage.class);
-                    bigcImageDataApiRepository.save(Objects.requireNonNull(bigCommerceApiImage).getData());
-                    ifFirstImage = false;
+                if (bcProductData.getImageList() != null) {
+                    List<String> filteredImagesList = bcProductData.getImageList().stream().filter(StringUtils::isNotEmpty).collect(Collectors.toList());
+                    for (String image : filteredImagesList) {
+                        imageData = new BcProductImageData();
+                        imageData.setId(bcProductData.getId());
+                        imageData.setSortOrder(sortOrder++);
+                        imageData.setIsThumbnail(ifFirstImage);
+                        imageData.setDescription("Image_" + imageDesriptionCount++);
+                        imageData.setImageUrl(image);
+                        request = new HttpEntity<>(imageData, getHttpHeaders());
+                        bigCommerceApiImage = restTemplate.postForObject(uri, request, BigCommerceApiImage.class);
+                        bigcImageDataApiRepository.save(Objects.requireNonNull(bigCommerceApiImage).getData());
+                        ifFirstImage = false;
+                    }
                 }
             }
         } catch (Exception ex) {
