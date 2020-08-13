@@ -139,10 +139,6 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
                 List<Furniture2GoProduct> furniture2GoProducts = csvToBean.parse();
                 furniture2GoProducts.stream().parallel().forEach(this::insertOrUpdate);
                 processDiscontinuedCatalog(furniture2GoProducts);
-
-                //Process & Save Images
-                Map<String, List<String>> catalogImages = Furniture2GoMasterFeedMaker.getCatalogImages(newCatalogList);
-                saveImages(catalogImages);
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
             }
@@ -309,6 +305,7 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
         } else {
             furniture2GoProduct.setDiscontinued(Boolean.FALSE);
             furniture2GoProduct.setUpdated(Boolean.TRUE);
+            furniture2GoProduct.setImages(Furniture2GoMasterFeedMaker.getCatalogImages(furniture2GoProduct));
             Furniture2GoProduct insertedNewCatalog = repository.insert(furniture2GoProduct);
             newCatalogList.add(insertedNewCatalog);
         }
