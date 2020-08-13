@@ -6,13 +6,6 @@ import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,45 +15,20 @@ import java.util.List;
 public class HillInteriorMasterFeedMaker {
     private final static Logger LOGGER = LoggerFactory.getLogger(HillInteriorMasterFeedMaker.class);
 
-    public static void main(String args[]) {
-
-        HillInteriorMasterFeedMaker maker = new HillInteriorMasterFeedMaker();
-        File hillInteriorsCode = new File("/Users/vamshikirangullapelly/Downloads/Uploads_110820/HillInteriors110820.csv");
-
+    public static List<String> getCatalogImages(HillInteriorProduct hillInteriorProduct) {
+        LOGGER.info("Started Processing Hill Interior Image URLs");
+        List<String> images = new ArrayList<>();
         try {
-            maker.processMasterData(new FileInputStream(hillInteriorsCode));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public List<HillInteriorProduct> processMasterData(InputStream fileStream) {
-        String line = "";
-        String cvsSplitBy = ",";
-
-
-        List<HillInteriorProduct> hillInteriorProducts = new ArrayList<HillInteriorProduct>();
-
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(fileStream))) {
-            br.readLine();
-            while ((line = br.readLine()) != null) {
-                HillInteriorProduct hillInteriorProduct = new HillInteriorProduct();
-                String[] productCode = line.split(cvsSplitBy);
-
-                String code = productCode[0].replaceAll("\"", "");
-                String productURL = HillInteriorURLReader.generateProductURL(HillInteriorConstants.FEEDMAKER_URL + code);
-                hillInteriorProduct.setSku(productCode[0]);
+            String productURL = HillInteriorURLReader.generateProductURL(HillInteriorConstants.FEEDMAKER_URL + hillInteriorProduct.getSku());
+            if (productURL.length() > 0) {
                 Document doc = HillInteriorURLReader.getDocument(productURL);
-                if (doc != null) {
-                    System.out.print("Finding for " + code);
-                    List<String> images = HillInteriorURLReader.addImages(doc);
-                    hillInteriorProduct.setImages(images);
-                }
-
+                images = HillInteriorURLReader.addImages(doc);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.error("Error while processing Hill Interior Data from Hill Interior website");
         }
-        return hillInteriorProducts;
+        LOGGER.info("Finished processing Hill Interior Image URLs for sku {} , images {}", hillInteriorProduct.getSku(), images);
+        return images;
     }
+
 }

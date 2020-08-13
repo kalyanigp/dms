@@ -2,9 +2,9 @@ package com.ecomm.define.suppliers.hillinterior.service.impl;
 
 import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.exception.FileNotFoundException;
-import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
 import com.ecomm.define.suppliers.hillinterior.domain.HillInteriorProduct;
+import com.ecomm.define.suppliers.hillinterior.feedgenerator.HillInteriorMasterFeedMaker;
 import com.ecomm.define.suppliers.hillinterior.repository.HillInteriorProductRepository;
 import com.ecomm.define.suppliers.hillinterior.service.HillInteriorService;
 import com.mongodb.client.result.DeleteResult;
@@ -44,8 +44,6 @@ public class HillInteriorServiceImpl implements HillInteriorService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HillInteriorServiceImpl.class);
 
-    private final BigCommerceApiService bigCommerceApiService;
-
     private final GenerateBCDataService generateBCDataService;
 
     private final MongoOperations mongoOperations;
@@ -58,9 +56,8 @@ public class HillInteriorServiceImpl implements HillInteriorService {
 
     @Autowired // inject hillInteriorDataService
     public HillInteriorServiceImpl(@Lazy @Qualifier("hillInteriorDataService") GenerateBCDataService generateBCDataService
-            , MongoOperations mongoOperations, HillInteriorProductRepository repository, BigCommerceApiService bigCommerceApiService) {
+            , MongoOperations mongoOperations, HillInteriorProductRepository repository) {
         this.repository = repository;
-        this.bigCommerceApiService = bigCommerceApiService;
         this.mongoOperations = mongoOperations;
         this.generateBCDataService = generateBCDataService;
     }
@@ -123,6 +120,8 @@ public class HillInteriorServiceImpl implements HillInteriorService {
                 // convert `CsvToBean` object to list of MarkHarrisProduct
                 List<HillInteriorProduct> markHarrisProducts = csvToBean.parse();
                 markHarrisProducts.parallelStream().forEach(this::insertOrUpdate);
+                processDiscontinuedCatalog(markHarrisProducts);
+
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
             }
@@ -140,7 +139,7 @@ public class HillInteriorServiceImpl implements HillInteriorService {
                 Update update = new Update();
                 update.set("discontinued", Boolean.FALSE);
                 update.set("updated", Boolean.TRUE);
-                update.set("price",evaluatePrice(product));
+                update.set("price", evaluatePrice(product));
                 UpdateResult updatedProduct = mongoOperations.updateFirst(query, update, HillInteriorProduct.class);
                 LOGGER.info("Successfully updated HillInterior Product SKU {} and ProductName {}", hillInteriorProduct.getSku(), hillInteriorProduct.getProductName());
             }
@@ -148,6 +147,7 @@ public class HillInteriorServiceImpl implements HillInteriorService {
             hillInteriorProduct.setDiscontinued(Boolean.FALSE);
             hillInteriorProduct.setUpdated(Boolean.TRUE);
             hillInteriorProduct.setPrice(evaluatePrice(hillInteriorProduct));
+            hillInteriorProduct.setImages(HillInteriorMasterFeedMaker.getCatalogImages(hillInteriorProduct));
             HillInteriorProduct insertedProduct = mongoOperations.insert(hillInteriorProduct);
             LOGGER.info("Successfully created HillInterior Product SKU {} and ProductName {}", insertedProduct.getSku(), insertedProduct.getProductName());
         }
@@ -196,10 +196,9 @@ public class HillInteriorServiceImpl implements HillInteriorService {
         LOGGER.info("Total number of products modified Updated flag to false is, {}", updateResult.getModifiedCount());
     }
 
-
     private BigDecimal evaluatePrice(HillInteriorProduct hillInteriorProduct) {
         BigDecimal price = hillInteriorProduct.getPrice();
-        if(price != null && price.intValue() > 0) {
+        if (price != null && price.intValue() > 0) {
             price.add(DefineUtils.getVat(price, new BigDecimal(vatPercent)));
             price.add(DefineUtils.percentage(price, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
         }

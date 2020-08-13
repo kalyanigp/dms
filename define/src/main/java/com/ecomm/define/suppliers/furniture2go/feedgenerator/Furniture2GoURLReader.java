@@ -5,6 +5,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by vamshikirangullapelly on 08/07/2020.
@@ -36,17 +38,26 @@ public class Furniture2GoURLReader {
     }
 
 
-    public static String findImageURL(Document doc, int number) {
+    public static List<String> findImageURL(Document doc) {
         String imageURL = "";
+        List<String> images = new ArrayList<>();
+
         Elements links = doc.getElementsByClass("more-views");
         if (links != null && links.size() > 0 && links.get(0).child(1) != null) {
-            if (links.get(0).child(1).children().size() > number) {
-                String fullText = links.get(0).child(1).child(number).toString();
-                if (fullText.contains("<a href=") && fullText.contains("rel=\"popupWin:")) {
-                    imageURL = fullText.substring(fullText.indexOf("<a href=") + 9, fullText.indexOf("rel=\"popupWin:") - 2);
+            for (int i = 0; i <= 13; i++) {
+                if (links.get(0).child(1).children().size() > i) {
+                    String fullText = links.get(0).child(1).child(i).toString();
+                    if (fullText.contains("<a href=") && fullText.contains("rel=\"popupWin:")) {
+                        imageURL = fullText.substring(fullText.indexOf("<a href=") + 9, fullText.indexOf("rel=\"popupWin:") - 2);
+                        if (imageURL != null && !imageURL.isEmpty()) {
+                            images.add(imageURL);
+                        }
+                    }
                 }
+
             }
+
         }
-        return imageURL;
+        return images;
     }
 }

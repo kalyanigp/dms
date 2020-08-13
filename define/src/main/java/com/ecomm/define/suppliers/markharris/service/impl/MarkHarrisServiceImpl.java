@@ -309,19 +309,9 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
         } else {
             markHarrisProduct.setDiscontinued(Boolean.FALSE);
             markHarrisProduct.setUpdated(Boolean.TRUE);
+            markHarrisProduct.setImages(MarkHarrisFeedMaker.getCatalogImages(markHarrisProduct));
             MarkHarrisProduct insertedProduct = mongoOperations.insert(markHarrisProduct);
             LOGGER.info("Successfully created MarkHarris Product SKU {} and ProductName {}", insertedProduct.getSku(), insertedProduct.getProductName());
-        }
-
-        //Process Images
-        MarkHarrisProduct markHarrisProd = mongoOperations.findOne(query, MarkHarrisProduct.class);
-        if (markHarrisProd.getImages() == null || Objects.requireNonNull(markHarrisProd).getImages().isEmpty()) {
-            List<String> catalogImages = MarkHarrisFeedMaker.getCatalogImages(markHarrisProd);
-            if (catalogImages != null && catalogImages.isEmpty()) {
-                LOGGER.info("Images are null or empty for the sku {} {}", markHarrisProd.getSku(), markHarrisProd.getProductName());
-            }
-            markHarrisProd.setImages(catalogImages);
-            repository.save(markHarrisProd);
         }
     }
 
