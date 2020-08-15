@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -65,6 +66,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         List<BcProductData> updatedBcProductDataList = new ArrayList<>();
         List<Furniture2GoProduct> updatedCatalogList = productList
                 .stream()
+                .filter(Objects::nonNull)
                 .filter(Furniture2GoProduct::isUpdated)
                 .collect(Collectors.toList());
 

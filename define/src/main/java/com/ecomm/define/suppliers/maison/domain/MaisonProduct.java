@@ -42,7 +42,7 @@ public class MaisonProduct {
     private String packingSpec;
     @CsvBindByName(column = "Images")
     private String images;
-    private boolean isUpdated;
+    private boolean updated;
     private boolean isDiscontinued;
 
     public MaisonProduct() {

@@ -3,6 +3,7 @@ package com.ecomm.define.suppliers.artisan.domain;
 import com.opencsv.bean.CsvBindByName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -16,6 +17,7 @@ import java.util.List;
  * Created by vamshikirangullapelly on 18/04/2020.
  */
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
 @Document(collection = "artisanProduct")
 public class ArtisanProduct {
@@ -91,10 +93,6 @@ public class ArtisanProduct {
     private boolean updated;
 
     private boolean isDiscontinued;
-
-
-    public ArtisanProduct() {
-    }
 
     public int compareTo(ArtisanProduct catalog){
         int compare = Comparator.comparing(ArtisanProduct::getSku)
