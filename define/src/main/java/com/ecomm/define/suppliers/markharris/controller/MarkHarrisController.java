@@ -114,24 +114,6 @@ public class MarkHarrisController {
         return ResponseEntity.ok().body("Successfully updated Products");
     }
 
-
-    @ApiOperation(value = "Uploads Mark Harris Products from CSV File to DB", response = Iterable.class)
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Mark Harris Products Stock to DB"),
-            @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
-            @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
-            @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
-    }
-    )
-    @PostMapping("/markharris/uploadImages")
-    public ResponseEntity<String> uploadMarkHarrisImagesCSVFile(@RequestParam("file") MultipartFile file) {
-        LOGGER.info("Started uploading Master product Images from CSV");
-        markHarrisService.uploadImages(file);
-        LOGGER.info("Finished uploading Master product Images from CSV");
-        return ResponseEntity.ok().body("Successfully updated Products");
-    }
-
-
     @ApiOperation(value = "Uploads MarkHarris Catalogue to BigCommerce by reading data from markHarrisProduct table", response = Iterable.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully uploaded MarkHarris Products to BigCommerce from MarkHarrisProduct table"),
