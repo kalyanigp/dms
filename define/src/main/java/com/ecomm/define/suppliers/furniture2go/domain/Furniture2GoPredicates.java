@@ -14,7 +14,7 @@ public class Furniture2GoPredicates {
                 .collect(Collectors.<Furniture2GoProduct>toList());
     }
 
-    /*public static Predicate<Furniture2GoProduct> isPriceQuantityChanged(String productCode, String msp, int stockQty) {
-        return furniture2Go -> (furniture2Go.getProductCode().equals(productCode)) && (!furniture2Go.getMspPrice().equals(msp) || furniture2Go.getStockQuantity() !=stockQty);
+    /*public static Predicate<Furniture2GoProduct> isPriceQuantityChanged(String sku, String msp, int stockQty) {
+        return furniture2Go -> (furniture2Go.getSku().equals(sku)) && (!furniture2Go.getMspPrice().equals(msp) || furniture2Go.getStockQuantity() !=stockQty);
     }*/
 }

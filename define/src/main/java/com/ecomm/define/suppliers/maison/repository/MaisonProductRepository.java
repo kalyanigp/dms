@@ -14,6 +14,6 @@ import java.util.Optional;
 public interface MaisonProductRepository extends MongoRepository<MaisonProduct, String> {
     MaisonProduct findBy_id(ObjectId _id);
 
-    @Query("{productCode : ?0}")
+    @Query("{sku : ?0}")
     Optional<MaisonProduct> findByProductSku(String productName);
 }

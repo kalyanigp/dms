@@ -75,12 +75,13 @@ public class HillInteriorProduct {
 
     private boolean updated;
 
+    private BigDecimal salePrice;
+
     private boolean isDiscontinued;
 
     public int compareTo(HillInteriorProduct catalog) {
         int compare = Comparator.comparing(HillInteriorProduct::getSku)
                 .thenComparing(HillInteriorProduct::getProductName)
-                .thenComparing(HillInteriorProduct::getDescription)
                 .thenComparing(HillInteriorProduct::getPrice)
                 .thenComparing(HillInteriorProduct::getStockLevel)
                 .compare(this, catalog);

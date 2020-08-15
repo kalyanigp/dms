@@ -102,7 +102,8 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
                 updatedBcProductDataList.add(bcProductData);
             }
         });
-        bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList);
+
+        bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList, BcConstants.FURNITURE_2_GO, Furniture2GoProduct.class);
         LOGGER.info("Finished generating Furniture2Go Product to BigCommerce");
     }
 
@@ -134,7 +135,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
     }
 
     private void evaluatePrice(Furniture2GoProduct furniture2GoProduct, BcProductData byProductSku) {
-        BigDecimal originalPrice = furniture2GoProduct.getPrice();
+        BigDecimal originalPrice = furniture2GoProduct.getSalePrice();
         if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
             byProductSku.setPrice(originalPrice.intValue());
             if (originalPrice.compareTo(new BigDecimal(higherLimitHDPrice)) > 0) {

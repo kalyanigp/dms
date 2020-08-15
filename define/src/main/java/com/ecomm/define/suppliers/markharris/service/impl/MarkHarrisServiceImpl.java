@@ -236,14 +236,15 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
                 } else {
                     hdPrice = new BigDecimal(priceValue.substring(1));
                 }
+                if(!product.getPrice().equals(hdPrice)) {
+                    product.setUpdated(true);
+                    product.setPrice(hdPrice);
+                }
+                BigDecimal salePrice = hdPrice;
 
                 //add 20% VAT plus 50% Profit
-                hdPrice = hdPrice.add(DefineUtils.getVat(hdPrice, new BigDecimal(profitPercentHigh)));
-
-                if (!Objects.equals(product.getPrice(), hdPrice)) {
-                    product.setUpdated(Boolean.TRUE);
-                }
-                product.setPrice(hdPrice);
+                salePrice = salePrice.add(DefineUtils.getVat(salePrice, new BigDecimal(profitPercentHigh)));
+                product.setSalePrice(salePrice);
                 product.setHeight(catalogWithPrice.getHeight());
                 product.setDepth(catalogWithPrice.getLength());
                 product.setWidth(catalogWithPrice.getWidth());

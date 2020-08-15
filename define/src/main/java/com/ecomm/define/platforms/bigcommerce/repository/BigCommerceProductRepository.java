@@ -17,6 +17,6 @@ public interface BigCommerceProductRepository extends MongoRepository<BigCommerc
     @Override
     Optional<BigCommerceCsvProduct> findById(String s);
 
-    @Query("{productCode : ?0}")
+    @Query("{sku : ?0}")
     BigCommerceCsvProduct findByProductSku(String productName);
 }

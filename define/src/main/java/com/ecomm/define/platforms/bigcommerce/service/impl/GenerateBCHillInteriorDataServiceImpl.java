@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -55,6 +56,7 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
         List<BcProductData> updatedBcProductDataList = new ArrayList<>();
         List<HillInteriorProduct> updatedCatalogList = productList
                 .stream()
+                .filter(Objects::nonNull)
                 .filter(HillInteriorProduct::isUpdated)
                 .collect(Collectors.toList());
 
@@ -72,47 +74,17 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
 
                 byProductSku.setSku(BcConstants.HILL_INTERIOR + hillInteriorProduct.getSku());
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + hillInteriorProduct.getProductName());
-                StringBuilder discriptionBuilder = new StringBuilder();
-                if (hillInteriorProduct.getDescription() != null && !hillInteriorProduct.getDescription().isEmpty()) {
-                    discriptionBuilder.append(hillInteriorProduct.getDescription());
-                }
-                discriptionBuilder.append("Dimensions - (");
-
                 byProductSku.setSupplier(Supplier.HILL_INTERIORS.getName());
                 byProductSku.setType(BcConstants.TYPE);
-                if (hillInteriorProduct.getWeight() != null) {
-                    int weight = hillInteriorProduct.getWeight().intValue();
-                    byProductSku.setWeight(weight);
-                    discriptionBuilder.append(" Weight : ").append(weight).append("kg");
-                }
-                if (hillInteriorProduct.getHeight() != null) {
-                    int height = hillInteriorProduct.getHeight().intValue();
-                    byProductSku.setHeight(height);
-                    discriptionBuilder.append(" Height : ").append(height).append("mm");
-                }
-                if (hillInteriorProduct.getWidth() != null) {
-                    int width = hillInteriorProduct.getWidth().intValue();
-                    byProductSku.setWidth(width);
-                    discriptionBuilder.append(" Width : ").append(width).append("mm");
-                }
-                if (hillInteriorProduct.getDepth() != null) {
-                    int depth = hillInteriorProduct.getDepth().intValue();
-                    byProductSku.setDepth(depth);
-                    discriptionBuilder.append(" Depth : ").append(depth).append("mm)");
-                }
-                if (hillInteriorProduct.getFinish() != null && !hillInteriorProduct.getFinish().isEmpty()) {
-                    discriptionBuilder.append("Finish - ").append(hillInteriorProduct.getFinish());
-                }
-                if (hillInteriorProduct.getColour() != null && !hillInteriorProduct.getColour().isEmpty()) {
-                    discriptionBuilder.append("Colour - ").append(hillInteriorProduct.getFinish());
-                }
+
+                byProductSku = evaluateDescription(hillInteriorProduct, byProductSku);
 
                 byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
                 if (byName.isPresent()) {
                     byProductSku.setBrandId(byName.get().getId());
                 }
-                byProductSku.setDescription(discriptionBuilder.toString());
+                byProductSku.setUpc(hillInteriorProduct.getEan());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
@@ -120,12 +92,52 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
                 setPriceAndQuantity(hillInteriorProduct, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(hillInteriorProduct.getProductName()));
                 byProductSku.setImageList(hillInteriorProduct.getImages());
+                byProductSku = evaluateDescription(hillInteriorProduct, byProductSku);
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             }
 
         });
-        bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList);
+        bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList, BcConstants.HILL_INTERIOR, HillInteriorProduct.class);
+    }
+
+    private BcProductData evaluateDescription(HillInteriorProduct hillInteriorProduct, BcProductData byProductSku) {
+        StringBuilder discriptionBuilder = new StringBuilder();
+        if (hillInteriorProduct.getDescription() != null && !hillInteriorProduct.getDescription().isEmpty()) {
+            discriptionBuilder.append(hillInteriorProduct.getDescription());
+        }
+        discriptionBuilder.append("  Dimensions - (");
+
+        if (hillInteriorProduct.getWeight() != null) {
+            int weight = hillInteriorProduct.getWeight().intValue();
+            byProductSku.setWeight(weight);
+            discriptionBuilder.append(" Weight : ").append(weight).append("kg");
+        }
+        if (hillInteriorProduct.getHeight() != null) {
+            int height = hillInteriorProduct.getHeight().intValue();
+            byProductSku.setHeight(height);
+            discriptionBuilder.append(" Height : ").append(height).append("cm");
+        }
+        if (hillInteriorProduct.getWidth() != null) {
+            int width = hillInteriorProduct.getWidth().intValue();
+            byProductSku.setWidth(width);
+            discriptionBuilder.append(" Width : ").append(width).append("cm");
+        }
+        if (hillInteriorProduct.getDepth() != null) {
+            int depth = hillInteriorProduct.getDepth().intValue();
+            byProductSku.setDepth(depth);
+            discriptionBuilder.append(" Depth : ").append(depth).append("cm)");
+        }
+        if (hillInteriorProduct.getFinish() != null && !hillInteriorProduct.getFinish().isEmpty()) {
+            discriptionBuilder.append("  Finish - ").append(hillInteriorProduct.getFinish());
+        }
+        if (hillInteriorProduct.getColour() != null && !hillInteriorProduct.getColour().isEmpty()) {
+            discriptionBuilder.append("  Colour - ").append(hillInteriorProduct.getFinish());
+        }
+
+        byProductSku.setDescription(discriptionBuilder.toString());
+
+        return byProductSku;
     }
 
 
@@ -149,9 +161,9 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
     }
 
     private void evaluatePrice(HillInteriorProduct hillInteriorProduct, BcProductData byProductSku) {
-        BigDecimal originalPrice = hillInteriorProduct.getPrice();
-        if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
-            byProductSku.setPrice(originalPrice.intValue());
+        BigDecimal salePrice = hillInteriorProduct.getSalePrice();
+        if (salePrice != null && salePrice.compareTo(BigDecimal.ZERO) > 0) {
+            byProductSku.setPrice(salePrice.intValue());
         }
     }
 }

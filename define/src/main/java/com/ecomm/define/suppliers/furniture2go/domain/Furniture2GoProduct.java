@@ -1,6 +1,5 @@
 package com.ecomm.define.suppliers.furniture2go.domain;
 
-import com.ecomm.define.suppliers.artisan.domain.ArtisanProduct;
 import com.opencsv.bean.CsvBindByName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -89,9 +88,9 @@ public class Furniture2GoProduct {
 
     private List<String> images;
 
-    private BigDecimal hdPrice;
-
     private BigDecimal price;
+
+    private BigDecimal salePrice;
 
     private int stockLevel;
 
@@ -104,7 +103,7 @@ public class Furniture2GoProduct {
     public int comparePrice(Furniture2GoProduct catalog){
         int compare = Comparator.comparing(Furniture2GoProduct::getSku)
                 .thenComparing(Furniture2GoProduct::getProductName)
-                .thenComparing(Furniture2GoProduct::getHdPrice)
+                .thenComparing(Furniture2GoProduct::getPrice)
                 .compare(this, catalog);
         return compare;
     }

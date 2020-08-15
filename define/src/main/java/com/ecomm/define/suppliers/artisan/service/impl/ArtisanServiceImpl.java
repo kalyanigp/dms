@@ -34,7 +34,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -153,30 +152,29 @@ public class ArtisanServiceImpl implements ArtisanService {
         }
     }
 
-    private void savePrice(ArtisanPrice price) {
-        if (price.getSku() != null && !price.getSku().isEmpty()) {
-            Optional<ArtisanProduct> byProductSku = findByProductSku(price.getSku());
-            BigDecimal hdPrice;
-            if (byProductSku.isPresent()) {
-                ArtisanProduct product = byProductSku.get();
-                LOGGER.info("SKU --- " + product.getSku() + " & Price --- " + price.getPrice());
-
-                String priceValue = price.getPrice().trim();
-                if (DefineUtils.isNumeric(priceValue)) {
-                    hdPrice = new BigDecimal(priceValue);
-                } else {
-                    hdPrice = new BigDecimal(priceValue.substring(1));
-                }
-
-                //add 20% VAT plus 30% Profit
-                hdPrice = hdPrice.add(DefineUtils.getVat(hdPrice, new BigDecimal(profitPercentHigh)));
-
-                if (!Objects.equals(product.getPrice(), hdPrice)) {
-                    product.setUpdated(Boolean.TRUE);
-                }
-                product.setPrice(hdPrice);
-                update(product);
+    private void savePrice(ArtisanPrice artisanPriceObj) {
+        BigDecimal price;
+        BigDecimal salePrice;
+        if (artisanPriceObj.getSku() != null && !artisanPriceObj.getSku().isEmpty()) {
+            String priceValue = artisanPriceObj.getPrice().trim();
+            if (DefineUtils.isNumeric(priceValue)) {
+                price = new BigDecimal(priceValue);
+            } else {
+                price = new BigDecimal(priceValue.substring(1));
             }
+            Optional<ArtisanProduct> byProductSku = findByProductSku(artisanPriceObj.getSku());
+            if (byProductSku.isPresent()) {
+                ArtisanProduct artisanProduct = byProductSku.get();
+                if (!artisanProduct.getPrice().equals(price)) {
+                    artisanProduct.setPrice(price);
+                    salePrice = price;
+                    salePrice = salePrice.add(DefineUtils.getVat(salePrice, new BigDecimal(profitPercentHigh)));
+                    artisanProduct.setUpdated(Boolean.TRUE);
+                    artisanProduct.setSalePrice(salePrice);
+                    update(artisanProduct);
+                }
+            }
+
         }
     }
 

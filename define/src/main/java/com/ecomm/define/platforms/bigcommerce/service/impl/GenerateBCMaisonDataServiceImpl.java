@@ -24,7 +24,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
@@ -62,10 +61,9 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 .stream()
                 .filter(MaisonProduct::isUpdated)
                 .collect(Collectors.toList());
-
         updatedCatalogList.parallelStream().forEach(maisonProd -> {
             Query query = new Query();
-            query.addCriteria(Criteria.where("sku").is(MAISON_CODE + maisonProd.getProductCode()));
+            query.addCriteria(Criteria.where("sku").is(MAISON_CODE + maisonProd.getSku()));
             BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
 
             if (byProductSku == null) {
@@ -73,8 +71,9 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 setPriceAndQuantity(maisonProd, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
                 byProductSku.setImageList(Arrays.asList(maisonProd.getImages().split(",")));
-                byProductSku.setSku(MAISON_CODE + maisonProd.getProductCode());
+                byProductSku.setSku(MAISON_CODE + maisonProd.getSku());
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
+                byProductSku.setUpc(maisonProd.getEan());
 
                 byProductSku.setSupplier(Supplier.MAISON.getName());
                 byProductSku.setType(BcConstants.TYPE);
@@ -115,22 +114,23 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 }
                 findDimesions(byProductSku, maisonProd.getSize());
 
-                byProductSku.setDescription(byProductSku.getDescription() + " " + maisonProd.getSize() + " " + packingSpec);
+                byProductSku.setDescription(byProductSku.getDescription() + System.lineSeparator() + maisonProd.getSize() + System.lineSeparator() + packingSpec);
                 byProductSku.setAvailabilityDescription(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
-                byProductSku.setMpn(maisonProd.getProductCode());
+                byProductSku.setMpn(maisonProd.getSku());
                 byProductSku.setPageTitle(maisonProd.getTitle());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
                 setPriceAndQuantity(maisonProd, byProductSku);
+                byProductSku.setUpc(maisonProd.getEan());
                 byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
                 byProductSku.setAvailabilityDescription(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             }
         });
-        bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList);
+        bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList, BcConstants.MAISON_CODE, MaisonProduct.class);
     }
 
     private void setPriceAndQuantity(MaisonProduct maisonProd, BcProductData byProductSku) {
@@ -142,18 +142,16 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
 
 
     private int evaluatePrice(MaisonProduct maisonProd) {
-        BigDecimal decimalPrice = null;
+        BigDecimal salePrice = null;
         if (StringUtils.isEmpty(maisonProd.getMspPrice()) || "N/A".equals(maisonProd.getMspPrice()) || "0".equals(maisonProd.getMspPrice())) {
             if (!StringUtils.isEmpty(maisonProd.getTradePrice())) {
-                decimalPrice = new BigDecimal(maisonProd.getTradePrice());
-                decimalPrice = decimalPrice.multiply(BigDecimal.valueOf(2.5));
+                salePrice = new BigDecimal(maisonProd.getTradePrice());
+                salePrice = salePrice.multiply(BigDecimal.valueOf(2.5));
             }
         } else {
-            decimalPrice = new BigDecimal(maisonProd.getMspPrice());
+            salePrice = new BigDecimal(maisonProd.getMspPrice());
         }
-        decimalPrice = Objects.requireNonNull(decimalPrice).add(new BigDecimal(1));
-        return decimalPrice.intValue();
-
+        return salePrice.intValue();
     }
 
 
@@ -171,8 +169,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 size = size.replaceAll("mm", "MM");
 
                 int unit = size.indexOf("CM");
-                if (size.contains("MM"))
-                {
+                if (size.contains("MM")) {
                     unit = size.indexOf("MM");
                 }
                 if (size.contains("X")) {
@@ -191,6 +188,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                         height = height.replaceAll(" ", "");
                         height = height.replaceAll("cm", "");
                         height = height.replaceAll("mm", "");
+                        height = height.replaceAll("MM", "");
 
                         if (height.contains(".")) {
                             height = height.substring(0, height.indexOf("."));
@@ -208,6 +206,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                         width = width.replaceAll(" ", "");
                         width = width.replaceAll("cm", "");
                         width = width.replaceAll("mm", "");
+                        width = width.replaceAll("MM", "");
                         width = width.replaceAll("[^\\d.]", "");
 
                         if (width.contains(".")) {
@@ -231,6 +230,11 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                             depth = depth.substring(0, depth.indexOf("mm"));
                             depth = depth.replaceAll("mm", "");
                         }
+                        if (depth.contains("MM")) {
+                            depth = depth.substring(0, depth.indexOf("MM"));
+                            depth = depth.replaceAll("MM", "");
+                        }
+
                         if (depth.contains(".")) {
                             depth = depth.substring(0, depth.indexOf("."));
                         }
@@ -269,7 +273,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 .stream()
                 .filter(MaisonProduct::isDiscontinued)
                 .collect(Collectors.toList());
-        discontinuedList.parallelStream().forEach(maisonProduct -> bigCommerceApiService.processDiscontinuedCatalog(MAISON_CODE + maisonProduct.getProductCode()));
+        discontinuedList.parallelStream().forEach(maisonProduct -> bigCommerceApiService.processDiscontinuedCatalog(MAISON_CODE + maisonProduct.getSku()));
     }
 
 }

@@ -61,6 +61,8 @@ public class MarkHarrisProduct {
     private String width;
     private String height;
     private BigDecimal price;
+    private BigDecimal salePrice;
+
     private int stockLevel;
     private List<String> images;
     private boolean updated;
@@ -73,7 +75,6 @@ public class MarkHarrisProduct {
     public int compareTo(MarkHarrisProduct catalog) {
         int compare = Comparator.comparing(MarkHarrisProduct::getSku)
                 .thenComparing(MarkHarrisProduct::getProductName)
-                .thenComparing(MarkHarrisProduct::getDescription)
                 .thenComparing(MarkHarrisProduct::getPrice)
                 .thenComparing(MarkHarrisProduct::getStockLevel)
                 .compare(this, catalog);
