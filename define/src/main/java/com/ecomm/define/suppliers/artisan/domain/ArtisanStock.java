@@ -3,6 +3,7 @@ package com.ecomm.define.suppliers.artisan.domain;
 import com.opencsv.bean.CsvBindByName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -11,6 +12,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
  * Created by vamshikirangullapelly on 06/07/2020.
  */
 @AllArgsConstructor
+@NoArgsConstructor
 @Data
 public class ArtisanStock {
 
@@ -23,7 +25,4 @@ public class ArtisanStock {
 
     @CsvBindByName(column = "stock_quantity")
     private int stockLevel;
-
-    public ArtisanStock() {
-    }
 }

@@ -60,6 +60,7 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
             List<BcProductData> updatedBcProductDataList = new ArrayList<>();
             List<MarkHarrisProduct> updatedCatalogList = productList
                     .stream()
+                    .filter(Objects::nonNull)
                     .filter(MarkHarrisProduct::isUpdated)
                     .collect(Collectors.toList());
             for (MarkHarrisProduct markHarrisProduct : updatedCatalogList) {
@@ -104,29 +105,29 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                     if (markHarrisProduct.getDescription() != null) {
                         additionalDescription.append(markHarrisProduct.getDescription());
                     }
-                    additionalDescription.append("(Product Dimensions - ");
+                    additionalDescription.append("(Product Dimensions - (");
                     if (markHarrisProduct.getMaxHeight() != null && !markHarrisProduct.getMaxHeight().isEmpty()) {
-                        additionalDescription.append(" Maximum Height - ").append(markHarrisProduct.getMaxHeight()).append("mm");
+                        additionalDescription.append(" Maximum Height - ").append(markHarrisProduct.getMaxHeight()).append("cm");
                     }
                     if (markHarrisProduct.getMinHeight() != null && !markHarrisProduct.getMinHeight().isEmpty()) {
-                        additionalDescription.append(" Minimum Height - ").append(markHarrisProduct.getMinHeight()).append("mm");
+                        additionalDescription.append(" Minimum Height - ").append(markHarrisProduct.getMinHeight()).append("cm");
                     }
                     if (markHarrisProduct.getMaxWidth() != null && !markHarrisProduct.getMaxWidth().isEmpty()) {
-                        additionalDescription.append(" Maximum Width -  ").append(markHarrisProduct.getMaxWidth()).append("mm");
+                        additionalDescription.append(" Maximum Width -  ").append(markHarrisProduct.getMaxWidth()).append("cm");
                     }
                     if (markHarrisProduct.getMinWidth() != null && !markHarrisProduct.getMinWidth().isEmpty()) {
-                        additionalDescription.append(" Minimum Width -  ").append(markHarrisProduct.getMinWidth()).append("mm");
+                        additionalDescription.append(" Minimum Width -  ").append(markHarrisProduct.getMinWidth()).append("cm");
                     }
                     if (markHarrisProduct.getMaxLengthOrDepth() != null && !markHarrisProduct.getMaxLengthOrDepth().isEmpty()) {
-                        additionalDescription.append(" Maximum Length/Depth -  ").append(markHarrisProduct.getMaxLengthOrDepth()).append("mm");
+                        additionalDescription.append(" Maximum Length/Depth -  ").append(markHarrisProduct.getMaxLengthOrDepth()).append("cm");
                     }
                     if (markHarrisProduct.getMinLengthOrDepth() != null && !markHarrisProduct.getMinLengthOrDepth().isEmpty()) {
-                        additionalDescription.append(" Minimum Length/Depth -  ").append(markHarrisProduct.getMinLengthOrDepth()).append("mm");
+                        additionalDescription.append(" Minimum Length/Depth -  ").append(markHarrisProduct.getMinLengthOrDepth()).append("cm )");
                     }
                     additionalDescription.append(")");
 
-                    if (markHarrisProduct.getWeight() != null && !markHarrisProduct.getWeight().isEmpty()) {
-                        additionalDescription.append(" Product Weight -  ").append(markHarrisProduct.getWeight()).append("kg ");
+                    if (markHarrisProduct.getWeight() != null && !markHarrisProduct.getWeight().isEmpty() && !markHarrisProduct.getWeight().equals("0")) {
+                        additionalDescription.append("  Product Weight -  ").append(markHarrisProduct.getWeight()).append("kg ");
                     }
 
                     if (markHarrisProduct.getAssembled() != null && !markHarrisProduct.getAssembled().isEmpty()) {

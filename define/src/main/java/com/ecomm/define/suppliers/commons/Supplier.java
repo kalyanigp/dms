@@ -9,6 +9,8 @@ public enum Supplier {
     FURNITURE2GO("Furniture 2 Go"),
     HILL_INTERIORS("Hill Interiors"),
     MAR_HARRIS("Mark Harris"),
+    LPD("LPD"),
+    GEKO("Geko"),
     SELLER_BRAND("Define");
 
 

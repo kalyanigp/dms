@@ -3,7 +3,6 @@ package com.ecomm.define.suppliers.markharris.service.impl;
 import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.exception.FileNotFoundException;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
-import com.ecomm.define.suppliers.markharris.domain.MarkHarrisImage;
 import com.ecomm.define.suppliers.markharris.domain.MarkHarrisPrice;
 import com.ecomm.define.suppliers.markharris.domain.MarkHarrisProduct;
 import com.ecomm.define.suppliers.markharris.domain.MarkHarrisStock;
@@ -33,9 +32,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -94,14 +91,6 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
         return repository.save(markHarrisProduct);
     }
 
-    @Override
-    public void uploadImages() {
-        LOGGER.info("started uploading MarkHarris Images from file ");
-        //Process Images
-        Map<String, List<String>> catalogImages = MarkHarrisFeedMaker.getCatalogImages(repository.findAll());
-        saveImages(catalogImages);
-        LOGGER.info("Finished uploading MarkHarris Images from file ");
-    }
 
     @Override
     public void saveAll(List<MarkHarrisProduct> markHarrisProducts) {
@@ -131,61 +120,6 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
                 // convert `CsvToBean` object to list of MarkHarrisProduct
                 List<MarkHarrisProduct> markHarrisProducts = csvToBean.parse();
                 markHarrisProducts.parallelStream().forEach(this::insertOrUpdate);
-            } catch (Exception ex) {
-                LOGGER.error("Error while processing CSV File" + ex.getMessage());
-            }
-        }
-    }
-
-
-    @Override
-    public void uploadImages(MultipartFile file) {
-        LOGGER.info("started uploading MarkHarris Imagesvfrom file - {}", file.getOriginalFilename());
-
-        // validate file
-        if (file.isEmpty()) {
-            throw new FileNotFoundException("Please select a valid CSV file to upload.");
-        } else {
-
-            // parse CSV file to create a list of `Product` objects
-            try (Reader reader = new BufferedReader(new InputStreamReader(file.getInputStream()))) {
-
-                // create csv bean reader
-                CsvToBean<MarkHarrisImage> csvToBean = new CsvToBeanBuilder(reader)
-                        .withIgnoreEmptyLine(true)
-                        .withType(MarkHarrisImage.class)
-                        .withIgnoreLeadingWhiteSpace(true)
-                        .build();
-
-                // convert `CsvToBean` object to list of MarkHarrisProduct
-                List<MarkHarrisImage> markHarrisProducts = csvToBean.parse();
-                markHarrisProducts.parallelStream().forEach(image -> {
-                    Query query = new Query();
-                    query.addCriteria(Criteria.where("sku").is(image.getSku()));
-                    MarkHarrisProduct product = mongoOperations.findOne(query, MarkHarrisProduct.class);
-                    if (product != null && product.getImages() == null) {
-                        List<String> images = new ArrayList<>();
-                        images.add(image.getImageURL1());
-                        images.add(image.getImageURL2());
-                        images.add(image.getImageURL3());
-                        images.add(image.getImageURL4());
-                        images.add(image.getImageURL5());
-                        images.add(image.getImageURL6());
-                        images.add(image.getImageURL7());
-                        images.add(image.getImageURL8());
-                        images.add(image.getImageURL9());
-                        images.add(image.getImageURL10());
-                        images.add(image.getImageURL11());
-                        images.add(image.getImageURL12());
-                        images.add(image.getImageURL13());
-                        images.add(image.getImageURL14());
-                        product.setImages(images);
-                        repository.save(product);
-
-                    }
-                });
-
-
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
             }
@@ -236,7 +170,7 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
                 } else {
                     hdPrice = new BigDecimal(priceValue.substring(1));
                 }
-                if(!product.getPrice().equals(hdPrice)) {
+                if (!product.getPrice().equals(hdPrice)) {
                     product.setUpdated(true);
                     product.setPrice(hdPrice);
                 }
@@ -262,7 +196,6 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
         }
         MarkHarrisProduct andModify = mongoOperations.findAndModify(query, update, new FindAndModifyOptions().returnNew(false).upsert(false), MarkHarrisProduct.class);
         LOGGER.info("Catalog has been updated with stock for sku {}, product name {}", Objects.requireNonNull(andModify).getSku(), andModify.getProductName());
-        //System.out.println("++++++++++++++++++++++++++++++SKU "+ stock.getSku() + "Status "+ stock.getStatus() + "Stock "+ stock.getStockQuantity());
     }
 
     @Override
@@ -329,36 +262,6 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
         DeleteResult deleteResult = mongoOperations.remove(deleteDiscontinuedCatalogQuery, MarkHarrisProduct.class);
         LOGGER.info("Discontinued Catalog has been deleted from the MarkHarrisProduct Table, total records been deleted is {}", deleteResult.getDeletedCount());
 
-        //Update modified to false.
-        Query updateModifiedCatalogQuery = new Query();
-        updateModifiedCatalogQuery.addCriteria(Criteria.where("updated").is(true));
-        Update update = new Update();
-        update.set("updated", false);
-        UpdateResult updateResult = mongoOperations.updateMulti(updateModifiedCatalogQuery, update, MarkHarrisProduct.class);
-        LOGGER.info("Total number of products modified Updated flag to false is, {}", updateResult.getModifiedCount());
     }
 
-
-    /**
-     * Saves Images for the catalog
-     *
-     * @param images
-     */
-    private void saveImages(Map<String, List<String>> images) {
-        List<MarkHarrisProduct> markHarrisProducts = repository.findAll();
-        markHarrisProducts.forEach(product -> {
-            if (product.getImages() == null) {
-                List<String> imagesList = images.get(product.getSku());
-                if (imagesList != null && !imagesList.isEmpty()) {
-                    product.setImages(imagesList);
-                    product.setUpdated(Boolean.TRUE);
-                } else {
-                    product.setUpdated(Boolean.TRUE);
-                    product.setDiscontinued(Boolean.TRUE);
-                }
-                repository.save(product);
-            }
-        });
-
-    }
 }

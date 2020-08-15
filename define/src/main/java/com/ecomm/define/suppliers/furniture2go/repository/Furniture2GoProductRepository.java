@@ -17,9 +17,6 @@ public interface Furniture2GoProductRepository extends MongoRepository<Furniture
     @Query("{sku : ?0}")
     Optional<Furniture2GoProduct> findByProductSku(String productName);
 
-    @Query("{updated : ?0}")
-    List<Furniture2GoProduct> findUpdatedProducts(boolean productName);
-
     @Query("{id : ?0}")
     Optional<Furniture2GoProduct> findById(String id);
 

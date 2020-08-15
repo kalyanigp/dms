@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
@@ -59,6 +60,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         List<BcProductData> updatedBcProductDataList = new ArrayList<>();
         List<MaisonProduct> updatedCatalogList = updatedMaisonProductList
                 .stream()
+                .filter(Objects::nonNull)
                 .filter(MaisonProduct::isUpdated)
                 .collect(Collectors.toList());
         updatedCatalogList.parallelStream().forEach(maisonProd -> {
