@@ -6,7 +6,9 @@ import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by vamshikirangullapelly on 08/07/2020.
@@ -41,21 +43,21 @@ public class HillInteriorURLReader {
 
     public static List<String> addImages(Document doc) {
         String imageURL = "";
-        List<String> images = new ArrayList<String>();
+        Set<String> imageSet = new HashSet<String>();
         imageURL = doc.select("div[id*=product-album-main").select("a[href]").toString();
         if (imageURL.length() > 8) {
             imageURL = imageURL.substring(9, imageURL.indexOf("rel=")-2);
         }
-        images.add(imageURL);
+        imageSet.add(imageURL);
 
-        findMoreURLs(doc, images, "zoom1");
-        findMoreURLs(doc, images, "zoom2");
-        findMoreURLs(doc, images, "zoom3");
+        findMoreURLs(doc, imageSet, "zoom1");
+        findMoreURLs(doc, imageSet, "zoom2");
+        findMoreURLs(doc, imageSet, "zoom3");
 
-        return images;
+        return new ArrayList<>(imageSet);
     }
 
-    private static void findMoreURLs(Document doc, List<String> images, String zoom) {
+    private static void findMoreURLs(Document doc, Set<String> images, String zoom) {
         String fullURL;
         String partURL;
         if (doc.getElementById(zoom) != null) {

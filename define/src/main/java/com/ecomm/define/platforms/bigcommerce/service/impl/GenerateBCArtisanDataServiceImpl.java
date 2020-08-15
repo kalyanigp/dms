@@ -19,8 +19,6 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -74,6 +72,12 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                 byProductSku.setCategories(BCUtils.assignCategories(artisanProduct.getProductName()));
                 byProductSku.setImageList(artisanProduct.getImages());
 
+
+                String ean = artisanProduct.getEan();
+                if (ean != null && !ean.isEmpty()) {
+                    byProductSku.setUpc(ean);
+                }
+
                 byProductSku.setSku(BcConstants.ARTISAN + artisanProduct.getSku());
                 byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
                 StringBuilder discriptionBuilder = new StringBuilder();
@@ -122,7 +126,7 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                 updatedBcProductDataList.add(bcProductData);
             }
         }
-        bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList);
+        bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList, BcConstants.ARTISAN, ArtisanProduct.class);
     }
 
 
@@ -136,7 +140,7 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
     }
 
     private void setPriceAndQuantity(ArtisanProduct artisanProduct, BcProductData byProductSku) {
-        evaluatePrice(artisanProduct, byProductSku);
+        byProductSku.setPrice(artisanProduct.getPrice().intValue());
         byProductSku.setInventoryLevel(Math.max(artisanProduct.getStockLevel(), 0));
         byProductSku.setAvailability(BcConstants.PREORDER);
         byProductSku.setAvailabilityDescription("Usually dispatches in 6 to 8 weeks.");
@@ -146,10 +150,4 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
         }
     }
 
-    private void evaluatePrice(ArtisanProduct artisanProduct, BcProductData byProductSku) {
-        BigDecimal originalPrice = artisanProduct.getPrice();
-        if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
-            byProductSku.setPrice(originalPrice.intValue());
-        }
-    }
 }

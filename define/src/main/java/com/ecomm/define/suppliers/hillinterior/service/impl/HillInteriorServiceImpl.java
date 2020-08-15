@@ -49,8 +49,14 @@ public class HillInteriorServiceImpl implements HillInteriorService {
     @Value("${bigcommerce.hillinterior.profit.percentage.high}")
     private String profitPercentHigh;
 
+    @Value("${bigcommerce.hillinterior.profit.percentage.low}")
+    private String profitPercentLow;
+
     @Value("${bigcommerce.f2g.vat.percentage}")
     private String vatPercent;
+
+    @Value("${bigcommerce.hillinterior.profit.factor.under4}")
+    private String profitFactorunder4;
 
     @Value("${bigcommerce.hillinterior.profit.factor.under10}")
     private String profitFactorunder10;
@@ -60,6 +66,9 @@ public class HillInteriorServiceImpl implements HillInteriorService {
 
     @Value("${bigcommerce.hillinterior.profit.factor.under30}")
     private String profitFactorunder30;
+
+    @Value("${bigcommerce.hillinterior.profit.factor.under40}")
+    private String profitFactorunder40;
 
     @Autowired // inject hillInteriorDataService
     public HillInteriorServiceImpl(@Lazy @Qualifier("hillInteriorDataService") GenerateBCDataService generateBCDataService
@@ -146,14 +155,14 @@ public class HillInteriorServiceImpl implements HillInteriorService {
                 Update update = new Update();
                 update.set("discontinued", Boolean.FALSE);
                 update.set("updated", Boolean.TRUE);
-                update.set("price", evaluatePrice(product));
+                update.set("salePrice", evaluatePrice(product));
                 UpdateResult updatedProduct = mongoOperations.updateFirst(query, update, HillInteriorProduct.class);
                 LOGGER.info("Successfully updated HillInterior Product SKU {} and ProductName {}", hillInteriorProduct.getSku(), hillInteriorProduct.getProductName());
             }
         } else {
             hillInteriorProduct.setDiscontinued(Boolean.FALSE);
             hillInteriorProduct.setUpdated(Boolean.TRUE);
-            hillInteriorProduct.setPrice(evaluatePrice(hillInteriorProduct));
+            hillInteriorProduct.setSalePrice(evaluatePrice(hillInteriorProduct));
             hillInteriorProduct.setImages(HillInteriorMasterFeedMaker.getProductImages(hillInteriorProduct));
             HillInteriorProduct insertedProduct = mongoOperations.insert(hillInteriorProduct);
             LOGGER.info("Successfully created HillInterior Product SKU {} and ProductName {}", insertedProduct.getSku(), insertedProduct.getProductName());
@@ -194,29 +203,30 @@ public class HillInteriorServiceImpl implements HillInteriorService {
         DeleteResult deleteResult = mongoOperations.remove(deleteDiscontinuedCatalogQuery, HillInteriorProduct.class);
         LOGGER.info("Discontinued Catalog has been deleted from the HillInteriorProduct Table, total records been deleted is {}", deleteResult.getDeletedCount());
 
-        //Update modified to false.
-        Query updateModifiedCatalogQuery = new Query();
-        updateModifiedCatalogQuery.addCriteria(Criteria.where("updated").is(true));
-        Update update = new Update();
-        update.set("updated", false);
-        UpdateResult updateResult = mongoOperations.updateMulti(updateModifiedCatalogQuery, update, HillInteriorProduct.class);
-        LOGGER.info("Total number of products modified Updated flag to false is, {}", updateResult.getModifiedCount());
     }
 
     private BigDecimal evaluatePrice(HillInteriorProduct hillInteriorProduct) {
         BigDecimal price = hillInteriorProduct.getPrice();
         if (price != null && price.intValue() > 0) {
             price.add(DefineUtils.getVat(price, new BigDecimal(vatPercent)));
-            if (price.intValue() <= 10) {
+            if (price.intValue() <= 4) {
+                price = DefineUtils.multiply(price, new BigDecimal(profitFactorunder4)).setScale(0, BigDecimal.ROUND_HALF_UP);
+            } else if (price.intValue() <= 10) {
                 price = DefineUtils.multiply(price, new BigDecimal(profitFactorunder10)).setScale(0, BigDecimal.ROUND_HALF_UP);
             } else if (price.intValue() <= 20) {
                 price = DefineUtils.multiply(price, new BigDecimal(profitFactorunder20)).setScale(0, BigDecimal.ROUND_HALF_UP);
             } else if (price.intValue() <= 30) {
                 price = DefineUtils.multiply(price, new BigDecimal(profitFactorunder30)).setScale(0, BigDecimal.ROUND_HALF_UP);
+            } else if (price.intValue() <= 40) {
+                price = DefineUtils.multiply(price, new BigDecimal(profitFactorunder40)).setScale(0, BigDecimal.ROUND_HALF_UP);
+            } else if (price.intValue() <= 100) {
+                price = price.add(DefineUtils.percentage(price, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
             } else {
-                price.add(DefineUtils.percentage(price, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                price = price.add(DefineUtils.percentage(price, new BigDecimal(profitPercentLow))).setScale(0, BigDecimal.ROUND_HALF_UP);
             }
+
         }
+
         return price;
     }
 }

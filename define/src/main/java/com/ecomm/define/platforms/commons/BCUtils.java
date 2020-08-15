@@ -37,7 +37,7 @@ public class BCUtils {
         }
         if (categories.size() == 0)
         {
-            categories.add(Category.FURNITURE.getCategoryCode());
+            categories.add(Category.INTERIOR.getCategoryCode());
         }
         return categories.parallelStream().collect(Collectors.toList());
     }

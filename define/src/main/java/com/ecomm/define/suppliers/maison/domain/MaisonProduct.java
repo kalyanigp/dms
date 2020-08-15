@@ -25,7 +25,7 @@ public class MaisonProduct {
     private String title;
     @Indexed(unique = true)
     @CsvBindByName(column = "Product Code")
-    private String productCode;
+    private String sku;
     @CsvBindByName(column = "Trade Price")
     private String tradePrice;
     @CsvBindByName(column = "MSP Price")
@@ -50,11 +50,10 @@ public class MaisonProduct {
 
 
     public int compareTo(MaisonProduct catalog) {
-        int compare = Comparator.comparing(MaisonProduct::getProductCode)
+        int compare = Comparator.comparing(MaisonProduct::getSku)
                 .thenComparing(MaisonProduct::getTitle)
                 .thenComparing(MaisonProduct::getTradePrice)
                 .thenComparing(MaisonProduct::getStockQuantity)
-                .thenComparing(MaisonProduct::getImages)
                 .compare(this, catalog);
         return compare;
     }

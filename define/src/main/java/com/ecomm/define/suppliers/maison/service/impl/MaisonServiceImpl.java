@@ -102,19 +102,19 @@ public class MaisonServiceImpl implements MaisonService {
     public void insertOrUpdate(List<MaisonProduct> newList) {
         newList.forEach(catalog -> {
             Query query = new Query();
-            query.addCriteria(Criteria.where("productCode").is(catalog.getProductCode()));
+            query.addCriteria(Criteria.where("sku").is(catalog.getSku()));
             MaisonProduct maisonProduct = mongoOperations.findOne(query, MaisonProduct.class);
             if(maisonProduct != null) {
                 if(maisonProduct.compareTo(catalog) != 0) {
                     maisonProduct.setDiscontinued(Boolean.FALSE);
                     mongoOperations.save(maisonProduct);
-                    LOGGER.info("Updated Maison Product "+catalog.getProductCode());
+                    LOGGER.info("Updated Maison Product "+catalog.getSku());
                 }
             } else {
                 catalog.setDiscontinued(Boolean.FALSE);
                 catalog.setUpdated(Boolean.TRUE);
                 mongoOperations.insert(catalog);
-                LOGGER.info("Inserted Maison Product "+catalog.getProductCode());
+                LOGGER.info("Inserted Maison Product "+catalog.getSku());
             }
         });
         LOGGER.info("Successfully updated Maison Products to DB");
@@ -142,9 +142,9 @@ public class MaisonServiceImpl implements MaisonService {
                 // convert `CsvToBean` object to list of MaisonProducts
                 List<MaisonProduct> maisonProducts = csvToBean.parse();
 
-                // Append MREP to the productCode as to avoid other sellers to trace our product details
+                // Append MREP to the sku as to avoid other sellers to trace our product details
                 maisonProducts.parallelStream().forEach(catalog ->
-                        catalog.setProductCode(catalog.getProductCode()));
+                        catalog.setSku(catalog.getSku()));
                 insertOrUpdate(maisonProducts);
                 processDiscontinuedCatalog(maisonProducts);
 
@@ -158,8 +158,8 @@ public class MaisonServiceImpl implements MaisonService {
 
     private void processDiscontinuedCatalog(List<MaisonProduct> maisonProducts) {
         List<MaisonProduct> dbCatalog = findAll();
-        List<String> oldCatalog = dbCatalog.stream().map(MaisonProduct::getProductCode).collect(Collectors.toList());
-        List<String> newCatalog = maisonProducts.stream().map(MaisonProduct::getProductCode).collect(Collectors.toList());
+        List<String> oldCatalog = dbCatalog.stream().map(MaisonProduct::getSku).collect(Collectors.toList());
+        List<String> newCatalog = maisonProducts.stream().map(MaisonProduct::getSku).collect(Collectors.toList());
         List<String> discontinuedList = oldCatalog.stream()
                 .filter(e -> !newCatalog.contains(e))
                 .collect(Collectors.toList());

@@ -147,7 +147,7 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                     LOGGER.info("Successfully updated BCProductData for {}", markHarrisProduct.getSku());
                 }
             }
-            bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList);
+            bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList, BcConstants.MARK_HARRIS, MarkHarrisProduct.class);
         } catch (Exception ex) {
             LOGGER.error(ex.getCause().getMessage());
         }
@@ -174,7 +174,7 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
     }
 
     private void evaluatePrice(MarkHarrisProduct markHarrisProduct, BcProductData byProductSku) {
-        BigDecimal originalPrice = markHarrisProduct.getPrice();
+        BigDecimal originalPrice = markHarrisProduct.getSalePrice();
         if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
             byProductSku.setPrice(originalPrice.intValue());
             if (originalPrice.compareTo(new BigDecimal(higherLimitHDPrice)) > 0) {

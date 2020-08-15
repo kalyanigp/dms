@@ -3,9 +3,7 @@ package com.ecomm.define.platforms.bigcommerce.service;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
 import org.bson.types.ObjectId;
 import org.springframework.http.HttpHeaders;
-import org.springframework.web.client.RestTemplate;
 
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,7 +32,7 @@ public interface BigCommerceApiService {
 
     String getBaseUrl();
 
-    void populateBigCommerceProduct(List<BcProductData> productDataList);
+    void populateBigCommerceProduct(List<BcProductData> productDataList, String supplierCode, Object clazz);
 
     void processDiscontinuedCatalog(String sku);
 

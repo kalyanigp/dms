@@ -82,6 +82,8 @@ public class ArtisanProduct {
 
     private BigDecimal price;
 
+    private BigDecimal salePrice;
+
     private int stockLevel;
 
     private List<String> images;

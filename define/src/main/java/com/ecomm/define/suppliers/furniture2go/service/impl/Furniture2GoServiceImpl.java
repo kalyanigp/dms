@@ -34,7 +34,6 @@ import java.io.Reader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -194,57 +193,30 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
         }
     }
 
-    private void savePrice(Furniture2GoPrice price) {
-        if (price.getSku() != null && !price.getSku().isEmpty()) {
-            Optional<Furniture2GoProduct> byProductSku = findByProductSku(price.getSku());
-            BigDecimal hdPrice;
-            BigDecimal hdPriceBeforeVat;
+    private void savePrice(Furniture2GoPrice furniture2GoPrice) {
+        if (furniture2GoPrice.getSku() != null && !furniture2GoPrice.getSku().isEmpty()) {
+            Optional<Furniture2GoProduct> byProductSku = findByProductSku(furniture2GoPrice.getSku());
             if (byProductSku.isPresent()) {
                 Furniture2GoProduct product = byProductSku.get();
-                LOGGER.info("SKU --- " + product.getSku() + " & Price --- " + price.getPrice());
+                LOGGER.info("SKU --- " + product.getSku() + " & Price --- " + furniture2GoPrice.getPrice());
 
-                String priceValue = price.getPrice().trim();
-                if (DefineUtils.isNumeric(priceValue)) {
-                    hdPrice = new BigDecimal(priceValue);
-                } else {
-                    hdPrice = new BigDecimal(priceValue.substring(1));
-                }
-                product.setHdPrice(hdPrice);
-                hdPriceBeforeVat = hdPrice;
-                //add 20% VAT
-                hdPrice = hdPrice.add(DefineUtils.getVat(hdPrice, new BigDecimal(vatPercent)));
+                BigDecimal price = furniture2GoPrice.getPrice();
 
-                //add profit
-                //Profit depends on the HD Price, if HDPrice is < 400 then the profit percent is 30 else 40
-                if (hdPriceBeforeVat.compareTo(new BigDecimal(lowerLimitHDPrice)) < 1) {
-                    hdPrice = hdPrice.add(DefineUtils.percentage(hdPrice, new BigDecimal(profitPercentLow))).setScale(0, BigDecimal.ROUND_HALF_UP);
-                } else {
-                    hdPrice = hdPrice.add(DefineUtils.percentage(hdPrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
-                }
-
-                if (product.getPrice().compareTo(hdPrice) != 0) {
+                if (!product.getPrice().equals(price)) {
                     product.setUpdated(Boolean.TRUE);
-                    product.setPrice(hdPrice);
-                    update(product);
                 }
+                product.setPrice(price);
+                BigDecimal salePrice = price;
 
-                product.setPrice(hdPrice);
+                if (salePrice.compareTo(new BigDecimal(lowerLimitHDPrice)) < 1) {
+                    salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentLow))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                } else {
+                    salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                }
+                salePrice = salePrice.add(DefineUtils.getVat(price, new BigDecimal(vatPercent)));
+
+                product.setSalePrice(salePrice);
                 update(product);
-            }
-        }
-    }
-
-
-    private void saveImages(Map<String, List<String>> images) {
-        for (Map.Entry<String, List<String>> entry : images.entrySet()) {
-            Optional<Furniture2GoProduct> byProductSku = findByProductSku(entry.getKey());
-            if (byProductSku.isPresent()) {
-                Furniture2GoProduct furniture2GoProduct = byProductSku.get();
-                if (!furniture2GoProduct.getImages().equals(entry.getValue())) {
-                    furniture2GoProduct.setImages(entry.getValue());
-                    furniture2GoProduct.setUpdated(Boolean.TRUE);
-                    update(furniture2GoProduct);
-                }
             }
         }
     }
