@@ -80,7 +80,9 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
                 setPriceAndQuantity(furniture2GoProduct, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(furniture2GoProduct.getProductName()));
                 byProductSku.setSku(BcConstants.FURNITURE_2_GO + furniture2GoProduct.getSku());
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + furniture2GoProduct.getProductName() + " " + furniture2GoProduct.getFinish());
+                if (!furniture2GoProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + furniture2GoProduct.getProductName() + " " + furniture2GoProduct.getFinish());
+                }
 
                 byProductSku.setSupplier(Supplier.FURNITURE2GO.getName());
                 byProductSku.setType(BcConstants.TYPE);
@@ -95,7 +97,9 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + furniture2GoProduct.getProductName() + " " + furniture2GoProduct.getFinish());
+                if (!furniture2GoProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + furniture2GoProduct.getProductName() + " " + furniture2GoProduct.getFinish());
+                }
                 setPriceAndQuantity(furniture2GoProduct, byProductSku);
                 evaluateDescription(furniture2GoProduct, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(furniture2GoProduct.getProductName()));

@@ -74,7 +74,9 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
                 byProductSku.setImageList(Arrays.asList(maisonProd.getImages().split(",")));
                 byProductSku.setSku(MAISON_CODE + maisonProd.getSku());
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
+                if(!maisonProd.getTitle().contains(Supplier.SELLER_BRAND.getName())) {
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
+                }
                 byProductSku.setUpc(maisonProd.getEan());
 
                 byProductSku.setSupplier(Supplier.MAISON.getName());
@@ -123,7 +125,10 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
+
+                if(!maisonProd.getTitle().contains(Supplier.SELLER_BRAND.getName())) {
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
+                }
                 setPriceAndQuantity(maisonProd, byProductSku);
                 byProductSku.setUpc(maisonProd.getEan());
                 byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));

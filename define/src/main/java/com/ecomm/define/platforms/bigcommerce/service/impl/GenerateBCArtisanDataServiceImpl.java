@@ -65,7 +65,9 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                 .collect(Collectors.toList());
         for (ArtisanProduct artisanProduct : updatedCatalogList) {
             Query query = new Query();
-            query.addCriteria(Criteria.where("sku").is(BcConstants.ARTISAN + artisanProduct.getSku()));
+            if (!artisanProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
+                query.addCriteria(Criteria.where("sku").is(BcConstants.ARTISAN + artisanProduct.getSku()));
+            }
             BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
 
             if (byProductSku == null) {
@@ -81,7 +83,9 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                 }
 
                 byProductSku.setSku(BcConstants.ARTISAN + artisanProduct.getSku());
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
+                if (!artisanProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
+                }
                 StringBuilder discriptionBuilder = new StringBuilder();
                 discriptionBuilder.append(artisanProduct.getDescription());
                 discriptionBuilder.append("Dimensions - (");
@@ -121,7 +125,9 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                 updatedBcProductDataList.add(bcProductData);
             } else {
                 byProductSku.setImageList(artisanProduct.getImages());
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
+                if (!artisanProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
+                }
                 setPriceAndQuantity(artisanProduct, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(artisanProduct.getProductName()));
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
