@@ -169,7 +169,7 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                         updateModifiedCatalogQuery.addCriteria(Criteria.where("sku").is(productSku));
                         Update update = new Update();
                         update.set("updated", false);
-                        mongoOperations.updateFirst(updateModifiedCatalogQuery, update, ((Class) clazz).getSimpleName());
+                        mongoOperations.updateFirst(updateModifiedCatalogQuery, update, ((Class) clazz));
                         LOGGER.info("Product has been successfully sent to the BigCommerce API ");
 
                     } catch (HttpClientErrorException httpClientException) {
@@ -184,7 +184,7 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                             update.set("productName", product.getName() + " " + productSku);
                         }
                         update.set("updated", true);
-                        UpdateResult updateResult = mongoOperations.updateFirst(updateModifiedCatalogQuery, update, ((Class) clazz).getSimpleName());
+                        UpdateResult updateResult = mongoOperations.updateFirst(updateModifiedCatalogQuery, update, ((Class) clazz));
                         LOGGER.info("Sku has been updated {} , getMatchedCount {}, getModifiedCount {}", productSku, updateResult.getMatchedCount(), updateResult.getModifiedCount());
 
                     }

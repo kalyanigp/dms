@@ -73,7 +73,9 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
                 byProductSku.setImageList(hillInteriorProduct.getImages());
 
                 byProductSku.setSku(BcConstants.HILL_INTERIOR + hillInteriorProduct.getSku());
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + hillInteriorProduct.getProductName());
+                if(!hillInteriorProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + hillInteriorProduct.getProductName());
+                }
                 byProductSku.setSupplier(Supplier.HILL_INTERIORS.getName());
                 byProductSku.setType(BcConstants.TYPE);
 
@@ -88,7 +90,9 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
-                byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + hillInteriorProduct.getProductName());
+                if(!hillInteriorProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + hillInteriorProduct.getProductName());
+                }
                 setPriceAndQuantity(hillInteriorProduct, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(hillInteriorProduct.getProductName()));
                 byProductSku.setImageList(hillInteriorProduct.getImages());
@@ -96,7 +100,6 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             }
-
         });
         bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList, BcConstants.HILL_INTERIOR, HillInteriorProduct.class);
     }
@@ -107,32 +110,28 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
             discriptionBuilder.append(hillInteriorProduct.getDescription());
         }
         discriptionBuilder.append("  Dimensions - (");
+        byProductSku.setWeight(null);
+        byProductSku.setHeight(null);
+        byProductSku.setWidth(null);
+        byProductSku.setDepth(null);
 
         if (hillInteriorProduct.getWeight() != null) {
-            int weight = hillInteriorProduct.getWeight().intValue();
-            byProductSku.setWeight(weight);
-            discriptionBuilder.append(" Weight : ").append(weight).append("kg");
+            discriptionBuilder.append(" Weight : ").append(hillInteriorProduct.getWeight()).append("kg");
         }
         if (hillInteriorProduct.getHeight() != null) {
-            int height = hillInteriorProduct.getHeight().intValue();
-            byProductSku.setHeight(height);
-            discriptionBuilder.append(" Height : ").append(height).append("cm");
+            discriptionBuilder.append(" Height : ").append(hillInteriorProduct.getHeight()).append("cm");
         }
         if (hillInteriorProduct.getWidth() != null) {
-            int width = hillInteriorProduct.getWidth().intValue();
-            byProductSku.setWidth(width);
-            discriptionBuilder.append(" Width : ").append(width).append("cm");
+            discriptionBuilder.append(" Width : ").append(hillInteriorProduct.getWidth()).append("cm");
         }
         if (hillInteriorProduct.getDepth() != null) {
-            int depth = hillInteriorProduct.getDepth().intValue();
-            byProductSku.setDepth(depth);
-            discriptionBuilder.append(" Depth : ").append(depth).append("cm)");
+            discriptionBuilder.append(" Depth : ").append(hillInteriorProduct.getDepth()).append("cm)");
         }
         if (hillInteriorProduct.getFinish() != null && !hillInteriorProduct.getFinish().isEmpty()) {
             discriptionBuilder.append("  Finish - ").append(hillInteriorProduct.getFinish());
         }
         if (hillInteriorProduct.getColour() != null && !hillInteriorProduct.getColour().isEmpty()) {
-            discriptionBuilder.append("  Colour - ").append(hillInteriorProduct.getFinish());
+            discriptionBuilder.append("  Colour - ").append(hillInteriorProduct.getColour());
         }
 
         byProductSku.setDescription(discriptionBuilder.toString());

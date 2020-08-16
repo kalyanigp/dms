@@ -74,7 +74,9 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                     byProductSku.setCategories(BCUtils.assignCategories(markHarrisProduct.getProductName()));
                     byProductSku.setImageList(markHarrisProduct.getImages());
                     byProductSku.setSku(BcConstants.MARK_HARRIS + markHarrisProduct.getSku());
-                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
+                    if(!markHarrisProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
+                        byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
+                    }
 
                     byProductSku.setSupplier(Supplier.MAR_HARRIS.getName());
                     byProductSku.setType(BcConstants.TYPE);
