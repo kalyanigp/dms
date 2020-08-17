@@ -181,6 +181,7 @@ public class LpdProduct {
         int compare = Comparator.comparing(LpdProduct::getSku)
                 .thenComparing(LpdProduct::getProductName)
                 .thenComparing(LpdProduct::getPrice)
+                .thenComparing(LpdProduct::getDhdPrice)
                 .thenComparing(LpdProduct::getStockLevel)
                 .compare(this, catalog);
         return compare;

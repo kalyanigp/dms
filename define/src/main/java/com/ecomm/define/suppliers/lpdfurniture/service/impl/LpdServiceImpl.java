@@ -190,19 +190,19 @@ public class LpdServiceImpl implements LpdService {
                 LOGGER.info("SKU --- " + product.getSku() + " & Price --- " + lpdPrice.getPrice());
 
                 BigDecimal price = lpdPrice.getPrice();
-
                 if (product.getPrice() != null && !product.getPrice().equals(price)) {
                     product.setUpdated(Boolean.TRUE);
                 }
                 product.setPrice(price);
                 BigDecimal salePrice = price;
+                salePrice = salePrice.add(DefineUtils.getVat(salePrice, new BigDecimal(vatPercent)));
 
                 if (salePrice.compareTo(new BigDecimal(lowerLimitSalePrice)) < 1) {
-                    salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentLow))).setScale(0, BigDecimal.ROUND_HALF_UP);
-                } else {
                     salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                } else {
+                    salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentLow))).setScale(0, BigDecimal.ROUND_HALF_UP);
                 }
-                salePrice = salePrice.add(DefineUtils.getVat(price, new BigDecimal(vatPercent)));
+                salePrice = salePrice.add(product.getDhdPrice());
 
                 product.setSalePrice(salePrice);
                 update(product);
