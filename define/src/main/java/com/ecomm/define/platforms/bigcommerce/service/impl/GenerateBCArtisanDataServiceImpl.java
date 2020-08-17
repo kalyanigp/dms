@@ -65,9 +65,7 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                 .collect(Collectors.toList());
         for (ArtisanProduct artisanProduct : updatedCatalogList) {
             Query query = new Query();
-            if (!artisanProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
-                query.addCriteria(Criteria.where("sku").is(BcConstants.ARTISAN + artisanProduct.getSku()));
-            }
+            query.addCriteria(Criteria.where("sku").is(BcConstants.ARTISAN + artisanProduct.getSku()));
             BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
 
             if (byProductSku == null) {

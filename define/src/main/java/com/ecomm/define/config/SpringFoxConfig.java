@@ -77,6 +77,16 @@ public class SpringFoxConfig {
                 .apiInfo(apiEndPointsInfo());
     }
 
+    @Bean
+    public Docket swaggerLpdApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("LPD")
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.ecomm.define.suppliers.lpdfurniture.controller"))
+                .build()
+                .apiInfo(apiEndPointsInfo());
+    }
+
     private ApiInfo apiEndPointsInfo() {
         return new ApiInfoBuilder().title("Spring Boot REST API")
                 .description("Define Furniture Product Management System REST API")

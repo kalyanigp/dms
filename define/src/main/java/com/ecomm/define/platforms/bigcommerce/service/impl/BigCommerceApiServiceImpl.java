@@ -32,6 +32,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.PRODUCTS_ENDPOINT;
@@ -130,12 +131,13 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
 
     @Override
     public void populateBigCommerceProduct(List<BcProductData> productDataList, String supplierCode, Object clazz) throws HttpClientErrorException {
+        LOGGER.info("Started populating the products to BigCommerce, total number of products to processed is {} for the supplier {}", productDataList.size(), clazz.getClass().getSimpleName());
         int failedProducts = 0;
         int totalProducts = productDataList.size();
-        int processedProducts = 0;
+        AtomicInteger processedProducts = new AtomicInteger(0);
         try {
             URI uri = new URI(getBaseUrl() + getStoreHash() + PRODUCTS_ENDPOINT);
-            for (BcProductData product : productDataList) {
+            productDataList.stream().forEach(product -> {
                 if (product != null) {
                     String productSku = product.getSku().replaceAll(supplierCode, "");
                     try {
@@ -153,15 +155,13 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                             updateImage(resultData);
                             LOGGER.info("Successfully Created Product in to Big Commerce for the product id {}, sku {} & name {}", resultData.getId(), resultData.getSku(), resultData.getName());
 
-                            processedProducts++;
+                            processedProducts.getAndIncrement();
                         } else {
                             String url = uri + "/" + product.getId();
                             ResponseEntity<BigCommerceApiProduct> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, request, BigCommerceApiProduct.class);
-                            //List<String> $milliseconds = responseEntity.getHeaders().get("X-Rate-Limit-Time-Reset-Ms");
-                            //sleep(Long.valueOf($milliseconds.get(0)));
                             BcProductData resultData = Objects.requireNonNull(responseEntity.getBody()).getData();
                             LOGGER.info("Successfully Updated Product in to Big Commerce for the product id {}, sku {} & name {}", resultData.getId(), resultData.getSku(), resultData.getName());
-                            processedProducts++;
+                            processedProducts.getAndIncrement();
                         }
 
                         //Update modified to false.
@@ -190,29 +190,7 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                     }
                 }
 
-            }
-            //Need to enable this code once all products uploaded
-            /*productDataList.stream().forEach(product -> {
-                HttpEntity<BcProductData> request = new HttpEntity<>(product, getHttpHeaders());
-                if (product.getId() == null) {
-                    LOGGER.info(Objects.requireNonNull(request.getBody()).getName());
-                    BigCommerceApiProduct result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
-                    BcProductData resultData = Objects.requireNonNull(result).getData();
-                    resultData.set_id(product.get_id());
-                    resultData.setImageList(product.getImageList());
-                    resultData = update(resultData);
-                    updateImage(resultData);
-                    LOGGER.info("Successfully Created Product in to Big Commerce for the product id {}, sku {} & name {}", resultData.getId(), resultData.getSku(), resultData.getName());
-                    processedProducts.getAndIncrement();
-                } else {
-                    String url = uri + "/" + product.getId();
-                    ResponseEntity<BigCommerceApiProduct> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, request, BigCommerceApiProduct.class);
-                    BcProductData resultData = Objects.requireNonNull(responseEntity.getBody()).getData();
-                    LOGGER.info("Successfully Updated Product in to Big Commerce for the product id {}, sku {} & name {}", resultData.getId(), resultData.getSku(), resultData.getName());
-                    processedProducts.getAndIncrement();
-                }
-            });*/
-
+            });
         } catch (Exception exception) {
             exception.printStackTrace();
             LOGGER.error("Exception while uploading to Big Commerce " + exception.toString());
@@ -268,7 +246,7 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                         bigcImageDataApiRepository.save(Objects.requireNonNull(bigCommerceApiImage).getData());
                         ifFirstImage = false;
                     }
-                    sleep(Long.valueOf(5000));
+                    //sleep(Long.valueOf(5000));
                 }
             }
         } catch (Exception ex) {

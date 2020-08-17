@@ -53,7 +53,7 @@ public class MarkHarrisURLReader {
         List<String> urlTokens = getTokens(wholeData);
         for (String token:urlTokens){
             if (token.startsWith("\"full\"")){
-                imageURLList.add(token.substring(8, token.length() - 1));
+                imageURLList.add(token.substring(8, token.length() - 1).replaceAll("\\\\",""));
             }
         }
         return imageURLList;
