@@ -26,9 +26,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import rx.Observable;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,11 +38,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.PRODUCTS_ENDPOINT;
-import static java.lang.Thread.sleep;
 
 @Service
 public class BigCommerceApiServiceImpl implements BigCommerceApiService {
 
+    public static final int BATCH_SIZE = 10;
     private final Logger LOGGER = LoggerFactory.getLogger(BigCommerceApiServiceImpl.class);
     private final RestTemplate restTemplate;
     @Autowired
@@ -137,11 +139,11 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
         AtomicInteger processedProducts = new AtomicInteger(0);
         try {
             URI uri = new URI(getBaseUrl() + getStoreHash() + PRODUCTS_ENDPOINT);
+            List<BcProductData> updateBatchRequest = new ArrayList<>();
             productDataList.stream().forEach(product -> {
                 if (product != null) {
                     String productSku = product.getSku().replaceAll(supplierCode, "");
                     try {
-
                         HttpEntity<BcProductData> request = new HttpEntity<>(product, getHttpHeaders());
                         if (product.getId() == null) {
                             LOGGER.info("Processing the sku {}, and name {}", product.getSku(), product.getName());
@@ -155,22 +157,14 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                             updateImage(resultData);
                             LOGGER.info("Successfully Created Product in to Big Commerce for the product id {}, sku {} & name {}", resultData.getId(), resultData.getSku(), resultData.getName());
 
+                            //Update modified to false.
+                            updateFlag((Class) clazz, productSku);
+                            LOGGER.info("Product has been successfully sent to the BigCommerce API ");
                             processedProducts.getAndIncrement();
                         } else {
-                            String url = uri + "/" + product.getId();
-                            ResponseEntity<BigCommerceApiProduct> responseEntity = restTemplate.exchange(url, HttpMethod.PUT, request, BigCommerceApiProduct.class);
-                            BcProductData resultData = Objects.requireNonNull(responseEntity.getBody()).getData();
-                            LOGGER.info("Successfully Updated Product in to Big Commerce for the product id {}, sku {} & name {}", resultData.getId(), resultData.getSku(), resultData.getName());
-                            processedProducts.getAndIncrement();
+                            updateBatchRequest.add(product);
                         }
 
-                        //Update modified to false.
-                        Query updateModifiedCatalogQuery = new Query();
-                        updateModifiedCatalogQuery.addCriteria(Criteria.where("sku").is(productSku));
-                        Update update = new Update();
-                        update.set("updated", false);
-                        mongoOperations.updateFirst(updateModifiedCatalogQuery, update, ((Class) clazz));
-                        LOGGER.info("Product has been successfully sent to the BigCommerce API ");
 
                     } catch (HttpClientErrorException httpClientException) {
 
@@ -191,12 +185,44 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                 }
 
             });
+            Observable.from(updateBatchRequest).buffer(BATCH_SIZE).forEach((batch) -> processedProducts.addAndGet(processBatchUpdate(batch, uri, supplierCode, (Class) clazz)));
         } catch (Exception exception) {
             exception.printStackTrace();
             LOGGER.error("Exception while uploading to Big Commerce " + exception.toString());
             failedProducts++;
         }
         LOGGER.info("Total products count - {}, Successfully processed count {} & Failed products count  {}", totalProducts, processedProducts, failedProducts);
+    }
+
+    private void updateFlag(Class clazz, String productSku) {
+        Query updateModifiedCatalogQuery = new Query();
+        updateModifiedCatalogQuery.addCriteria(Criteria.where("sku").is(productSku));
+        Update update = new Update();
+        update.set("updated", false);
+        mongoOperations.updateFirst(updateModifiedCatalogQuery, update, clazz);
+    }
+
+
+    private int processBatchUpdate(List<BcProductData> updateBatchRequest, URI uri, String supplierCode, Class clazz) {
+        try {
+            HttpEntity<List<BcProductData>> batchRequest = new HttpEntity<>(updateBatchRequest, getHttpHeaders());
+            ResponseEntity<String> responseEntity = restTemplate.exchange(uri, HttpMethod.PUT, batchRequest, String.class);
+            //update the flag to false
+            updateBatchRequest.parallelStream().forEach(
+                    product -> {
+                        String productSku = product.getSku().replaceAll(supplierCode, "");
+                        updateFlag((Class) clazz, productSku);
+                        LOGGER.info("Successfully updated flag to false for sku {}", productSku);
+                    }
+            );
+
+            LOGGER.info("Successfully Updated batch products in to Big Commerce for the product status code {}", responseEntity.getStatusCode());
+
+        } catch (Exception e) {
+            LOGGER.error("Error while processing batch request {} " + e.getCause());
+            e.printStackTrace();
+        }
+        return updateBatchRequest.size();
     }
 
     @Override
@@ -231,8 +257,6 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                 BigCommerceApiImage bigCommerceApiImage;
                 if (bcProductData.getImageList() != null) {
                     List<String> filteredImagesList = bcProductData.getImageList().stream().filter(StringUtils::isNotEmpty).collect(Collectors.toList());
-
-
                     for (String image : filteredImagesList) {
                         imageData = new BcProductImageData();
                         imageData.setId(bcProductData.getId());
@@ -242,11 +266,9 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                         imageData.setImageUrl(image);
                         request = new HttpEntity<>(imageData, getHttpHeaders());
                         bigCommerceApiImage = restTemplate.postForObject(uri, request, BigCommerceApiImage.class);
-
                         bigcImageDataApiRepository.save(Objects.requireNonNull(bigCommerceApiImage).getData());
                         ifFirstImage = false;
                     }
-                    //sleep(Long.valueOf(5000));
                 }
             }
         } catch (Exception ex) {
