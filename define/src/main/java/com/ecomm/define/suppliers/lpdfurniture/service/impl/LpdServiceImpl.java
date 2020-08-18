@@ -183,7 +183,6 @@ public class LpdServiceImpl implements LpdService {
 
 
     private void savePrice(LpdPrice lpdPrice) {
-        if (lpdPrice.getSku() != null && !lpdPrice.getSku().isEmpty()) {
             Optional<LpdProduct> byProductSku = findByProductSku(lpdPrice.getSku());
             if (byProductSku.isPresent()) {
                 LpdProduct product = byProductSku.get();
@@ -207,7 +206,6 @@ public class LpdServiceImpl implements LpdService {
                 product.setSalePrice(salePrice);
                 update(product);
             }
-        }
     }
 
     @Override

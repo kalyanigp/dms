@@ -155,11 +155,6 @@ public class GenerateBCLpdDataServiceImpl implements GenerateBCDataService<LpdPr
         return byProductSku;
     }
 
-    private String appendDescription(String description) {
-        return description != null || !description.isEmpty() ? description : "";
-    }
-
-
     private void processDiscontinuedCatalog(List<LpdProduct> productList) {
         List<LpdProduct> discontinuedList = productList
                 .stream()
@@ -173,7 +168,7 @@ public class GenerateBCLpdDataServiceImpl implements GenerateBCDataService<LpdPr
         int stockLevel = lpdProduct.getStockLevel() == null? 0 : lpdProduct.getStockLevel();
         byProductSku.setInventoryLevel(Math.max(stockLevel, 0));
         byProductSku.setAvailability(BcConstants.PREORDER);
-        byProductSku.setAvailabilityDescription("Usually dispatches in 4 weeks.");
+        byProductSku.setAvailabilityDescription("Usually dispatches in 8 weeks.");
         if (stockLevel > 0) {
             byProductSku.setAvailability(BcConstants.AVAILABLE);
             byProductSku.setAvailabilityDescription("Usually dispatches in 5 to 7 working days.");
