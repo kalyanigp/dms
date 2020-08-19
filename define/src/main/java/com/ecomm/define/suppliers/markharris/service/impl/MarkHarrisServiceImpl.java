@@ -53,6 +53,16 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
     @Value("${bigcommerce.markharris.profit.percentage.high}")
     private String profitPercentHigh;
 
+    @Value("${bigcommerce.markharris.profit.percentage.low}")
+    private String profitPercentLow;
+
+    @Value("${bigcommerce.f2g.vat.percentage}")
+    private String vatPercent;
+
+    @Value("${bigcommerce.markharris.profit.limit.high}")
+    private int profitLimitHighThreshold;
+
+
     @Autowired // inject markHarrisData
     public MarkHarrisServiceImpl(@Lazy @Qualifier("markHarrisDataService") GenerateBCDataService generateBCDataService
             , MongoOperations mongoOperations, MarkHarrisProductRepository repository) {
@@ -122,6 +132,7 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
                 markHarrisProducts.parallelStream().forEach(this::insertOrUpdate);
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
+                ex.printStackTrace();
             }
         }
     }
@@ -152,40 +163,51 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
 
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
+                ex.printStackTrace();
             }
         }
     }
 
     private void savePrice(MarkHarrisPrice catalogWithPrice) {
-        if (catalogWithPrice.getSku() != null && !catalogWithPrice.getSku().isEmpty()) {
+        if (catalogWithPrice != null && catalogWithPrice.getSku() != null && !catalogWithPrice.getSku().isEmpty()) {
             Optional<MarkHarrisProduct> byProductSku = findByProductSku(catalogWithPrice.getSku());
-            BigDecimal hdPrice;
-            if (byProductSku.isPresent()) {
+            BigDecimal hdPrice=null;
+            if (byProductSku != null && byProductSku.isPresent()) {
                 MarkHarrisProduct product = byProductSku.get();
                 LOGGER.info("SKU --- " + product.getSku() + " & Price --- " + catalogWithPrice.getPrice());
 
-                String priceValue = catalogWithPrice.getPrice().trim();
+                String priceValue = new String();
+                if (catalogWithPrice.getPrice() != null ) {
+                    priceValue = catalogWithPrice.getPrice().trim().replace(",","").replace("£","");
+                }
                 if (DefineUtils.isNumeric(priceValue)) {
                     hdPrice = new BigDecimal(priceValue);
                 } else {
-                    hdPrice = new BigDecimal(priceValue.substring(1));
+                    LOGGER.info("Non Numeric Price Value : {} ", priceValue);
                 }
-                if (!product.getPrice().equals(hdPrice)) {
+                if (product.getPrice() != null && !product.getPrice().equals(hdPrice)) {
                     product.setUpdated(true);
-                    product.setPrice(hdPrice);
+                    if (hdPrice != null) {
+                        product.setPrice(hdPrice);
+                    }
                 }
-                BigDecimal salePrice = hdPrice;
 
-                //add 20% VAT plus 50% Profit
-                salePrice = salePrice.add(DefineUtils.getVat(salePrice, new BigDecimal(profitPercentHigh)));
+                BigDecimal salePrice = hdPrice;
+                if (salePrice != null && salePrice.intValue() > 0) {
+                    salePrice = salePrice.add(DefineUtils.getVat(salePrice, new BigDecimal(vatPercent)));
+                    if (salePrice.intValue() <= profitLimitHighThreshold) {
+                        salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                    } else {
+                        salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentLow))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                    }
+                }
+
                 product.setSalePrice(salePrice);
-                product.setHeight(catalogWithPrice.getHeight());
-                product.setDepth(catalogWithPrice.getLength());
-                product.setWidth(catalogWithPrice.getWidth());
                 update(product);
             }
         }
     }
+
 
     private void saveStock(MarkHarrisStock stock) {
         Query query = new Query();
@@ -195,7 +217,12 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
             update.set("discontinued", Boolean.TRUE).set("isDiscontinued", Boolean.TRUE).set("updated", Boolean.TRUE);
         }
         MarkHarrisProduct andModify = mongoOperations.findAndModify(query, update, new FindAndModifyOptions().returnNew(false).upsert(false), MarkHarrisProduct.class);
-        LOGGER.info("Catalog has been updated with stock for sku {}, product name {}", Objects.requireNonNull(andModify).getSku(), andModify.getProductName());
+        if(andModify != null) {
+            LOGGER.info("Catalog has been updated with stock for sku {}, product name {}", Objects.requireNonNull(andModify).getSku(), andModify.getProductName());
+        } else {
+            LOGGER.info("Stock not found for the product with sku {}", stock.getSku());
+
+        }
     }
 
     @Override
@@ -224,6 +251,7 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
 
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
+                ex.printStackTrace();
             }
         }
     }

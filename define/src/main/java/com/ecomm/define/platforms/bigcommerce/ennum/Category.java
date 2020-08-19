@@ -116,7 +116,8 @@ public enum Category {
     DISH(94,"Dish"),
     TRAY(94,"Tray"),
 
-    SALT(94,"Salt");
+    SALT(94,"Salt"),
+    VIEW_ALL(95,"");
 
     private final int categoryCode;
     private final String categoryWord;

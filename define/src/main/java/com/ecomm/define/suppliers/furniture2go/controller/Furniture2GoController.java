@@ -72,7 +72,7 @@ public class Furniture2GoController {
     @PostMapping("/furniture2Go/products")
     public ResponseEntity<String> uploadFurniture2GoStockCSVFile(@RequestParam("file") MultipartFile file) {
         furniture2GoService.uploadProducts(file);
-        return ResponseEntity.ok().body("Successfully updated Mater Catalog Feed");
+        return ResponseEntity.ok().body("Successfully updated Master Catalog Feed");
     }
 
     @ApiOperation(value = "Uploads CSV File From furniture2Go Price List to DB", response = Iterable.class)

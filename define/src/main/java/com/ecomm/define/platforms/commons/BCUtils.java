@@ -13,10 +13,10 @@ public class BCUtils {
     public static List<Integer> assignCategories(String title) {
         Set<Integer> categories = new HashSet<>();
         for (Category category : Category.values()) {
-            if(!(title.toLowerCase().contains("dining chair") || title.toLowerCase().contains("dining table")
+            if((title.toLowerCase().contains("dining chair") || title.toLowerCase().contains("dining table")
                     || title.toLowerCase().contains("coffee table") || title.toLowerCase().contains("side table"))
                     || title.toLowerCase().contains("console table") || title.toLowerCase().contains("dressing table")
-                    || title.toLowerCase().contains("sofa bed")) {
+                    || title.toLowerCase().contains("sofa bed") || title.toLowerCase().contains("dining set")) {
                 if (title.toLowerCase().contains(category.getCategoryWord().toLowerCase())) {
                     categories.add(category.getCategoryCode());
                 }
@@ -39,6 +39,7 @@ public class BCUtils {
         {
             categories.add(Category.INTERIOR.getCategoryCode());
         }
+        categories.add(Category.VIEW_ALL.getCategoryCode());
         return categories.parallelStream().collect(Collectors.toList());
     }
 

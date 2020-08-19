@@ -17,7 +17,7 @@ public class Furniture2GoMasterFeedMaker {
     private final static Logger LOGGER = LoggerFactory.getLogger(Furniture2GoMasterFeedMaker.class);
 
     public static List<String> getCatalogImages(Furniture2GoProduct product) {
-        LOGGER.info("Started Processing Hill Interior Image URLs");
+        LOGGER.info("Started Processing Furniture2Go Image URLs");
         List<String> images = new ArrayList<>();
         try {
             String productURL = Furniture2GoURLReader.generateProductURL(FURNITURE_2_GO_FEED_URL + product.getSku());
