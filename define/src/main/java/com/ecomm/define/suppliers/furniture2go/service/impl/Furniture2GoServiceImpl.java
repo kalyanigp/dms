@@ -189,6 +189,7 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
+                ex.printStackTrace();
             }
         }
     }
@@ -199,21 +200,22 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
             if (byProductSku.isPresent()) {
                 Furniture2GoProduct product = byProductSku.get();
                 LOGGER.info("SKU --- " + product.getSku() + " & Price --- " + furniture2GoPrice.getPrice());
-
                 BigDecimal price = furniture2GoPrice.getPrice();
 
-                if (!product.getPrice().equals(price)) {
+                if (product.getPrice() == null) {
+                    product.setUpdated(Boolean.TRUE);
+                } else if (!product.getPrice().equals(price)) {
                     product.setUpdated(Boolean.TRUE);
                 }
                 product.setPrice(price);
                 BigDecimal salePrice = price;
 
+                salePrice = salePrice.add(DefineUtils.getVat(price, new BigDecimal(vatPercent)));
                 if (salePrice.compareTo(new BigDecimal(lowerLimitHDPrice)) < 1) {
                     salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentLow))).setScale(0, BigDecimal.ROUND_HALF_UP);
                 } else {
                     salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
                 }
-                salePrice = salePrice.add(DefineUtils.getVat(price, new BigDecimal(vatPercent)));
 
                 product.setSalePrice(salePrice);
                 update(product);
@@ -263,6 +265,7 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
 
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
+                ex.printStackTrace();
             }
         }
     }

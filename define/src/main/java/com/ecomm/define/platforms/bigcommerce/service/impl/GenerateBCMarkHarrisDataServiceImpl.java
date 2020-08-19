@@ -1,6 +1,5 @@
 package com.ecomm.define.platforms.bigcommerce.service.impl;
 
-import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
 import com.ecomm.define.platforms.bigcommerce.domain.BcBrandData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
@@ -42,6 +41,8 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
     private String higherLimitHDPrice;
     @Value("${bigcommerce.markharris.profit.percentage.low}")
     private String percentageLow;
+    @Value("${bigcommerce.markharris.profit.percentage.high}")
+    private String percentageHigh;
 
     @Autowired
     public GenerateBCMarkHarrisDataServiceImpl(BigCommerceApiService bigCommerceApiService, BigcBrandApiRepository brandApiRepository, MongoOperations mongoOperations) {
@@ -83,19 +84,6 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
 
                     if (!markHarrisProduct.getWeight().isEmpty()) {
                         byProductSku.setWeight(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getWeight()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
-                    }
-                    if (!markHarrisProduct.getMaxHeight().isEmpty()) {
-                        byProductSku.setHeight(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxHeight()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
-
-                    }
-
-                    if (!markHarrisProduct.getMaxWidth().isEmpty()) {
-                        byProductSku.setWidth(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxWidth()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
-
-                    }
-                    if (!markHarrisProduct.getMaxLengthOrDepth().isEmpty()) {
-
-                        byProductSku.setDepth(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getMaxLengthOrDepth()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
                     }
 
                     byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
@@ -141,10 +129,15 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                     updatedBcProductDataList.add(bcProductData);
                     LOGGER.info("Successfully created BCProductData for {}", markHarrisProduct.getSku());
                 } else {
-                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
+                    if(!markHarrisProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
+                        byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
+                    }
                     setPriceAndQuantity(markHarrisProduct, byProductSku);
                     byProductSku.setCategories(BCUtils.assignCategories(markHarrisProduct.getProductName()));
                     byProductSku.setImageList(markHarrisProduct.getImages());
+                    if (!markHarrisProduct.getWeight().isEmpty()) {
+                        byProductSku.setWeight(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getWeight()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
+                    }
                     BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                     updatedBcProductDataList.add(bcProductData);
                     LOGGER.info("Successfully updated BCProductData for {}", markHarrisProduct.getSku());
@@ -153,6 +146,7 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
             bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList, BcConstants.MARK_HARRIS, MarkHarrisProduct.class);
         } catch (Exception ex) {
             LOGGER.error(ex.getCause().getMessage());
+            ex.printStackTrace();
         }
     }
 
@@ -166,24 +160,16 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
     }
 
     private void setPriceAndQuantity(MarkHarrisProduct markHarrisProduct, BcProductData byProductSku) {
-        evaluatePrice(markHarrisProduct, byProductSku);
+        if (markHarrisProduct.getSalePrice() != null) {
+            byProductSku.setPrice(markHarrisProduct.getSalePrice().intValue());
+        }
         byProductSku.setInventoryLevel(Math.max(markHarrisProduct.getStockLevel(), 0));
         byProductSku.setAvailability(BcConstants.PREORDER);
-        byProductSku.setAvailabilityDescription("Usually dispatches on or after " + markHarrisProduct.getNextArrival());
+        byProductSku.setAvailabilityDescription("Will be dispatched on or after " + markHarrisProduct.getNextArrival());
         if (markHarrisProduct.getStockLevel() > 0) {
             byProductSku.setAvailability(BcConstants.AVAILABLE);
             byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
         }
     }
 
-    private void evaluatePrice(MarkHarrisProduct markHarrisProduct, BcProductData byProductSku) {
-        BigDecimal originalPrice = markHarrisProduct.getSalePrice();
-        if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
-            byProductSku.setPrice(originalPrice.intValue());
-            if (originalPrice.compareTo(new BigDecimal(higherLimitHDPrice)) > 0) {
-                BigDecimal retailPrice = originalPrice.add(DefineUtils.percentage(originalPrice, new BigDecimal(percentageLow)));
-                byProductSku.setRetailPrice(retailPrice.intValue());
-            }
-        }
-    }
 }

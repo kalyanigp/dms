@@ -2,6 +2,7 @@ package com.ecomm.define.suppliers.markharris.feedgenerator;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +23,14 @@ public class MarkHarrisURLReader {
         String productURL = "";
         try {
             Document doc = Jsoup.connect(url).get();
-            String href = doc.getElementsByClass("product-item-link").get(0).getElementsByAttribute("href").toString();
-            if (href.length() > 0) {
-                productURL = href.substring(href.indexOf("href=") + 6, href.indexOf("> <h3 class=") - 1);
+            Elements elements = doc.getElementsByClass("product-item-link");
+            if (elements.size() > 0) {
+                String href = elements.get(0).getElementsByAttribute("href").toString();
+                if (href.length() > 0) {
+                    productURL = href.substring(href.indexOf("href=") + 6, href.indexOf("> <h3 class=") - 1);
+                }
+            } else {
+                LOGGER.info("Unable to process images from url {}", url);
             }
         } catch (IOException e) {
             e.printStackTrace();

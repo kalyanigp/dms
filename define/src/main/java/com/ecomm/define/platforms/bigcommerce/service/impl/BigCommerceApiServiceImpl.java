@@ -134,6 +134,15 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
     @Override
     public void populateBigCommerceProduct(List<BcProductData> productDataList, String supplierCode, Object clazz) throws HttpClientErrorException {
         LOGGER.info("Started populating the products to BigCommerce, total number of products to processed is {} for the supplier {}", productDataList.size(), clazz.getClass().getSimpleName());
+
+        productDataList =
+                productDataList.stream()
+                        .filter(product -> Objects.nonNull(product))
+                        .filter(product -> Objects.nonNull(product.getName()))
+                        .filter(product -> Objects.nonNull(product.getPrice()))
+                        .filter(product -> Objects.nonNull(product.getWeight()))
+                        .collect(Collectors.toList());
+
         int failedProducts = 0;
         int totalProducts = productDataList.size();
         AtomicInteger processedProducts = new AtomicInteger(0);
@@ -141,49 +150,46 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
             URI uri = new URI(getBaseUrl() + getStoreHash() + PRODUCTS_ENDPOINT);
             List<BcProductData> updateBatchRequest = new ArrayList<>();
             productDataList.stream().forEach(product -> {
-                if (product != null) {
-                    String productSku = product.getSku().replaceAll(supplierCode, "");
-                    try {
-                        HttpEntity<BcProductData> request = new HttpEntity<>(product, getHttpHeaders());
-                        if (product.getId() == null) {
-                            LOGGER.info("Processing the sku {}, and name {}", product.getSku(), product.getName());
-                            BigCommerceApiProduct result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
-                            //   sleep(Long.valueOf(30000));
+                String productSku = product.getSku().replaceAll(supplierCode, "");
+                try {
+                    HttpEntity<BcProductData> request = new HttpEntity<>(product, getHttpHeaders());
+                    if (product.getId() == null) {
+                        LOGGER.info("Processing the sku {}, and name {}", product.getSku(), product.getName());
+                        BigCommerceApiProduct result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
+                        //   sleep(Long.valueOf(30000));
 
-                            BcProductData resultData = Objects.requireNonNull(result).getData();
-                            resultData.set_id(product.get_id());
-                            resultData.setImageList(product.getImageList());
-                            resultData = update(resultData);
-                            updateImage(resultData);
-                            LOGGER.info("Successfully Created Product in to Big Commerce for the product id {}, sku {} & name {}", resultData.getId(), resultData.getSku(), resultData.getName());
+                        BcProductData resultData = Objects.requireNonNull(result).getData();
+                        resultData.set_id(product.get_id());
+                        resultData.setImageList(product.getImageList());
+                        resultData = update(resultData);
+                        updateImage(resultData);
+                        LOGGER.info("Successfully Created Product in to Big Commerce for the product id {}, sku {} & name {}", resultData.getId(), resultData.getSku(), resultData.getName());
 
-                            //Update modified to false.
-                            updateFlag((Class) clazz, productSku);
-                            LOGGER.info("Product has been successfully sent to the BigCommerce API ");
-                            processedProducts.getAndIncrement();
-                        } else {
-                            updateBatchRequest.add(product);
-                        }
-
-
-                    } catch (HttpClientErrorException httpClientException) {
-
-                        String statusCode = httpClientException.getStatusCode().toString();
-                        LOGGER.error("Exception while processing product " + statusCode);
-                        Query updateModifiedCatalogQuery = new Query();
-
-                        updateModifiedCatalogQuery.addCriteria(Criteria.where("sku").is(productSku));
-                        Update update = new Update();
-                        if (statusCode.equals("409 CONFLICT")) {
-                            update.set("productName", product.getName() + " " + productSku);
-                        }
-                        update.set("updated", true);
-                        UpdateResult updateResult = mongoOperations.updateFirst(updateModifiedCatalogQuery, update, ((Class) clazz));
-                        LOGGER.info("Sku has been updated {} , getMatchedCount {}, getModifiedCount {}", productSku, updateResult.getMatchedCount(), updateResult.getModifiedCount());
-
+                        //Update modified to false.
+                        updateFlag((Class) clazz, productSku);
+                        LOGGER.info("Product has been successfully sent to the BigCommerce API ");
+                        processedProducts.getAndIncrement();
+                    } else {
+                        updateBatchRequest.add(product);
                     }
-                }
 
+
+                } catch (HttpClientErrorException httpClientException) {
+
+                    String statusCode = httpClientException.getStatusCode().toString();
+                    LOGGER.error("Exception while processing product " + statusCode);
+                    Query updateModifiedCatalogQuery = new Query();
+
+                    updateModifiedCatalogQuery.addCriteria(Criteria.where("sku").is(productSku));
+                    Update update = new Update();
+                    if (statusCode.equals("409 CONFLICT")) {
+                        update.set("productName", product.getName() + " " + productSku);
+                    }
+                    update.set("updated", true);
+                    UpdateResult updateResult = mongoOperations.updateFirst(updateModifiedCatalogQuery, update, ((Class) clazz));
+                    LOGGER.info("Sku has been updated {} , getMatchedCount {}, getModifiedCount {}", productSku, updateResult.getMatchedCount(), updateResult.getModifiedCount());
+
+                }
             });
             Observable.from(updateBatchRequest).buffer(BATCH_SIZE).forEach((batch) -> processedProducts.addAndGet(processBatchUpdate(batch, uri, supplierCode, (Class) clazz)));
         } catch (Exception exception) {
@@ -219,7 +225,7 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
             LOGGER.info("Successfully Updated batch products in to Big Commerce for the product status code {}", responseEntity.getStatusCode());
 
         } catch (Exception e) {
-            LOGGER.error("Error while processing batch request {} " + e.getCause());
+            LOGGER.error("Error while processing batch request {} " + e.getMessage());
             e.printStackTrace();
         }
         return updateBatchRequest.size();
@@ -232,7 +238,7 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
             uri = new URI(getBaseUrl() + getStoreHash() + PRODUCTS_ENDPOINT);
             HttpEntity<BcProductData> request = new HttpEntity<>(null, getHttpHeaders());
             BcProductData byProductSku = findByProductSku(sku);
-            if (byProductSku.getId() != null) {
+            if (byProductSku != null && byProductSku.getId() != null) {
                 String url = uri + "/" + byProductSku.getId();
                 restTemplate.exchange(url, HttpMethod.DELETE, request, Void.class);
                 delete(byProductSku.get_id());
@@ -273,6 +279,7 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
             }
         } catch (Exception ex) {
             LOGGER.error("Exception occurred while processing images for the product id {}", bcProductData.getId());
+            ex.printStackTrace();
         }
         LOGGER.info("Finished uploading images for the product sku {} , name {}", bcProductData.getSku(), bcProductData.getName());
     }

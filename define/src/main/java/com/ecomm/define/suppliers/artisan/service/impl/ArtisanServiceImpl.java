@@ -44,10 +44,8 @@ import java.util.stream.Collectors;
 @Service
 public class ArtisanServiceImpl implements ArtisanService {
 
-    private final ArtisanProductRepository repository;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ArtisanServiceImpl.class);
-
+    private final ArtisanProductRepository repository;
     private final BigCommerceApiService bigCommerceApiService;
 
     private final GenerateBCDataService generateBCDataService;
@@ -56,6 +54,9 @@ public class ArtisanServiceImpl implements ArtisanService {
 
     @Value("${bigcommerce.artisan.profit.percentage.high}")
     private String profitPercentHigh;
+
+    @Value("${bigcommerce.vat.percentage}")
+    private String vatPercent;
 
     @Autowired // inject artisanDataService
     public ArtisanServiceImpl(@Qualifier("artisanDataService") GenerateBCDataService generateBCDataService
@@ -166,13 +167,14 @@ public class ArtisanServiceImpl implements ArtisanService {
             if (byProductSku.isPresent()) {
                 ArtisanProduct artisanProduct = byProductSku.get();
                 if (!artisanProduct.getPrice().equals(price)) {
-                    artisanProduct.setPrice(price);
-                    salePrice = price;
-                    salePrice = salePrice.add(DefineUtils.getVat(salePrice, new BigDecimal(profitPercentHigh)));
                     artisanProduct.setUpdated(Boolean.TRUE);
-                    artisanProduct.setSalePrice(salePrice);
-                    update(artisanProduct);
                 }
+                artisanProduct.setPrice(price);
+                salePrice = price;
+                salePrice = salePrice.add(DefineUtils.getVat(salePrice, new BigDecimal(vatPercent)));
+                salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                artisanProduct.setSalePrice(salePrice);
+                update(artisanProduct);
             }
 
         }
@@ -223,7 +225,7 @@ public class ArtisanServiceImpl implements ArtisanService {
         query.addCriteria(Criteria.where("sku").is(artisanProduct.getSku()));
         ArtisanProduct product = mongoOperations.findOne(query, ArtisanProduct.class);
         if (product != null) {
-            if(product.compareTo(artisanProduct) != 0) {
+            if (product.compareTo(artisanProduct) != 0) {
                 Update update = new Update();
                 update.set("discontinued", Boolean.FALSE);
                 update.set("updated", Boolean.TRUE);
