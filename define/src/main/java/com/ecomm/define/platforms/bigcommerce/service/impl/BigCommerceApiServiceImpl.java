@@ -225,7 +225,7 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
             LOGGER.info("Successfully Updated batch products in to Big Commerce for the product status code {}", responseEntity.getStatusCode());
 
         } catch (Exception e) {
-            LOGGER.error("Error while processing batch request {} " + e.getMessage());
+            LOGGER.error("Error while processing batch request " + e.getMessage());
             e.printStackTrace();
         }
         return updateBatchRequest.size();

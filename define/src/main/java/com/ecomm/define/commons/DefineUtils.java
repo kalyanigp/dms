@@ -76,7 +76,7 @@ public class DefineUtils {
     }
 
     public static boolean isValidF2GDate(String d) {
-        String regex = "^[0-3]?[0-9]/[0-3]?[0-9]/(?:[0-9]{2})?[0-9]{2}$";
+        String regex = "^\\d{4}\\-(0?[1-9]|1[012])\\-(0?[1-9]|[12][0-9]|3[01])$";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher((CharSequence) d);
         return matcher.matches();

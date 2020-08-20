@@ -1,5 +1,7 @@
 package com.ecomm.define.platforms.commons;
 
+import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
+import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
 import com.ecomm.define.platforms.bigcommerce.ennum.Category;
 
 import java.util.Collections;
@@ -47,5 +49,17 @@ public class BCUtils {
         return Collections.list(new StringTokenizer(str, " ")).stream()
                 .map(token -> (String) token)
                 .collect(Collectors.toList());
+    }
+
+
+    public static void setInventoryParameters(int stockLevel, BcProductData byProductSku) {
+        if (stockLevel > 0) {
+            byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
+            byProductSku.setAvailability(BcConstants.AVAILABLE);
+        } else {
+            byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING_NONE);
+            byProductSku.setAvailability(BcConstants.PREORDER);
+            byProductSku.setIsPreorderOnly(true);
+        }
     }
 }

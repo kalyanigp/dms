@@ -21,8 +21,12 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,6 +34,7 @@ import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
 import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.MAISON_CODE;
+import static com.ecomm.define.platforms.commons.BCUtils.setInventoryParameters;
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
@@ -82,11 +87,11 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 byProductSku.setSupplier(Supplier.MAISON.getName());
                 byProductSku.setType(BcConstants.TYPE);
                 byProductSku.setWeight(0);
-                byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
-                byProductSku.setAvailability(BcConstants.PREORDER);
-                if (maisonProd.getStockQuantity() > 0) {
-                    byProductSku.setAvailability(BcConstants.AVAILABLE);
-                }
+               // byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
+                //byProductSku.setAvailability(BcConstants.PREORDER);
+                //if (maisonProd.getStockQuantity() > 0) {
+                  //  byProductSku.setAvailability(BcConstants.AVAILABLE);
+                //}
 
                 Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
                 if (byName.isPresent()) {
@@ -118,7 +123,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 }
                 findDimesions(byProductSku, maisonProd.getSize());
 
-                byProductSku.setDescription(byProductSku.getDescription() + System.lineSeparator() + maisonProd.getSize() + System.lineSeparator() + packingSpec);
+                byProductSku.setDescription(byProductSku.getDescription() + " "  + maisonProd.getSize() + " " + packingSpec);
                 byProductSku.setAvailabilityDescription(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
                 byProductSku.setMpn(maisonProd.getSku());
                 byProductSku.setPageTitle(maisonProd.getTitle());
@@ -145,6 +150,21 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         byProductSku.setPrice(priceIntValue);
         byProductSku.setSalePrice(priceIntValue);
         byProductSku.setInventoryLevel(maisonProd.getStockQuantity() < 0 ? 0 : maisonProd.getStockQuantity());
+
+        if (maisonProd.getStockQuantity() <= 0) {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss+SS:00");
+            GregorianCalendar calendar = new GregorianCalendar();
+            calendar.add(Calendar.DATE, 100);
+            Date date = calendar.getTime();
+            try {
+                byProductSku.setPreorderReleaseDate(formatter.format(date));
+            } catch (Exception exception) {
+                LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
+            }
+        } else {
+            byProductSku.setPreorderReleaseDate(null);
+        }
+        setInventoryParameters(maisonProd.getStockQuantity(), byProductSku);
     }
 
 

@@ -25,7 +25,6 @@ import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -35,6 +34,7 @@ import java.util.stream.Collectors;
 
 import static com.ecomm.define.commons.DefineUtils.evaluateDimensions;
 import static com.ecomm.define.commons.DefineUtils.getDelimiter;
+import static com.ecomm.define.platforms.commons.BCUtils.setInventoryParameters;
 
 /**
  * Created by vamshikirangullapelly on 18/07/2020.
@@ -152,28 +152,23 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
     private void setPriceAndQuantity(Furniture2GoProduct furniture2GoProduct, BcProductData byProductSku) {
         evaluatePrice(furniture2GoProduct, byProductSku);
         byProductSku.setInventoryLevel(Math.max(furniture2GoProduct.getStockLevel(), 0));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss+SS:00");
-        GregorianCalendar calendar;
-        calendar = new GregorianCalendar(2020, Calendar.SEPTEMBER, 22, 00, 00, 00);
-        Date date = calendar.getTime();
-//formatter2.setTimeZone(TimeZone.getTimeZone("CET"));
-//formatter2.getTimeZone();
-//formatter2.parse("2020-10-08T20:42:07+00:00");
-//TimeZone.getAvailableIDs();
 
-      //  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss Z", Locale.getDefault());
-        //formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-        // "2020-10-08T20:42:07+00:00"
+        if (furniture2GoProduct.getStockLevel() > 0) {
+            byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
+        } else {
+            byProductSku.setAvailabilityDescription("Usually dispatches on or after " + furniture2GoProduct.getStockArrivalDate());
+        }
 
+        if (furniture2GoProduct.getStockArrivalDate() != null && DefineUtils.isValidF2GDate(furniture2GoProduct.getStockArrivalDate())) {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss+SS:00");
+            GregorianCalendar calendar;
+            int year = Integer.parseInt(furniture2GoProduct.getStockArrivalDate().substring(0, 4));
+            int month = Integer.parseInt(furniture2GoProduct.getStockArrivalDate().substring(5, 7));
+            int day = Integer.parseInt(furniture2GoProduct.getStockArrivalDate().substring(8, 10));
 
-
-//Sample format: \"2005-12-30T01:02:03+00:00\""
-
-
-       // Date date = null;
-        if (furniture2GoProduct.getStockArrivalDate() != null && DefineUtils.isValidDate(furniture2GoProduct.getStockArrivalDate())) {
+            calendar = new GregorianCalendar(year, month, day, 00, 00, 00);
+            Date date = calendar.getTime();
             try {
-              //  date = formatter.parse(furniture2GoProduct.getStockArrivalDate());
                 byProductSku.setPreorderReleaseDate(formatter.format(date));
             } catch (Exception exception) {
                 LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
@@ -181,16 +176,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         } else {
             byProductSku.setPreorderReleaseDate(null);
         }
-
-        byProductSku.setAvailabilityDescription("Usually dispatches on or after " + furniture2GoProduct.getStockArrivalDate());
-        if (furniture2GoProduct.getStockLevel() > 0) {
-            byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
-            byProductSku.setAvailability(BcConstants.AVAILABLE);
-            byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
-        } else {
-            byProductSku.setInventoryTracking(null);
-            byProductSku.setAvailability(BcConstants.PREORDER);
-        }
+        setInventoryParameters(furniture2GoProduct.getStockLevel(), byProductSku);
     }
 
     private void evaluatePrice(Furniture2GoProduct furniture2GoProduct, BcProductData byProductSku) {
