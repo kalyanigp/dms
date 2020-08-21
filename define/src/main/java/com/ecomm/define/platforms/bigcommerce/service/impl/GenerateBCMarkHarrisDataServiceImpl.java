@@ -191,7 +191,8 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                 String strDate = markHarrisProduct.getNextArrival().substring(markHarrisProduct.getNextArrival().indexOf(",")+1);
                 int monthOffSet = strDate.trim().indexOf(" ")+1;
                 Calendar cal2 = Calendar.getInstance();
-                try {                     cal2.setTime(new SimpleDateFormat("MMM").parse(strDate.trim().substring(0,monthOffSet)));
+                try {
+                    cal2.setTime(new SimpleDateFormat("MMM").parse(strDate.trim().substring(0,monthOffSet)));
                 } catch (ParseException exception) {
                     LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
                     exception.printStackTrace();

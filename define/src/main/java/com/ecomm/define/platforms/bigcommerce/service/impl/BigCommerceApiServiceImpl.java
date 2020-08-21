@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.PRODUCTS_ENDPOINT;
-import static java.lang.Thread.sleep;
 
 @Service
 public class BigCommerceApiServiceImpl implements BigCommerceApiService {
@@ -222,7 +221,6 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                         LOGGER.info("Successfully updated flag to false for sku {}", productSku);
                     }
             );
-            sleep(Long.valueOf(30000));
 
             LOGGER.info("Successfully Updated batch products in to Big Commerce for the product status code {}", responseEntity.getStatusCode());
 

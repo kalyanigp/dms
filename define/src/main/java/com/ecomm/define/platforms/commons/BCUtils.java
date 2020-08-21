@@ -14,15 +14,9 @@ import java.util.stream.Collectors;
 public class BCUtils {
     public static List<Integer> assignCategories(String title) {
         Set<Integer> categories = new HashSet<>();
-        for (Category category : Category.values()) {
-            if((title.toLowerCase().contains("dining chair") || title.toLowerCase().contains("dining table")
-                    || title.toLowerCase().contains("coffee table") || title.toLowerCase().contains("side table"))
-                    || title.toLowerCase().contains("console table") || title.toLowerCase().contains("dressing table")
-                    || title.toLowerCase().contains("sofa bed") || title.toLowerCase().contains("dining set")) {
-                if (title.toLowerCase().contains(category.getCategoryWord().toLowerCase())) {
-                    categories.add(category.getCategoryCode());
-                }
-            } else {
+        int dualCat = getDualWordCategory(title.toLowerCase());
+        if (dualCat == 0) {
+            for (Category category : Category.values()) {
                 if (category.getCategoryWord().contains(" ")) {
                     for (String token : getTokensinWord(category.getCategoryWord())) {
                         if (title.contains(token)) {
@@ -36,6 +30,8 @@ public class BCUtils {
                     }
                 }
             }
+        } else {
+            categories.add(dualCat);
         }
         if (categories.size() == 0)
         {
@@ -61,5 +57,36 @@ public class BCUtils {
             byProductSku.setAvailability(BcConstants.PREORDER);
             byProductSku.setIsPreorderOnly(true);
         }
+    }
+
+    private static int getDualWordCategory(String title) {
+        int category = 0;
+        if (title.contains("dining chair")) {
+            category = Category.KD_DINING_CHAIRS.getCategoryCode();
+        } else if (title.contains("dining table")) {
+            category = Category.KD_DINING_TABLES.getCategoryCode();
+        } else if (title.contains("coffee table")) {
+            category = Category.LIVING_TABLES_COFFEE_TABLES.getCategoryCode();
+        } else if (title.contains("side table") || title.contains("end table") || title.contains("sidetable")) {
+            category = Category.SIDE_TABLE.getCategoryCode();
+
+        } else if (title.contains("console table")) {
+            category = Category.HALLWAY_CONSOLE_TABLES.getCategoryCode();
+
+        } else if (title.contains("dressing table")) {
+            category = Category.DRESSING_TABLE.getCategoryCode();
+
+        } else if (title.contains("sofa bed")) {
+            category = Category.SA_SOFABEDS.getCategoryCode();
+
+        } else if (title.contains("dining set")) {
+            category = Category.KD_DINING_TABLE_SETS.getCategoryCode();
+
+        } else if (title.contains("table lamp")) {
+            category = Category.LAMP_SHADE.getCategoryCode();
+
+        }
+
+        return category;
     }
 }
