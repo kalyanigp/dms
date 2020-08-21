@@ -18,12 +18,20 @@ import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.ecomm.define.platforms.commons.BCUtils.setInventoryParameters;
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
@@ -74,7 +82,6 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                 byProductSku.setCategories(BCUtils.assignCategories(artisanProduct.getProductName()));
                 byProductSku.setImageList(artisanProduct.getImages());
 
-
                 String ean = artisanProduct.getEan();
                 if (ean != null && !ean.isEmpty()) {
                     byProductSku.setUpc(ean);
@@ -82,36 +89,42 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
 
                 byProductSku.setSku(BcConstants.ARTISAN + artisanProduct.getSku());
                 if (!artisanProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
-                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName());
                 }
                 StringBuilder discriptionBuilder = new StringBuilder();
-                discriptionBuilder.append(artisanProduct.getDescription());
-                discriptionBuilder.append("Dimensions - (");
+                discriptionBuilder.append(artisanProduct.getDescription()).append("<br>");
+                discriptionBuilder.append(artisanProduct.getBp1()).append("<br>");
+                discriptionBuilder.append(artisanProduct.getBp2()).append("<br>");
+                discriptionBuilder.append(artisanProduct.getBp3()).append("<br>");
+                discriptionBuilder.append(artisanProduct.getBp4()).append("<br>");
+                discriptionBuilder.append(artisanProduct.getBp5()).append("<br>");
+                discriptionBuilder.append(artisanProduct.getBp6()).append("<br>");
 
+                discriptionBuilder.append("<br>Dimensions: <br>");
 
                 byProductSku.setSupplier(Supplier.ARTISAN.getName());
                 byProductSku.setType(BcConstants.TYPE);
                 if (artisanProduct.getWeight() != null) {
                     int weight = artisanProduct.getWeight().intValue();
                     byProductSku.setWeight(weight);
-                    discriptionBuilder.append(" Weight : ").append(weight).append("kg");
+                    discriptionBuilder.append(" Weight : ").append(weight).append("kg").append("<br>");
                 }
                 if (artisanProduct.getHeight() != null) {
                     int height = artisanProduct.getHeight().intValue();
                     byProductSku.setHeight(height);
-                    discriptionBuilder.append(" Height : ").append(height).append("mm");
+                    discriptionBuilder.append(" Height : ").append(height).append("mm").append("<br>");
                 }
                 if (artisanProduct.getWidth() != null) {
                     int width = artisanProduct.getWidth().intValue();
                     byProductSku.setWidth(width);
-                    discriptionBuilder.append(" Width : ").append(width).append("mm");
+                    discriptionBuilder.append(" Width : ").append(width).append("mm").append("<br>");
                 }
                 if (artisanProduct.getDepth() != null) {
                     int depth = artisanProduct.getDepth().intValue();
                     byProductSku.setDepth(depth);
-                    discriptionBuilder.append(" Depth : ").append(depth).append("mm)");
+                    discriptionBuilder.append(" Depth : ").append(depth).append("mm").append("<br>");
                 }
-                discriptionBuilder.append("Assembly Instructions - ").append(artisanProduct.getAssemblyInstructions());
+                discriptionBuilder.append(artisanProduct.getAvailablityMessage());
 
                 byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
@@ -124,7 +137,7 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
             } else {
                 byProductSku.setImageList(artisanProduct.getImages());
                 if (!artisanProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
-                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName() + " " + artisanProduct.getBp1());
+                    byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName());
                 }
                 setPriceAndQuantity(artisanProduct, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(artisanProduct.getProductName()));
@@ -148,12 +161,36 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
     private void setPriceAndQuantity(ArtisanProduct artisanProduct, BcProductData byProductSku) {
         byProductSku.setPrice(artisanProduct.getPrice().intValue());
         byProductSku.setInventoryLevel(Math.max(artisanProduct.getStockLevel(), 0));
-        byProductSku.setAvailability(BcConstants.PREORDER);
-        byProductSku.setAvailabilityDescription("Usually dispatches in 6 to 8 weeks.");
         if (artisanProduct.getStockLevel() > 0) {
-            byProductSku.setAvailability(BcConstants.AVAILABLE);
-            byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
+            byProductSku.setAvailabilityDescription(BcConstants.ARTISAN_AVAILABLE_DEFAULT);
+        } else {
+            if (StringUtils.isEmpty(artisanProduct.getArrivalDate())) {
+                byProductSku.setAvailabilityDescription(BcConstants.ARTISAN_AVAILABLE_ONDEMAND);
+            } else {
+                byProductSku.setAvailabilityDescription(BcConstants.ARTISAN_ARRIVALS_SOON + " " + artisanProduct.getArrivalDate());
+            }
+            if (!StringUtils.isEmpty(artisanProduct.getArrivalDate())) {
+                SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
+                GregorianCalendar calendar;
+                Calendar cal = Calendar.getInstance();
+                try {
+                    int monthOffSet = artisanProduct.getArrivalDate().trim().indexOf(" ")+1;
+                    cal.setTime(new SimpleDateFormat("MMM").parse(artisanProduct.getArrivalDate().trim().substring(monthOffSet)));
+                } catch (ParseException exception) {
+                    LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
+                    exception.printStackTrace();
+                }
+                int month = cal.get(Calendar.MONTH);
+                int day = Integer.parseInt(artisanProduct.getArrivalDate().trim().substring(0,2));
+                calendar = new GregorianCalendar(BcConstants.CURRENT_YEAR, month, day, 00, 00, 00);
+                Date date = calendar.getTime();
+                try {
+                    byProductSku.setPreorderReleaseDate(formatter.format(date));
+                } catch (Exception exception) {
+                    LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
+                }
+            }
         }
+        setInventoryParameters(artisanProduct.getStockLevel(), byProductSku);
     }
-
 }

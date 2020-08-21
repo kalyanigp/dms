@@ -160,7 +160,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         }
 
         if (furniture2GoProduct.getStockArrivalDate() != null && DefineUtils.isValidF2GDate(furniture2GoProduct.getStockArrivalDate())) {
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss+SS:00");
+            SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
             GregorianCalendar calendar;
             int year = Integer.parseInt(furniture2GoProduct.getStockArrivalDate().substring(0, 4));
             int month = Integer.parseInt(furniture2GoProduct.getStockArrivalDate().substring(5, 7));
@@ -194,7 +194,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         //Height logic
         StringBuilder dimensionsDescription = new StringBuilder();
         String heightDelimeter = getDelimiter(furniture2GoProduct.getHeight());
-        dimensionsDescription.append(" Height :").append(furniture2GoProduct.getHeight()).append("(mm) ");
+        dimensionsDescription.append(" <br> Height :").append(furniture2GoProduct.getHeight()).append("(mm) ");
         if (!heightDelimeter.isEmpty()) {
             List<String> heightList = evaluateDimensions(heightDelimeter, furniture2GoProduct.getHeight());
             if (!heightList.isEmpty()) {
@@ -206,7 +206,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
         //Width logic
         String widthDelimeter = getDelimiter(furniture2GoProduct.getWidth());
-        dimensionsDescription.append(" Width :").append(furniture2GoProduct.getWidth()).append("(mm) ");
+        dimensionsDescription.append(" <br> Width :").append(furniture2GoProduct.getWidth()).append("(mm) ");
         if (!widthDelimeter.isEmpty()) {
             List<String> widthList = evaluateDimensions(widthDelimeter, furniture2GoProduct.getWidth());
             if (!widthList.isEmpty()) {
@@ -218,7 +218,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
         //Depth logic
         String depthDelimeter = getDelimiter(furniture2GoProduct.getDepth());
-        dimensionsDescription.append(" Depth :").append(furniture2GoProduct.getDepth()).append("(mm) ");
+        dimensionsDescription.append(" <br> Depth :").append(furniture2GoProduct.getDepth()).append("(mm) ");
         if (!depthDelimeter.isEmpty()) {
             List<String> depthList = evaluateDimensions(widthDelimeter, furniture2GoProduct.getDepth());
             if (!depthList.isEmpty()) {
@@ -228,26 +228,24 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
             byProductSku.setDepth(new BigDecimal(furniture2GoProduct.getDepth()).intValue());
         }
         String stockArrivalDate = furniture2GoProduct.getStockArrivalDate();
-        dimensionsDescription.append("Next Dispatch Date : ");
+        dimensionsDescription.append("<br> Next Dispatch Date : ");
         if (stockArrivalDate != null && !stockArrivalDate.isEmpty()) {
             if (DefineUtils.isValidDate(stockArrivalDate)) {
                 dimensionsDescription.append(stockArrivalDate);
             } else {
                 dimensionsDescription.append(DefineUtils.plusDays(70));
             }
-        } /* else {
-            dimensionsDescription.append("Usually dispatches in next 10 working days");
-        } */
+        }
 
         if (furniture2GoProduct.getAssemblyInstructions() != null && !furniture2GoProduct.getAssemblyInstructions().isEmpty()) {
             dimensionsDescription.append(" <br> Assembly Instructions - ").append(furniture2GoProduct.getAssemblyInstructions());
         }
-        byProductSku.setDescription(furniture2GoProduct.getDescription() + " " + dimensionsDescription.toString());
         dimensionsDescription.append(" <br> 1. " + furniture2GoProduct.getBp1());
         dimensionsDescription.append(" <br> 2. " + furniture2GoProduct.getBp2());
         dimensionsDescription.append(" <br> 3. " + furniture2GoProduct.getBp3());
         dimensionsDescription.append(" <br> 4. " + furniture2GoProduct.getBp4());
         dimensionsDescription.append(" <br> 5. " + furniture2GoProduct.getBp5());
         dimensionsDescription.append(" <br> 6. " + furniture2GoProduct.getBp6());
+        byProductSku.setDescription(furniture2GoProduct.getDescription() + " " + dimensionsDescription.toString());
     }
 }

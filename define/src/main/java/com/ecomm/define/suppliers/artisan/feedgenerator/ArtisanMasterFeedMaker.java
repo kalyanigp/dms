@@ -56,7 +56,7 @@ public class ArtisanMasterFeedMaker {
                     if (doc != null) {
                         productTitle = ArtisanURLReader.findProductTitle(doc);
                         artisanProduct.setProductName(productTitle);
-                        productDesc = ArtisanURLReader.findProductDescription(doc);
+                        productDesc = ArtisanURLReader.findProductDescription(doc).concat("<br>");
 
                         height = ArtisanURLReader.findHeight(doc).replace("cm", "").replace("CM", "").replace(" ", "").replace(".", "");
                         width = ArtisanURLReader.findWidth(doc).replace("cm", "").replace("CM", "").replace(" ", "").replace(".", "");
@@ -75,15 +75,21 @@ public class ArtisanMasterFeedMaker {
                         if (weight != null && weight.length() > 0) {
                             artisanProduct.setWeight(new BigDecimal(weight));
                         }
-                        productDesc = productDesc.concat("Packaged Weight " + ArtisanURLReader.findPackagedWeight(doc) + "\n");
-                        productDesc = productDesc.concat("EAN " + ArtisanURLReader.findEAN(doc) + "\n");
-                        productDesc = productDesc.concat("Material " + ArtisanURLReader.findMaterial(doc));
-                        productDesc = productDesc.concat("Origin " + ArtisanURLReader.findOrigin(doc));
+                        productDesc = productDesc.concat("Packaged Weight: " + ArtisanURLReader.findPackagedWeight(doc) + "<br>");
+                        productDesc = productDesc.concat("Material: " + ArtisanURLReader.findMaterial(doc) + "<br>");
+                        productDesc = productDesc.concat("Origin: " + ArtisanURLReader.findOrigin(doc) + "<br>");
 
-                        productDesc = productDesc.concat("Features \n ");
-                        for (int i = 1; i <= 6; i++) {
-                            productDesc = productDesc.concat(ArtisanURLReader.findBulletPoint(doc, i) + "\n");
-                        }
+                        productDesc = productDesc.concat("Features: <br> ");
+                        artisanProduct.setBp1(ArtisanURLReader.findBulletPoint(doc, 1));
+                        artisanProduct.setBp2(ArtisanURLReader.findBulletPoint(doc, 2));
+                        artisanProduct.setBp3(ArtisanURLReader.findBulletPoint(doc, 3));
+                        artisanProduct.setBp4(ArtisanURLReader.findBulletPoint(doc, 4));
+                        artisanProduct.setBp5(ArtisanURLReader.findBulletPoint(doc, 5));
+                        artisanProduct.setBp6(ArtisanURLReader.findBulletPoint(doc, 6));
+                        artisanProduct.setEan(ArtisanURLReader.findEAN(doc));
+
+                        artisanProduct.setAvailablityMessage(ArtisanURLReader.findBulletPoint(doc, 9));
+                        artisanProduct.setArrivalDate(ArtisanURLReader.findBulletPoint(doc, 10).replaceAll(("Next Container Arrives:"),""));
                         artisanProduct.setDescription(productDesc);
                         List<String> images = new ArrayList<>();
 
@@ -92,11 +98,11 @@ public class ArtisanMasterFeedMaker {
                         }
                         artisanProduct.setImages(images);
 
-                        if (productTitle.length() == 0) {
+                        if (images.size() == 0) {
                             System.out.println("Product Not Available" + productCode[0]);
                         } else {
                             artisanProductList.add(artisanProduct);
-                            System.out.println("added" + artisanProduct.getSku());
+                            System.out.println("added" + artisanProduct.getSku() + artisanProduct.getArrivalDate() + artisanProduct.getAvailablityMessage());
                         }
                     }
                 }

@@ -94,6 +94,10 @@ public class ArtisanProduct {
 
     private boolean isDiscontinued;
 
+    private String arrivalDate;
+
+    private String availablityMessage;
+
     public int compareTo(ArtisanProduct catalog){
         int compare = Comparator.comparing(ArtisanProduct::getSku)
                 .thenComparing(ArtisanProduct::getProductName)

@@ -97,43 +97,20 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 if (byName.isPresent()) {
                     byProductSku.setBrandId(byName.get().getId());
                 }
-                String packingSpec = maisonProd.getPackingSpec();
-                if (packingSpec != null) {
-                    packingSpec = packingSpec.toLowerCase();
-                    int index = 0;
-                    if (packingSpec.contains("kg")) {
-                        index = packingSpec.indexOf("kg");
-                    }
-                    try {
-                        if (index > 0) {
-                            String weight = packingSpec.substring(index - 3, index);
-                            weight = weight.replaceAll(" ", "").replaceAll(":", "");
-                            weight = weight.replaceAll("[^\\d.]", "");
-                            double dWeight = Double.parseDouble(weight);
-                            if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
-                                byProductSku.setWeight((int) dWeight);
-                            }
-                        }
-                    } catch (Exception ex) {
-                        LOGGER.error("Exception while calculating weight for sku {}", byProductSku.getSku() + Arrays.toString(ex.getStackTrace()));
-                    }
-                }
-                if (maisonProd.getMaterial() != null) {
-                    byProductSku.setDescription(maisonProd.getMaterial().replaceAll(",", ""));
-                }
+
                 findDimesions(byProductSku, maisonProd.getSize());
 
-                byProductSku.setDescription(byProductSku.getDescription() + " "  + maisonProd.getSize() + " " + packingSpec);
+                evaluateDescription(maisonProd, byProductSku);
                 byProductSku.setAvailabilityDescription(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
                 byProductSku.setMpn(maisonProd.getSku());
                 byProductSku.setPageTitle(maisonProd.getTitle());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
-
                 if(!maisonProd.getTitle().contains(Supplier.SELLER_BRAND.getName())) {
                     byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
                 }
+                evaluateDescription(maisonProd, byProductSku); //Onetime execution to rest the data
                 setPriceAndQuantity(maisonProd, byProductSku);
                 byProductSku.setUpc(maisonProd.getEan());
                 byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
@@ -145,6 +122,35 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList, BcConstants.MAISON_CODE, MaisonProduct.class);
     }
 
+    private void evaluateDescription(MaisonProduct maisonProd, BcProductData byProductSku) {
+        StringBuilder description = new StringBuilder();
+        String packingSpec = maisonProd.getPackingSpec();
+        if (packingSpec != null) {
+            packingSpec = packingSpec.toLowerCase();
+            int index = 0;
+            if (packingSpec.contains("kg")) {
+                index = packingSpec.indexOf("kg");
+            }
+            try {
+                if (index > 0) {
+                    String weight = packingSpec.substring(index - 3, index);
+                    weight = weight.replaceAll(" ", "").replaceAll(":", "");
+                    weight = weight.replaceAll("[^\\d.]", "");
+                    double dWeight = Double.parseDouble(weight);
+                    if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
+                        byProductSku.setWeight((int) dWeight);
+                    }
+                }
+            } catch (Exception ex) {
+                LOGGER.error("Exception while calculating Packing Specifications for sku {}", byProductSku.getSku() + Arrays.toString(ex.getStackTrace()));
+            }
+        }
+        if (maisonProd.getMaterial() != null) {
+            description.append(maisonProd.getMaterial().replaceAll(",", ""));
+        }
+        description.append(byProductSku.getDescription() + "<br>"  + maisonProd.getSize() + "<br>" + packingSpec);
+    }
+
     private void setPriceAndQuantity(MaisonProduct maisonProd, BcProductData byProductSku) {
         int priceIntValue = evaluatePrice(maisonProd);
         byProductSku.setPrice(priceIntValue);
@@ -152,7 +158,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         byProductSku.setInventoryLevel(maisonProd.getStockQuantity() < 0 ? 0 : maisonProd.getStockQuantity());
 
         if (maisonProd.getStockQuantity() <= 0) {
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss+SS:00");
+            SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
             GregorianCalendar calendar = new GregorianCalendar();
             calendar.add(Calendar.DATE, 100);
             Date date = calendar.getTime();
@@ -274,6 +280,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
             }
         } catch (Exception ex) {
             LOGGER.error("Exception while finding dimensions for sku {}", byProductSku.getSku() + ex.getMessage());
+            ex.printStackTrace();
         }
     }
 

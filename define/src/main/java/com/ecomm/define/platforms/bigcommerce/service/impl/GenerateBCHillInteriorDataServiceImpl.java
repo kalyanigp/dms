@@ -17,13 +17,19 @@ import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.ecomm.define.platforms.commons.BCUtils.setInventoryParameters;
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
@@ -109,29 +115,32 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
         if (hillInteriorProduct.getDescription() != null && !hillInteriorProduct.getDescription().isEmpty()) {
             discriptionBuilder.append(hillInteriorProduct.getDescription());
         }
-        discriptionBuilder.append("  Dimensions - (");
-        byProductSku.setWeight(null);
-        byProductSku.setHeight(null);
-        byProductSku.setWidth(null);
-        byProductSku.setDepth(null);
+        discriptionBuilder.append(" <br> Dimensions:");
 
         if (hillInteriorProduct.getWeight() != null) {
-            discriptionBuilder.append(" Weight : ").append(hillInteriorProduct.getWeight()).append("kg");
+            byProductSku.setWeight(hillInteriorProduct.getWeight().intValue());
+            discriptionBuilder.append(" <br> Weight : ").append(byProductSku.getWeight().doubleValue()).append("kg");
+        } else {
+            byProductSku.setWeight(1);
         }
+
         if (hillInteriorProduct.getHeight() != null) {
-            discriptionBuilder.append(" Height : ").append(hillInteriorProduct.getHeight()).append("cm");
+            discriptionBuilder.append(" <br> Height : ").append(hillInteriorProduct.getHeight()).append("cm");
+            byProductSku.setHeight(hillInteriorProduct.getHeight().intValue());
         }
         if (hillInteriorProduct.getWidth() != null) {
-            discriptionBuilder.append(" Width : ").append(hillInteriorProduct.getWidth()).append("cm");
+            discriptionBuilder.append(" <br> Width : ").append(hillInteriorProduct.getWidth()).append("cm");
+            byProductSku.setWidth(hillInteriorProduct.getWidth().intValue());
         }
         if (hillInteriorProduct.getDepth() != null) {
-            discriptionBuilder.append(" Depth : ").append(hillInteriorProduct.getDepth()).append("cm)");
+            discriptionBuilder.append(" <br> Depth : ").append(hillInteriorProduct.getDepth()).append("cm");
+            byProductSku.setDepth(hillInteriorProduct.getDepth().intValue());
         }
         if (hillInteriorProduct.getFinish() != null && !hillInteriorProduct.getFinish().isEmpty()) {
-            discriptionBuilder.append("  Finish - ").append(hillInteriorProduct.getFinish());
+            discriptionBuilder.append(" <br> Finish - ").append(hillInteriorProduct.getFinish());
         }
         if (hillInteriorProduct.getColour() != null && !hillInteriorProduct.getColour().isEmpty()) {
-            discriptionBuilder.append("  Colour - ").append(hillInteriorProduct.getColour());
+            discriptionBuilder.append(" <br> Colour - ").append(hillInteriorProduct.getColour());
         }
 
         byProductSku.setDescription(discriptionBuilder.toString());
@@ -151,12 +160,31 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
     private void setPriceAndQuantity(HillInteriorProduct hillInteriorProduct, BcProductData byProductSku) {
         evaluatePrice(hillInteriorProduct, byProductSku);
         byProductSku.setInventoryLevel(Math.max(hillInteriorProduct.getStockLevel(), 0));
-        byProductSku.setAvailability(BcConstants.PREORDER);
-        byProductSku.setAvailabilityDescription("Usually dispatches on or after " + hillInteriorProduct.getStockExpectedOn());
+
         if (hillInteriorProduct.getStockLevel() > 0) {
-            byProductSku.setAvailability(BcConstants.AVAILABLE);
             byProductSku.setAvailabilityDescription("Usually dispatches in 5 to 7 working days.");
+        } else {
+            byProductSku.setAvailabilityDescription("Usually dispatches on or after " + hillInteriorProduct.getStockExpectedOn());
+            if (!StringUtils.isEmpty(hillInteriorProduct.getStockExpectedOn() != null)) {
+                SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
+                GregorianCalendar calendar;
+                int year = Integer.parseInt(hillInteriorProduct.getStockExpectedOn().substring(8, 10));
+                int month = Integer.parseInt(hillInteriorProduct.getStockExpectedOn().substring(3, 5));
+                int day = Integer.parseInt(hillInteriorProduct.getStockExpectedOn().substring(0, 2));
+
+                calendar = new GregorianCalendar(year, month, day, 00, 00, 00);
+                Date date = calendar.getTime();
+                try {
+                    byProductSku.setPreorderReleaseDate(formatter.format(date));
+                } catch (Exception exception) {
+                    LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
+                }
+            } else {
+                byProductSku.setPreorderReleaseDate(null);
+            }
         }
+        setInventoryParameters(hillInteriorProduct.getStockLevel(), byProductSku);
+
     }
 
     private void evaluatePrice(HillInteriorProduct hillInteriorProduct, BcProductData byProductSku) {
