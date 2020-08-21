@@ -21,8 +21,12 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,6 +34,7 @@ import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
 import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.MAISON_CODE;
+import static com.ecomm.define.platforms.commons.BCUtils.setInventoryParameters;
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
@@ -82,53 +87,30 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 byProductSku.setSupplier(Supplier.MAISON.getName());
                 byProductSku.setType(BcConstants.TYPE);
                 byProductSku.setWeight(0);
-                byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
-                byProductSku.setAvailability(BcConstants.PREORDER);
-                if (maisonProd.getStockQuantity() > 0) {
-                    byProductSku.setAvailability(BcConstants.AVAILABLE);
-                }
+               // byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
+                //byProductSku.setAvailability(BcConstants.PREORDER);
+                //if (maisonProd.getStockQuantity() > 0) {
+                  //  byProductSku.setAvailability(BcConstants.AVAILABLE);
+                //}
 
                 Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
                 if (byName.isPresent()) {
                     byProductSku.setBrandId(byName.get().getId());
                 }
-                String packingSpec = maisonProd.getPackingSpec();
-                if (packingSpec != null) {
-                    packingSpec = packingSpec.toLowerCase();
-                    int index = 0;
-                    if (packingSpec.contains("kg")) {
-                        index = packingSpec.indexOf("kg");
-                    }
-                    try {
-                        if (index > 0) {
-                            String weight = packingSpec.substring(index - 3, index);
-                            weight = weight.replaceAll(" ", "").replaceAll(":", "");
-                            weight = weight.replaceAll("[^\\d.]", "");
-                            double dWeight = Double.parseDouble(weight);
-                            if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
-                                byProductSku.setWeight((int) dWeight);
-                            }
-                        }
-                    } catch (Exception ex) {
-                        LOGGER.error("Exception while calculating weight for sku {}", byProductSku.getSku() + Arrays.toString(ex.getStackTrace()));
-                    }
-                }
-                if (maisonProd.getMaterial() != null) {
-                    byProductSku.setDescription(maisonProd.getMaterial().replaceAll(",", ""));
-                }
+
                 findDimesions(byProductSku, maisonProd.getSize());
 
-                byProductSku.setDescription(byProductSku.getDescription() + System.lineSeparator() + maisonProd.getSize() + System.lineSeparator() + packingSpec);
+                evaluateDescription(maisonProd, byProductSku);
                 byProductSku.setAvailabilityDescription(getProductAvailability(Double.parseDouble(maisonProd.getTradePrice()), maisonProd.getStockQuantity()));
                 byProductSku.setMpn(maisonProd.getSku());
                 byProductSku.setPageTitle(maisonProd.getTitle());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
-
                 if(!maisonProd.getTitle().contains(Supplier.SELLER_BRAND.getName())) {
                     byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
                 }
+                evaluateDescription(maisonProd, byProductSku); //Onetime execution to rest the data
                 setPriceAndQuantity(maisonProd, byProductSku);
                 byProductSku.setUpc(maisonProd.getEan());
                 byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
@@ -140,11 +122,55 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList, BcConstants.MAISON_CODE, MaisonProduct.class);
     }
 
+    private void evaluateDescription(MaisonProduct maisonProd, BcProductData byProductSku) {
+        StringBuilder description = new StringBuilder();
+        String packingSpec = maisonProd.getPackingSpec();
+        if (packingSpec != null) {
+            packingSpec = packingSpec.toLowerCase();
+            int index = 0;
+            if (packingSpec.contains("kg")) {
+                index = packingSpec.indexOf("kg");
+            }
+            try {
+                if (index > 0) {
+                    String weight = packingSpec.substring(index - 3, index);
+                    weight = weight.replaceAll(" ", "").replaceAll(":", "");
+                    weight = weight.replaceAll("[^\\d.]", "");
+                    double dWeight = Double.parseDouble(weight);
+                    if ((dWeight == Math.ceil(dWeight)) && !Double.isInfinite(dWeight)) {
+                        byProductSku.setWeight((int) dWeight);
+                    }
+                }
+            } catch (Exception ex) {
+                LOGGER.error("Exception while calculating Packing Specifications for sku {}", byProductSku.getSku() + Arrays.toString(ex.getStackTrace()));
+            }
+        }
+        if (maisonProd.getMaterial() != null) {
+            description.append(maisonProd.getMaterial().replaceAll(",", ""));
+        }
+        description.append(byProductSku.getDescription() + "<br>"  + maisonProd.getSize() + "<br>" + packingSpec);
+    }
+
     private void setPriceAndQuantity(MaisonProduct maisonProd, BcProductData byProductSku) {
         int priceIntValue = evaluatePrice(maisonProd);
         byProductSku.setPrice(priceIntValue);
         byProductSku.setSalePrice(priceIntValue);
         byProductSku.setInventoryLevel(maisonProd.getStockQuantity() < 0 ? 0 : maisonProd.getStockQuantity());
+
+        if (maisonProd.getStockQuantity() <= 0) {
+            SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
+            GregorianCalendar calendar = new GregorianCalendar();
+            calendar.add(Calendar.DATE, 100);
+            Date date = calendar.getTime();
+            try {
+                byProductSku.setPreorderReleaseDate(formatter.format(date));
+            } catch (Exception exception) {
+                LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
+            }
+        } else {
+            byProductSku.setPreorderReleaseDate(null);
+        }
+        setInventoryParameters(maisonProd.getStockQuantity(), byProductSku);
     }
 
 
@@ -254,6 +280,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
             }
         } catch (Exception ex) {
             LOGGER.error("Exception while finding dimensions for sku {}", byProductSku.getSku() + ex.getMessage());
+            ex.printStackTrace();
         }
     }
 

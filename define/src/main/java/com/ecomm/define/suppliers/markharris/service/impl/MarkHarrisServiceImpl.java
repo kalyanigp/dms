@@ -62,6 +62,11 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
     @Value("${bigcommerce.markharris.profit.limit.high}")
     private int profitLimitHighThreshold;
 
+    @Value("${bigcommerce.markharris.handling.charges.tar1}")
+    private int handlignChargesTar1;
+
+    @Value("${bigcommerce.markharris.handling.charges.tar2}")
+    private int handlignChargesTar2;
 
     @Autowired // inject markHarrisData
     public MarkHarrisServiceImpl(@Lazy @Qualifier("markHarrisDataService") GenerateBCDataService generateBCDataService
@@ -197,8 +202,10 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
                     salePrice = salePrice.add(DefineUtils.getVat(salePrice, new BigDecimal(vatPercent)));
                     if (salePrice.intValue() <= profitLimitHighThreshold) {
                         salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                        salePrice = salePrice.add(new BigDecimal(handlignChargesTar1));
                     } else {
                         salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentLow))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                        salePrice = salePrice.add(new BigDecimal(handlignChargesTar2));
                     }
                 }
 

@@ -25,7 +25,6 @@ import java.math.BigDecimal;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
@@ -35,6 +34,7 @@ import java.util.stream.Collectors;
 
 import static com.ecomm.define.commons.DefineUtils.evaluateDimensions;
 import static com.ecomm.define.commons.DefineUtils.getDelimiter;
+import static com.ecomm.define.platforms.commons.BCUtils.setInventoryParameters;
 
 /**
  * Created by vamshikirangullapelly on 18/07/2020.
@@ -152,28 +152,23 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
     private void setPriceAndQuantity(Furniture2GoProduct furniture2GoProduct, BcProductData byProductSku) {
         evaluatePrice(furniture2GoProduct, byProductSku);
         byProductSku.setInventoryLevel(Math.max(furniture2GoProduct.getStockLevel(), 0));
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss+SS:00");
-        GregorianCalendar calendar;
-        calendar = new GregorianCalendar(2020, Calendar.SEPTEMBER, 22, 00, 00, 00);
-        Date date = calendar.getTime();
-//formatter2.setTimeZone(TimeZone.getTimeZone("CET"));
-//formatter2.getTimeZone();
-//formatter2.parse("2020-10-08T20:42:07+00:00");
-//TimeZone.getAvailableIDs();
 
-      //  new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss Z", Locale.getDefault());
-        //formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
-        // "2020-10-08T20:42:07+00:00"
+        if (furniture2GoProduct.getStockLevel() > 0) {
+            byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
+        } else {
+            byProductSku.setAvailabilityDescription("Usually dispatches on or after " + furniture2GoProduct.getStockArrivalDate());
+        }
 
+        if (furniture2GoProduct.getStockArrivalDate() != null && DefineUtils.isValidF2GDate(furniture2GoProduct.getStockArrivalDate())) {
+            SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
+            GregorianCalendar calendar;
+            int year = Integer.parseInt(furniture2GoProduct.getStockArrivalDate().substring(0, 4));
+            int month = Integer.parseInt(furniture2GoProduct.getStockArrivalDate().substring(5, 7));
+            int day = Integer.parseInt(furniture2GoProduct.getStockArrivalDate().substring(8, 10));
 
-
-//Sample format: \"2005-12-30T01:02:03+00:00\""
-
-
-       // Date date = null;
-        if (furniture2GoProduct.getStockArrivalDate() != null && DefineUtils.isValidDate(furniture2GoProduct.getStockArrivalDate())) {
+            calendar = new GregorianCalendar(year, month, day, 00, 00, 00);
+            Date date = calendar.getTime();
             try {
-              //  date = formatter.parse(furniture2GoProduct.getStockArrivalDate());
                 byProductSku.setPreorderReleaseDate(formatter.format(date));
             } catch (Exception exception) {
                 LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
@@ -181,16 +176,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         } else {
             byProductSku.setPreorderReleaseDate(null);
         }
-
-        byProductSku.setAvailabilityDescription("Usually dispatches on or after " + furniture2GoProduct.getStockArrivalDate());
-        if (furniture2GoProduct.getStockLevel() > 0) {
-            byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
-            byProductSku.setAvailability(BcConstants.AVAILABLE);
-            byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
-        } else {
-            byProductSku.setInventoryTracking(null);
-            byProductSku.setAvailability(BcConstants.PREORDER);
-        }
+        setInventoryParameters(furniture2GoProduct.getStockLevel(), byProductSku);
     }
 
     private void evaluatePrice(Furniture2GoProduct furniture2GoProduct, BcProductData byProductSku) {
@@ -208,7 +194,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         //Height logic
         StringBuilder dimensionsDescription = new StringBuilder();
         String heightDelimeter = getDelimiter(furniture2GoProduct.getHeight());
-        dimensionsDescription.append(" Height :").append(furniture2GoProduct.getHeight()).append("(mm) ");
+        dimensionsDescription.append(" <br> Height :").append(furniture2GoProduct.getHeight()).append("(mm) ");
         if (!heightDelimeter.isEmpty()) {
             List<String> heightList = evaluateDimensions(heightDelimeter, furniture2GoProduct.getHeight());
             if (!heightList.isEmpty()) {
@@ -220,7 +206,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
         //Width logic
         String widthDelimeter = getDelimiter(furniture2GoProduct.getWidth());
-        dimensionsDescription.append(" Width :").append(furniture2GoProduct.getWidth()).append("(mm) ");
+        dimensionsDescription.append(" <br> Width :").append(furniture2GoProduct.getWidth()).append("(mm) ");
         if (!widthDelimeter.isEmpty()) {
             List<String> widthList = evaluateDimensions(widthDelimeter, furniture2GoProduct.getWidth());
             if (!widthList.isEmpty()) {
@@ -232,7 +218,7 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
 
         //Depth logic
         String depthDelimeter = getDelimiter(furniture2GoProduct.getDepth());
-        dimensionsDescription.append(" Depth :").append(furniture2GoProduct.getDepth()).append("(mm) ");
+        dimensionsDescription.append(" <br> Depth :").append(furniture2GoProduct.getDepth()).append("(mm) ");
         if (!depthDelimeter.isEmpty()) {
             List<String> depthList = evaluateDimensions(widthDelimeter, furniture2GoProduct.getDepth());
             if (!depthList.isEmpty()) {
@@ -242,26 +228,24 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
             byProductSku.setDepth(new BigDecimal(furniture2GoProduct.getDepth()).intValue());
         }
         String stockArrivalDate = furniture2GoProduct.getStockArrivalDate();
-        dimensionsDescription.append("Next Dispatch Date : ");
+        dimensionsDescription.append("<br> Next Dispatch Date : ");
         if (stockArrivalDate != null && !stockArrivalDate.isEmpty()) {
             if (DefineUtils.isValidDate(stockArrivalDate)) {
                 dimensionsDescription.append(stockArrivalDate);
             } else {
                 dimensionsDescription.append(DefineUtils.plusDays(70));
             }
-        } /* else {
-            dimensionsDescription.append("Usually dispatches in next 10 working days");
-        } */
+        }
 
         if (furniture2GoProduct.getAssemblyInstructions() != null && !furniture2GoProduct.getAssemblyInstructions().isEmpty()) {
             dimensionsDescription.append(" <br> Assembly Instructions - ").append(furniture2GoProduct.getAssemblyInstructions());
         }
-        byProductSku.setDescription(furniture2GoProduct.getDescription() + " " + dimensionsDescription.toString());
         dimensionsDescription.append(" <br> 1. " + furniture2GoProduct.getBp1());
         dimensionsDescription.append(" <br> 2. " + furniture2GoProduct.getBp2());
         dimensionsDescription.append(" <br> 3. " + furniture2GoProduct.getBp3());
         dimensionsDescription.append(" <br> 4. " + furniture2GoProduct.getBp4());
         dimensionsDescription.append(" <br> 5. " + furniture2GoProduct.getBp5());
         dimensionsDescription.append(" <br> 6. " + furniture2GoProduct.getBp6());
+        byProductSku.setDescription(furniture2GoProduct.getDescription() + " " + dimensionsDescription.toString());
     }
 }

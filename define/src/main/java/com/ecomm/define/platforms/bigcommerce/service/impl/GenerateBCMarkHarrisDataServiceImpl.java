@@ -18,13 +18,21 @@ import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.ecomm.define.platforms.commons.BCUtils.setInventoryParameters;
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
@@ -91,40 +99,7 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                     if (byName.isPresent()) {
                         byProductSku.setBrandId(byName.get().getId());
                     }
-                    StringBuilder additionalDescription = new StringBuilder();
-                    if (markHarrisProduct.getDescription() != null) {
-                        additionalDescription.append(markHarrisProduct.getDescription());
-                    }
-                    additionalDescription.append("(Product Dimensions - (");
-                    if (markHarrisProduct.getMaxHeight() != null && !markHarrisProduct.getMaxHeight().isEmpty()) {
-                        additionalDescription.append(" Maximum Height - ").append(markHarrisProduct.getMaxHeight()).append("cm");
-                    }
-                    if (markHarrisProduct.getMinHeight() != null && !markHarrisProduct.getMinHeight().isEmpty()) {
-                        additionalDescription.append(" Minimum Height - ").append(markHarrisProduct.getMinHeight()).append("cm");
-                    }
-                    if (markHarrisProduct.getMaxWidth() != null && !markHarrisProduct.getMaxWidth().isEmpty()) {
-                        additionalDescription.append(" Maximum Width -  ").append(markHarrisProduct.getMaxWidth()).append("cm");
-                    }
-                    if (markHarrisProduct.getMinWidth() != null && !markHarrisProduct.getMinWidth().isEmpty()) {
-                        additionalDescription.append(" Minimum Width -  ").append(markHarrisProduct.getMinWidth()).append("cm");
-                    }
-                    if (markHarrisProduct.getMaxLengthOrDepth() != null && !markHarrisProduct.getMaxLengthOrDepth().isEmpty()) {
-                        additionalDescription.append(" Maximum Length/Depth -  ").append(markHarrisProduct.getMaxLengthOrDepth()).append("cm");
-                    }
-                    if (markHarrisProduct.getMinLengthOrDepth() != null && !markHarrisProduct.getMinLengthOrDepth().isEmpty()) {
-                        additionalDescription.append(" Minimum Length/Depth -  ").append(markHarrisProduct.getMinLengthOrDepth()).append("cm )");
-                    }
-                    additionalDescription.append(")");
-
-                    if (markHarrisProduct.getWeight() != null && !markHarrisProduct.getWeight().isEmpty() && !markHarrisProduct.getWeight().equals("0")) {
-                        additionalDescription.append("  Product Weight -  ").append(markHarrisProduct.getWeight()).append("kg ");
-                    }
-
-                    if (markHarrisProduct.getAssembled() != null && !markHarrisProduct.getAssembled().isEmpty()) {
-                        additionalDescription.append(" Assembly Instructions : ").append(markHarrisProduct.getAssembled());
-                    }
-
-                    byProductSku.setDescription(additionalDescription.toString());
+                    setDescription(markHarrisProduct, byProductSku);
                     BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                     updatedBcProductDataList.add(bcProductData);
                     LOGGER.info("Successfully created BCProductData for {}", markHarrisProduct.getSku());
@@ -133,6 +108,9 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                         byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + markHarrisProduct.getProductName());
                     }
                     setPriceAndQuantity(markHarrisProduct, byProductSku);
+                    setDescription(markHarrisProduct, byProductSku); //One time execution to reset the data
+                    byProductSku.setCategories(null);
+
                     byProductSku.setCategories(BCUtils.assignCategories(markHarrisProduct.getProductName()));
                     byProductSku.setImageList(markHarrisProduct.getImages());
                     if (!markHarrisProduct.getWeight().isEmpty()) {
@@ -150,6 +128,43 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
         }
     }
 
+    private void setDescription(MarkHarrisProduct markHarrisProduct, BcProductData byProductSku) {
+        StringBuilder additionalDescription = new StringBuilder();
+        if (markHarrisProduct.getDescription() != null) {
+            additionalDescription.append(markHarrisProduct.getDescription());
+        }
+        additionalDescription.append("<br>Product Dimensions - ");
+        if (markHarrisProduct.getMaxHeight() != null && !markHarrisProduct.getMaxHeight().isEmpty()) {
+            additionalDescription.append("<br> Maximum Height - ").append(markHarrisProduct.getMaxHeight()).append("cm");
+        }
+        if (markHarrisProduct.getMinHeight() != null && !markHarrisProduct.getMinHeight().isEmpty()) {
+            additionalDescription.append("<br> Minimum Height - ").append(markHarrisProduct.getMinHeight()).append("cm");
+        }
+        if (markHarrisProduct.getMaxWidth() != null && !markHarrisProduct.getMaxWidth().isEmpty()) {
+            additionalDescription.append("<br> Maximum Width -  ").append(markHarrisProduct.getMaxWidth()).append("cm");
+        }
+        if (markHarrisProduct.getMinWidth() != null && !markHarrisProduct.getMinWidth().isEmpty()) {
+            additionalDescription.append("<br> Minimum Width -  ").append(markHarrisProduct.getMinWidth()).append("cm");
+        }
+        if (markHarrisProduct.getMaxLengthOrDepth() != null && !markHarrisProduct.getMaxLengthOrDepth().isEmpty()) {
+            additionalDescription.append("<br> Maximum Length/Depth -  ").append(markHarrisProduct.getMaxLengthOrDepth()).append("cm");
+        }
+        if (markHarrisProduct.getMinLengthOrDepth() != null && !markHarrisProduct.getMinLengthOrDepth().isEmpty()) {
+            additionalDescription.append("<br> Minimum Length/Depth -  ").append(markHarrisProduct.getMinLengthOrDepth()).append("cm ");
+        }
+        additionalDescription.append("<br>");
+
+        if (markHarrisProduct.getWeight() != null && !markHarrisProduct.getWeight().isEmpty() && !markHarrisProduct.getWeight().equals("0")) {
+            additionalDescription.append(" <br> Product Weight -  ").append(markHarrisProduct.getWeight()).append("kg ");
+        }
+
+        if (markHarrisProduct.getAssembled() != null && !markHarrisProduct.getAssembled().isEmpty()) {
+            additionalDescription.append(" <br> Assembly Instructions : ").append(markHarrisProduct.getAssembled());
+        }
+        additionalDescription.append("<br> "+byProductSku.getAvailabilityDescription());
+        byProductSku.setDescription(additionalDescription.toString());
+    }
+
 
     private void processDiscontinuedCatalog(List<MarkHarrisProduct> productList) {
         List<MarkHarrisProduct> discontinuedList = productList
@@ -164,12 +179,35 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
             byProductSku.setPrice(markHarrisProduct.getSalePrice().intValue());
         }
         byProductSku.setInventoryLevel(Math.max(markHarrisProduct.getStockLevel(), 0));
-        byProductSku.setAvailability(BcConstants.PREORDER);
-        byProductSku.setAvailabilityDescription("Will be dispatched on or after " + markHarrisProduct.getNextArrival());
+        setInventoryParameters(markHarrisProduct.getStockLevel(), byProductSku);
+
         if (markHarrisProduct.getStockLevel() > 0) {
-            byProductSku.setAvailability(BcConstants.AVAILABLE);
             byProductSku.setAvailabilityDescription("Usually dispatches in 10 to 12 working days.");
+        } else {
+            byProductSku.setAvailabilityDescription("Will be dispatched on or after " + markHarrisProduct.getNextArrival());
+            if (!StringUtils.isEmpty(markHarrisProduct.getNextArrival()) && markHarrisProduct.getNextArrival().contains("day")) {
+                SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
+                GregorianCalendar calendar;
+                String strDate = markHarrisProduct.getNextArrival().substring(markHarrisProduct.getNextArrival().indexOf(",")+1);
+                int monthOffSet = strDate.trim().indexOf(" ")+1;
+                Calendar cal2 = Calendar.getInstance();
+                try {
+                    cal2.setTime(new SimpleDateFormat("MMM").parse(strDate.trim().substring(0,monthOffSet)));
+                } catch (ParseException exception) {
+                    LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
+                    exception.printStackTrace();
+                }
+                int month = cal2.get(Calendar.MONTH);
+                int day = Integer.parseInt(strDate.substring(strDate.indexOf(",")-2, strDate.indexOf(",")));
+
+                calendar = new GregorianCalendar(BcConstants.CURRENT_YEAR, month, day, 00, 00, 00);
+                Date date = calendar.getTime();
+                try {
+                    byProductSku.setPreorderReleaseDate(formatter.format(date));
+                } catch (Exception exception) {
+                    LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
+                }
+            }
         }
     }
-
 }

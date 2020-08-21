@@ -17,7 +17,7 @@ public class ArtisanURLReader {
             Document doc = Jsoup.connect(url).get();
             Elements links = doc.select("a[href]");
             //System.out.println("Product Link *** "+links.get(81).getElementsByAttribute("href").attr("href").toString());
-            productURL = links.get(81).getElementsByAttribute("href").attr("href").toString();
+            productURL = links.get(110).getElementsByAttribute("href").attr("href").toString();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -83,8 +83,8 @@ public class ArtisanURLReader {
         String bulletPoint = "";
 
         Elements links = doc.getElementsByClass("eael-feature-list-content");
-        if (links != null && links.size() > index + 1) {
-            bulletPoint = links.get(index).ownText();
+        if (links != null && links.size() >= index) {
+            bulletPoint = links.get(index-1).ownText();
         }
 
         return bulletPoint;

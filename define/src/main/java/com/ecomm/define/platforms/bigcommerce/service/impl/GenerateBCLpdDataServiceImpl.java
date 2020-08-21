@@ -19,11 +19,17 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.ecomm.define.platforms.commons.BCUtils.setInventoryParameters;
 
 /**
  * Created by vamshikirangullapelly on 19/04/2020.
@@ -83,7 +89,7 @@ public class GenerateBCLpdDataServiceImpl implements GenerateBCDataService<LpdPr
                     byProductSku.setSupplier(Supplier.LPD.getName());
                     byProductSku.setType(BcConstants.TYPE);
 
-                    byProductSku = evaluateDescription(lpdProduct, byProductSku);
+                    evaluateDescription(lpdProduct, byProductSku);
 
                     byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                     Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
@@ -101,7 +107,7 @@ public class GenerateBCLpdDataServiceImpl implements GenerateBCDataService<LpdPr
                     setPriceAndQuantity(lpdProduct, byProductSku);
                     byProductSku.setCategories(BCUtils.assignCategories(lpdProduct.getProductName()));
                     byProductSku.setImageList(lpdProduct.getImages());
-                    byProductSku = evaluateDescription(lpdProduct, byProductSku);
+                    evaluateDescription(lpdProduct, byProductSku);
                     BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                     updatedBcProductDataList.add(bcProductData);
                 }
@@ -121,37 +127,36 @@ public class GenerateBCLpdDataServiceImpl implements GenerateBCDataService<LpdPr
         if (lpdProduct.getDescription() != null && !lpdProduct.getDescription().isEmpty()) {
             discriptionBuilder.append(lpdProduct.getDescription());
         }
-        discriptionBuilder.append("  Dimensions - (");
+        discriptionBuilder.append(" <br> Dimensions: ");
 
         if (lpdProduct.getWeight() != null) {
             int weight = lpdProduct.getWeight().intValue();
             byProductSku.setWeight(weight);
-            discriptionBuilder.append(" Weight : ").append(lpdProduct.getWeight()).append("kg");
+            discriptionBuilder.append("  <br> Weight : ").append(lpdProduct.getWeight()).append("kg");
         }
         if (lpdProduct.getHeight() != null) {
             int height = lpdProduct.getHeight().intValue();
             byProductSku.setHeight(height);
-            discriptionBuilder.append(" Height : ").append(lpdProduct.getHeight()).append("mm");
+            discriptionBuilder.append("  <br> Height : ").append(lpdProduct.getHeight()).append("mm");
         }
         if (lpdProduct.getWidth() != null) {
             int width = lpdProduct.getWidth().intValue();
             byProductSku.setWidth(width);
-            discriptionBuilder.append(" Width : ").append(lpdProduct.getWidth()).append("mm");
+            discriptionBuilder.append("  <br> Width : ").append(lpdProduct.getWidth()).append("mm");
         }
         if (lpdProduct.getDepth() != null) {
             int depth = lpdProduct.getDepth().intValue();
             byProductSku.setDepth(depth);
-            discriptionBuilder.append(" Depth : ").append(lpdProduct.getDepth()).append("mm)");
+            discriptionBuilder.append("  <br> Depth : ").append(lpdProduct.getDepth()).append("mm");
         }
         if (lpdProduct.getFinish() != null && !lpdProduct.getFinish().isEmpty()) {
-            discriptionBuilder.append("  Finish - ").append(lpdProduct.getFinish());
+            discriptionBuilder.append("  <br> Finish - ").append(lpdProduct.getFinish());
         }
         if (lpdProduct.getColour() != null && !lpdProduct.getColour().isEmpty()) {
-            discriptionBuilder.append("  Colour - ").append(lpdProduct.getColour());
+            discriptionBuilder.append("  <br> Colour - ").append(lpdProduct.getColour());
         }
 
         byProductSku.setDescription(discriptionBuilder.toString());
-
         return byProductSku;
     }
 
@@ -167,12 +172,21 @@ public class GenerateBCLpdDataServiceImpl implements GenerateBCDataService<LpdPr
         evaluatePrice(lpdProduct, byProductSku);
         int stockLevel = lpdProduct.getStockLevel() == null? 0 : lpdProduct.getStockLevel();
         byProductSku.setInventoryLevel(Math.max(stockLevel, 0));
-        byProductSku.setAvailability(BcConstants.PREORDER);
-        byProductSku.setAvailabilityDescription("Usually dispatches in 8 weeks.");
-        if (stockLevel > 0) {
-            byProductSku.setAvailability(BcConstants.AVAILABLE);
-            byProductSku.setAvailabilityDescription("Usually dispatches in 5 to 7 working days.");
+        if (stockLevel <= 0) {
+            SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
+            GregorianCalendar calendar = new GregorianCalendar();
+            calendar.add(Calendar.DATE, 90);
+            Date date = calendar.getTime();
+            try {
+                byProductSku.setPreorderReleaseDate(formatter.format(date));
+            } catch (Exception exception) {
+                LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
+            }
+            byProductSku.setAvailabilityDescription("Will be dispatched on or after " + date);
+        } else {
+            byProductSku.setAvailabilityDescription("Usually dispatches in 15 to 20 working days by our own 2 man delivery service.");
         }
+        setInventoryParameters(stockLevel, byProductSku);
     }
 
     private void evaluatePrice(LpdProduct lpdProduct, BcProductData byProductSku) {

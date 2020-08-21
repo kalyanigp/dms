@@ -149,31 +149,36 @@ public class ArtisanServiceImpl implements ArtisanService {
 
             } catch (Exception ex) {
                 LOGGER.error("Error while processing CSV File" + ex.getMessage());
+                ex.printStackTrace();
             }
         }
     }
 
     private void savePrice(ArtisanPrice artisanPriceObj) {
-        BigDecimal price;
+        BigDecimal price = null;
         BigDecimal salePrice;
-        if (artisanPriceObj.getSku() != null && !artisanPriceObj.getSku().isEmpty()) {
+        if (artisanPriceObj != null && artisanPriceObj.getSku() != null && !artisanPriceObj.getSku().isEmpty()) {
             String priceValue = artisanPriceObj.getPrice().trim();
             if (DefineUtils.isNumeric(priceValue)) {
                 price = new BigDecimal(priceValue);
             } else {
-                price = new BigDecimal(priceValue.substring(1));
+                if (priceValue.length()>0) {
+                    price = new BigDecimal(priceValue.substring(1));
+                }
             }
             Optional<ArtisanProduct> byProductSku = findByProductSku(artisanPriceObj.getSku());
             if (byProductSku.isPresent()) {
                 ArtisanProduct artisanProduct = byProductSku.get();
-                if (!artisanProduct.getPrice().equals(price)) {
+                if (artisanProduct !=null && artisanProduct.getPrice() != null && !artisanProduct.getPrice().equals(price)) {
                     artisanProduct.setUpdated(Boolean.TRUE);
                 }
-                artisanProduct.setPrice(price);
-                salePrice = price;
-                salePrice = salePrice.add(DefineUtils.getVat(salePrice, new BigDecimal(vatPercent)));
-                salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
-                artisanProduct.setSalePrice(salePrice);
+                if (price != null) {
+                    artisanProduct.setPrice(price);
+                    salePrice = price;
+                    salePrice = salePrice.add(DefineUtils.getVat(salePrice, new BigDecimal(vatPercent)));
+                    salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
+                    artisanProduct.setSalePrice(salePrice);
+                }
                 update(artisanProduct);
             }
 

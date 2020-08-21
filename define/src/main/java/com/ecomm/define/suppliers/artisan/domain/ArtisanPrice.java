@@ -23,6 +23,6 @@ public class ArtisanPrice {
     @CsvBindByName(column = "sku")
     private String sku;
 
-    @CsvBindByName(column = " Dropship price £ ")
+    @CsvBindByName(column = "Dropship price £")
     private String price;
 }

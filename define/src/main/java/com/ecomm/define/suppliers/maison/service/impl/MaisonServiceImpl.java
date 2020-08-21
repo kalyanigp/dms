@@ -179,7 +179,7 @@ public class MaisonServiceImpl implements MaisonService {
     @Override
     public void uploadMaisonCatalogueToBigCommerce() throws Exception {
         Query discontinuedOrModifiedQuery = new Query();
-        discontinuedOrModifiedQuery.addCriteria(Criteria.where("isUpdated").is(true));
+        discontinuedOrModifiedQuery.addCriteria(Criteria.where("updated").is(true));
         List<MaisonProduct> maisonProducts = mongoOperations.find(discontinuedOrModifiedQuery, MaisonProduct.class);
         generateBCDataService.generateBcProductsFromSupplier(maisonProducts);
 
@@ -191,9 +191,9 @@ public class MaisonServiceImpl implements MaisonService {
 
         //Update modified to false.
         Query updateModifiedCatalogQuery = new Query();
-        updateModifiedCatalogQuery.addCriteria(Criteria.where("isUpdated").is(true));
+        updateModifiedCatalogQuery.addCriteria(Criteria.where("updated").is(true));
         Update update = new Update();
-        update.set("isUpdated", false);
+        update.set("updated", false);
         UpdateResult updateResult = mongoOperations.updateMulti(updateModifiedCatalogQuery, update, MaisonProduct.class);
         LOGGER.info("Total number of products modified Updated flag to false is, {}", updateResult.getModifiedCount());
     }
