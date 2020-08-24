@@ -1,5 +1,6 @@
 package com.ecomm.define.platforms.bigcommerce.service.impl;
 
+import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
 import com.ecomm.define.platforms.bigcommerce.domain.BcBrandData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
@@ -20,6 +21,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -45,12 +47,17 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
     private final BigcBrandApiRepository brandApiRepository;
     private final MongoOperations mongoOperations;
 
-    @Value("${bigcommerce.f2g.profit.limit.high}")
+    @Value("${bigcommerce.artisan.profit.limit.high}")
     private String higherLimitHDPrice;
 
-    @Value("${bigcommerce.f2g.profit.percentage.low}")
+    @Value("${bigcommerce.artisan.profit.limit.high}")
+    private String lowerLimitHDPrice;
+
+    @Value("${bigcommerce.artisan.profit.percentage.low}")
     private String percentageLow;
 
+    @Value("${bigcommerce.artisan.profit.percentage.high}")
+    private String percentageHigh;
 
     @Autowired
     public GenerateBCArtisanDataServiceImpl(BigCommerceApiService bigCommerceApiService, BigcBrandApiRepository brandApiRepository, MongoOperations mongoOperations) {
@@ -157,9 +164,22 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
 
         discontinuedList.parallelStream().forEach(artisanProduct -> bigCommerceApiService.processDiscontinuedCatalog(BcConstants.ARTISAN + artisanProduct.getSku()));
     }
+    private void evaluatePrice(ArtisanProduct artisanProduct, BcProductData byProductSku) {
+        BigDecimal originalPrice = artisanProduct.getSalePrice();
+        if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
+            if (originalPrice.compareTo(new BigDecimal(higherLimitHDPrice)) > 0) {
+                BigDecimal retailPrice = originalPrice.add(DefineUtils.percentage(originalPrice, new BigDecimal(percentageLow)));
+                byProductSku.setPrice(retailPrice.intValue());
+            }
+        }
+    }
 
     private void setPriceAndQuantity(ArtisanProduct artisanProduct, BcProductData byProductSku) {
-        byProductSku.setPrice(artisanProduct.getPrice().intValue());
+        LOGGER.info("Setting Price and Quantity for {} with date {}" , artisanProduct.getSku(),artisanProduct.getArrivalDate());
+
+        if (artisanProduct.getPrice() != null) {
+            evaluatePrice(artisanProduct, byProductSku);
+        }
         byProductSku.setInventoryLevel(Math.max(artisanProduct.getStockLevel(), 0));
         if (artisanProduct.getStockLevel() > 0) {
             byProductSku.setAvailabilityDescription(BcConstants.ARTISAN_AVAILABLE_DEFAULT);
@@ -169,7 +189,9 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
             } else {
                 byProductSku.setAvailabilityDescription(BcConstants.ARTISAN_ARRIVALS_SOON + " " + artisanProduct.getArrivalDate());
             }
-            if (!StringUtils.isEmpty(artisanProduct.getArrivalDate())) {
+            if (!StringUtils.isEmpty(artisanProduct.getArrivalDate()) && !artisanProduct.getArrivalDate().contains("End")
+                    && !artisanProduct.getArrivalDate().contains("Mid") && !artisanProduct.getArrivalDate().contains("Early")
+                    && !artisanProduct.getArrivalDate().contains("Sold")) {
                 SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
                 GregorianCalendar calendar;
                 Calendar cal = Calendar.getInstance();
@@ -181,13 +203,14 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                     exception.printStackTrace();
                 }
                 int month = cal.get(Calendar.MONTH);
-                int day = Integer.parseInt(artisanProduct.getArrivalDate().trim().substring(0,2));
+                int day = Integer.parseInt(artisanProduct.getArrivalDate().trim().replaceAll("[^\\d.]", ""));
                 calendar = new GregorianCalendar(BcConstants.CURRENT_YEAR, month, day, 00, 00, 00);
                 Date date = calendar.getTime();
                 try {
                     byProductSku.setPreorderReleaseDate(formatter.format(date));
                 } catch (Exception exception) {
                     LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
+                    exception.printStackTrace();
                 }
             }
         }

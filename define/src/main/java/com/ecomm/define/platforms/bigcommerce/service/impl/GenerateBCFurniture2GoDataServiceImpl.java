@@ -48,8 +48,10 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
     private final MongoOperations mongoOperations;
     @Value("${bigcommerce.f2g.profit.limit.high}")
     private String higherLimitHDPrice;
-    @Value("${bigcommerce.f2g.profit.percentage.low}")
+    @Value("${bigcommerce.artisan.profit.percentage.low}")
     private String percentageLow;
+    @Value("${bigcommerce.artisan.profit.percentage.high}")
+    private String percentageHigh;
 
     @Autowired
     public GenerateBCFurniture2GoDataServiceImpl(BigCommerceApiService bigCommerceApiService,
