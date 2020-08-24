@@ -4,6 +4,7 @@ import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
 import com.ecomm.define.platforms.bigcommerce.ennum.Category;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +16,7 @@ public class BCUtils {
     public static List<Integer> assignCategories(String title) {
         Set<Integer> categories = new HashSet<>();
         int dualCat = getDualWordCategory(title.toLowerCase());
-        if (dualCat == 0) {
+        if (dualCat == BigDecimal.ZERO.intValue()) {
             for (Category category : Category.values()) {
                 if (category.getCategoryWord().contains(" ")) {
                     for (String token : getTokensinWord(category.getCategoryWord())) {
@@ -33,11 +34,16 @@ public class BCUtils {
         } else {
             categories.add(dualCat);
         }
-        if (categories.size() == 0)
+        if (categories.isEmpty())
         {
             categories.add(Category.INTERIOR.getCategoryCode());
         }
         categories.add(Category.VIEW_ALL.getCategoryCode());
+        //Temp Fix
+        if (categories.contains(Category.LIVING_SOFAS.getCategoryCode()) || categories.contains(Category.LIVING_ARMCHAIRS.getCategoryCode()) || categories.contains(Category.LIVING_SOFA_BEDS.getCategoryCode()) || categories.contains(Category.LIVING_FOOTSTOOLS.getCategoryCode()) || categories.contains(Category.MEDIA_TABLE.getCategoryCode()) || categories.contains(Category.LIVING_STORAGE.getCategoryCode()) ||
+                categories.contains(Category.SA_SOFAS.getCategoryCode()) || categories.contains(Category.SOFAS_ARMCHAIRS.getCategoryCode()) || categories.contains(Category.SA_SOFAS.getCategoryCode()) || categories.contains(Category.SA_ARMCHAIRS.getCategoryCode()) || categories.contains(Category.SA_FOOTSTOOLS.getCategoryCode())) {
+            categories.add(Category.LIVING.getCategoryCode());
+        }
         return categories.parallelStream().collect(Collectors.toList());
     }
 
@@ -49,7 +55,7 @@ public class BCUtils {
 
 
     public static void setInventoryParameters(int stockLevel, BcProductData byProductSku) {
-        if (stockLevel > 0) {
+        if (stockLevel > BigDecimal.ZERO.intValue()) {
             byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
             byProductSku.setAvailability(BcConstants.AVAILABLE);
         } else {

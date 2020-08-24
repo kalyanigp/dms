@@ -1,5 +1,6 @@
 package com.ecomm.define.platforms.bigcommerce.service.impl;
 
+import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
 import com.ecomm.define.platforms.bigcommerce.domain.BcBrandData;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
@@ -43,6 +44,7 @@ import static com.ecomm.define.platforms.commons.BCUtils.setInventoryParameters;
 @Qualifier("maisonDataService")
 public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<MaisonProduct> {
 
+    private static final String CLOCK = "clock";
     private final Logger LOGGER = LoggerFactory.getLogger(GenerateBCMaisonDataServiceImpl.class);
     private final BigCommerceApiService bigCommerceApiService;
     private final BigcBrandApiRepository brandApiRepository;
@@ -79,7 +81,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 byProductSku.setCategories(BCUtils.assignCategories(maisonProd.getTitle()));
                 byProductSku.setImageList(Arrays.asList(maisonProd.getImages().split(",")));
                 byProductSku.setSku(MAISON_CODE + maisonProd.getSku());
-                if(!maisonProd.getTitle().contains(Supplier.SELLER_BRAND.getName())) {
+                if (!maisonProd.getTitle().contains(Supplier.SELLER_BRAND.getName())) {
                     byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
                 }
                 byProductSku.setUpc(maisonProd.getEan());
@@ -87,10 +89,10 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 byProductSku.setSupplier(Supplier.MAISON.getName());
                 byProductSku.setType(BcConstants.TYPE);
                 byProductSku.setWeight(0);
-               // byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
+                // byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 //byProductSku.setAvailability(BcConstants.PREORDER);
                 //if (maisonProd.getStockQuantity() > 0) {
-                  //  byProductSku.setAvailability(BcConstants.AVAILABLE);
+                //  byProductSku.setAvailability(BcConstants.AVAILABLE);
                 //}
 
                 Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
@@ -107,7 +109,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
-                if(!maisonProd.getTitle().contains(Supplier.SELLER_BRAND.getName())) {
+                if (!maisonProd.getTitle().contains(Supplier.SELLER_BRAND.getName())) {
                     byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + maisonProd.getTitle());
                 }
                 evaluateDescription(maisonProd, byProductSku); //Onetime execution to rest the data
@@ -148,7 +150,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         if (maisonProd.getMaterial() != null) {
             description.append(maisonProd.getMaterial().replaceAll(",", ""));
         }
-        description.append(byProductSku.getDescription() + "<br>"  + maisonProd.getSize() + "<br>" + packingSpec);
+        description.append(byProductSku.getDescription() + "<br>" + maisonProd.getSize() + "<br>" + packingSpec);
     }
 
     private void setPriceAndQuantity(MaisonProduct maisonProd, BcProductData byProductSku) {
@@ -183,6 +185,9 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
             }
         } else {
             salePrice = new BigDecimal(maisonProd.getMspPrice());
+        }
+        if (maisonProd.getTitle().toLowerCase().contains(CLOCK)) {
+            salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(30)));
         }
         return salePrice.intValue();
     }
