@@ -111,7 +111,7 @@ public class ArtisanServiceImpl implements ArtisanService {
         if (file.isEmpty()) {
             throw new FileNotFoundException("Please select a valid CSV file containing EAN Codes  to upload.");
         } else {
-            ArtisanMasterFeedMaker feedMaker = new ArtisanMasterFeedMaker();
+            ArtisanMasterFeedMaker feedMaker = new ArtisanMasterFeedMaker(repository);
             List<ArtisanProduct> artsianProductList;
             try {
                 artsianProductList = feedMaker.processMasterData(file.getInputStream());
@@ -179,6 +179,7 @@ public class ArtisanServiceImpl implements ArtisanService {
                     salePrice = salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(profitPercentHigh))).setScale(0, BigDecimal.ROUND_HALF_UP);
                     artisanProduct.setSalePrice(salePrice);
                 }
+                //mongoOperations.save(artisanProduct);
                 update(artisanProduct);
             }
 

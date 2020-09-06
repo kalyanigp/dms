@@ -2,9 +2,11 @@ package com.ecomm.define.suppliers.artisan.feedgenerator;
 
 import com.ecomm.define.suppliers.artisan.constants.ArtisanConstants;
 import com.ecomm.define.suppliers.artisan.domain.ArtisanProduct;
+import com.ecomm.define.suppliers.artisan.repository.ArtisanProductRepository;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,12 +15,20 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by vamshikirangullapelly on 07/07/2020.
  */
 public class ArtisanMasterFeedMaker {
+
     private final static Logger LOGGER = LoggerFactory.getLogger(ArtisanMasterFeedMaker.class);
+    private final ArtisanProductRepository repository;
+
+    public ArtisanMasterFeedMaker(ArtisanProductRepository repository) {
+        this.repository = repository;
+    }
+
 
     public List<ArtisanProduct> processMasterData(InputStream fileStream) {
         String line = "";
@@ -40,75 +50,93 @@ public class ArtisanMasterFeedMaker {
 
             while ((line = br.readLine()) != null) {
                 boolean avoided = false;
-                ArtisanProduct artisanProduct = new ArtisanProduct();
                 String[] productCode = line.split(cvsSplitBy);
                 for (int index = 0; index < avoidCodes.length; index++) {
                     if (avoidCodes[index].equals(productCode[0])) {
-                        System.out.println("Product Avoided to write " + productCode[0]);
+                        LOGGER.info("Product Avoided to write  {} " , productCode[0]);
                         avoided = true;
                         break;
                     }
                 }
                 if (!avoided) {
                     String productURL = ArtisanURLReader.generateProductURL(ArtisanConstants.FEEDMAKER_URL + productCode[0]);
-                    artisanProduct.setSku(productCode[0]);
-                    Document doc = ArtisanURLReader.getDocument(productURL);
-                    if (doc != null) {
-                        productTitle = ArtisanURLReader.findProductTitle(doc);
-                        artisanProduct.setProductName(productTitle);
-                        productDesc = ArtisanURLReader.findProductDescription(doc).concat("<br>");
+                    Optional<ArtisanProduct> byProductSku = repository.findByProductSku(productCode[0]);
 
-                        height = ArtisanURLReader.findHeight(doc).replace("cm", "").replace("CM", "").replace(" ", "").replace(".", "");
-                        width = ArtisanURLReader.findWidth(doc).replace("cm", "").replace("CM", "").replace(" ", "").replace(".", "");
-                        depth = ArtisanURLReader.findDepth(doc).replace("cm", "").replace("CM", "").replace(" ", "").replace(".", "");
-                        weight = ArtisanURLReader.findWeight(doc).replace("kg", "").replace("KG", "").replace("Kg", "").replace(" ", "").replace(".", "");
-                        if (height != null && height.length() > 0) {
-                            artisanProduct.setHeight(new BigDecimal(height));
-                        }
-                        if (width != null && width.length() > 0) {
-                            artisanProduct.setWidth(new BigDecimal(width));
-                        }
+                        if (!byProductSku.isPresent()) {
+                            Document doc = ArtisanURLReader.getDocument(productURL);
+                            if (doc != null) {
+                                ArtisanProduct artisanProduct = new ArtisanProduct();
+                                artisanProduct.setSku(productCode[0]);
 
-                        if (depth != null && depth.length() > 0) {
-                            artisanProduct.setDepth(new BigDecimal(depth));
-                        }
-                        if (weight != null && weight.length() > 0) {
-                            artisanProduct.setWeight(new BigDecimal(weight));
-                        }
-                        productDesc = productDesc.concat("Packaged Weight: " + ArtisanURLReader.findPackagedWeight(doc) + "<br>");
-                        productDesc = productDesc.concat("Material: " + ArtisanURLReader.findMaterial(doc) + "<br>");
-                        productDesc = productDesc.concat("Origin: " + ArtisanURLReader.findOrigin(doc) + "<br>");
+                                productTitle = ArtisanURLReader.findProductTitle(doc);
+                                artisanProduct.setProductName(productTitle);
+                                productDesc = ArtisanURLReader.findProductDescription(doc).concat("<br>");
 
-                        productDesc = productDesc.concat("Features: <br> ");
-                        artisanProduct.setBp1(ArtisanURLReader.findBulletPoint(doc, 1));
-                        artisanProduct.setBp2(ArtisanURLReader.findBulletPoint(doc, 2));
-                        artisanProduct.setBp3(ArtisanURLReader.findBulletPoint(doc, 3));
-                        artisanProduct.setBp4(ArtisanURLReader.findBulletPoint(doc, 4));
-                        artisanProduct.setBp5(ArtisanURLReader.findBulletPoint(doc, 5));
-                        artisanProduct.setBp6(ArtisanURLReader.findBulletPoint(doc, 6));
-                        artisanProduct.setEan(ArtisanURLReader.findEAN(doc));
+                                height = ArtisanURLReader.findHeight(doc).replace("cm", "").replace("CM", "").replace(" ", "").replace(".", "");
+                                width = ArtisanURLReader.findWidth(doc).replace("cm", "").replace("CM", "").replace(" ", "").replace(".", "");
+                                depth = ArtisanURLReader.findDepth(doc).replace("cm", "").replace("CM", "").replace(" ", "").replace(".", "");
+                                weight = ArtisanURLReader.findWeight(doc).replace("kg", "").replace("KG", "").replace("Kg", "").replace(" ", "").replace(".", "");
+                                if (height != null && height.length() > 0) {
+                                    artisanProduct.setHeight(new BigDecimal(height));
+                                }
+                                if (width != null && width.length() > 0) {
+                                    artisanProduct.setWidth(new BigDecimal(width));
+                                }
 
-                        artisanProduct.setAvailablityMessage(ArtisanURLReader.findBulletPoint(doc, 9));
-                        artisanProduct.setArrivalDate(ArtisanURLReader.findBulletPoint(doc, 10).replaceAll(("Next Container Arrives:"),""));
-                        artisanProduct.setDescription(productDesc);
-                        List<String> images = new ArrayList<>();
+                                if (depth != null && depth.length() > 0) {
+                                    artisanProduct.setDepth(new BigDecimal(depth));
+                                }
+                                if (weight != null && weight.length() > 0) {
+                                    artisanProduct.setWeight(new BigDecimal(weight));
+                                }
+                                productDesc = productDesc.concat("Packaged Weight: " + ArtisanURLReader.findPackagedWeight(doc) + "<br>");
+                                productDesc = productDesc.concat("Material: " + ArtisanURLReader.findMaterial(doc) + "<br>");
+                                productDesc = productDesc.concat("Origin: " + ArtisanURLReader.findOrigin(doc) + "<br>");
 
-                        for (int i = 0; i <= 13; i++) {
-                            images.add(ArtisanURLReader.findImageURL(doc, i));
-                        }
-                        artisanProduct.setImages(images);
+                                productDesc = productDesc.concat("Features: <br> ");
+                                artisanProduct.setBp1(ArtisanURLReader.findBulletPoint(doc, 1));
+                                artisanProduct.setBp2(ArtisanURLReader.findBulletPoint(doc, 2));
+                                artisanProduct.setBp3(ArtisanURLReader.findBulletPoint(doc, 3));
+                                artisanProduct.setBp4(ArtisanURLReader.findBulletPoint(doc, 4));
+                                artisanProduct.setBp5(ArtisanURLReader.findBulletPoint(doc, 5));
+                                artisanProduct.setBp6(ArtisanURLReader.findBulletPoint(doc, 6));
+                                artisanProduct.setEan(ArtisanURLReader.findEAN(doc));
 
-                        if (images.size() == 0) {
-                            System.out.println("Product Not Available" + productCode[0]);
-                        } else {
-                            artisanProductList.add(artisanProduct);
-                            System.out.println("added" + artisanProduct.getSku() + artisanProduct.getArrivalDate() + artisanProduct.getAvailablityMessage());
-                        }
+                                artisanProduct.setAvailablityMessage(ArtisanURLReader.findBulletPoint(doc, 9));
+                                artisanProduct.setArrivalDate(ArtisanURLReader.findBulletPoint(doc, 10).replaceAll(("Next Container Arrives:"), ""));
+                                artisanProduct.setDescription(productDesc);
+                                List<String> images = new ArrayList<>();
+
+                                for (int i = 0; i <= 13; i++) {
+                                    String imgURL = ArtisanURLReader.findImageURL(doc, i);
+                                    if (!StringUtils.isEmpty(imgURL)) {
+                                        images.add(imgURL);
+                                    }
+                                }
+                                artisanProduct.setImages(images);
+
+                                if (images.size() == 0) {
+                                    LOGGER.info("Product Not Available {} ", productCode[0]);
+                                } else {
+                                    artisanProductList.add(artisanProduct);
+                                    LOGGER.info("added {}" + artisanProduct.getSku());
+                                }
+                            }
+                    } else {
+                            ArtisanProduct artisanProduct = byProductSku.get();
+                            Document doc = ArtisanURLReader.getDocument(productURL);
+                            if (doc != null) {
+                                artisanProduct.setAvailablityMessage(ArtisanURLReader.findBulletPoint(doc, 9));
+                                artisanProduct.setArrivalDate(ArtisanURLReader.findBulletPoint(doc, 10).replaceAll(("Next Container Arrives:"), ""));
+                                artisanProductList.add(artisanProduct);
+                            }
+                        LOGGER.info("Updated Arrival Dates for {}" , artisanProduct.getSku());
                     }
                 }
             }
         } catch (IOException e) {
             LOGGER.error("Error while processing Artisan Data from Artisan website");
+            e.printStackTrace();
         }
         return artisanProductList;
     }
