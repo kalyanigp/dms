@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.PRODUCTS_ENDPOINT;
@@ -42,7 +43,7 @@ import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.PRODU
 @Service
 public class BigCommerceApiServiceImpl implements BigCommerceApiService {
 
-    public static final int BATCH_SIZE = 10;
+    public static final int BATCH_SIZE = 1;
     private final Logger LOGGER = LoggerFactory.getLogger(BigCommerceApiServiceImpl.class);
     private final RestTemplate restTemplate;
     @Autowired
@@ -59,6 +60,7 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
     private String storeHash;
     @Value("${bigcommerce.client.baseUrl}")
     private String baseUrl;
+    private Consumer<BcProductData> bcProductDataConsumer;
 
     public BigCommerceApiServiceImpl() {
         restTemplate = new RestTemplate();
@@ -172,8 +174,6 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                     } else {
                         updateBatchRequest.add(product);
                     }
-
-
                 } catch (HttpClientErrorException httpClientException) {
 
                     String statusCode = httpClientException.getStatusCode().toString();
@@ -188,13 +188,15 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                     update.set("updated", true);
                     UpdateResult updateResult = mongoOperations.updateFirst(updateModifiedCatalogQuery, update, ((Class) clazz));
                     LOGGER.info("Sku has been updated {} , getMatchedCount {}, getModifiedCount {}", productSku, updateResult.getMatchedCount(), updateResult.getModifiedCount());
-
+                } catch (Exception exception) {
+                    exception.printStackTrace();
+                    LOGGER.error("Exception while uploading to Big Commerce " + exception.toString());
                 }
             });
             Observable.from(updateBatchRequest).buffer(BATCH_SIZE).forEach((batch) -> processedProducts.addAndGet(processBatchUpdate(batch, uri, supplierCode, (Class) clazz)));
-        } catch (Exception exception) {
-            exception.printStackTrace();
-            LOGGER.error("Exception while uploading to Big Commerce " + exception.toString());
+        } catch (URISyntaxException uriException) {
+            uriException.printStackTrace();
+            LOGGER.error("URISyntaxException while uploading to Big Commerce " + uriException.toString());
             failedProducts++;
         }
         LOGGER.info("Total products count - {}, Successfully processed count {} & Failed products count  {}", totalProducts, processedProducts, failedProducts);
@@ -217,6 +219,7 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
             updateBatchRequest.parallelStream().forEach(
                     product -> {
                         String productSku = product.getSku().replaceAll(supplierCode, "");
+                        LOGGER.info("Processing sku {}", productSku);
                         updateFlag((Class) clazz, productSku);
                         LOGGER.info("Successfully updated flag to false for sku {}", productSku);
                     }

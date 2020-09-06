@@ -4,7 +4,6 @@ import com.ecomm.define.commons.DefineUtils;
 import com.ecomm.define.exception.FileNotFoundException;
 import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
 import com.ecomm.define.suppliers.hillinterior.domain.HillInteriorProduct;
-import com.ecomm.define.suppliers.hillinterior.feedgenerator.HillInteriorMasterFeedMaker;
 import com.ecomm.define.suppliers.hillinterior.repository.HillInteriorProductRepository;
 import com.ecomm.define.suppliers.hillinterior.service.HillInteriorService;
 import com.mongodb.client.result.DeleteResult;
@@ -163,7 +162,7 @@ public class HillInteriorServiceImpl implements HillInteriorService {
             hillInteriorProduct.setDiscontinued(Boolean.FALSE);
             hillInteriorProduct.setUpdated(Boolean.TRUE);
             hillInteriorProduct.setSalePrice(evaluatePrice(hillInteriorProduct));
-            hillInteriorProduct.setImages(HillInteriorMasterFeedMaker.getProductImages(hillInteriorProduct));
+            //hillInteriorProduct.setImages(HillInteriorMasterFeedMaker.getProductImages(hillInteriorProduct));
             HillInteriorProduct insertedProduct = mongoOperations.insert(hillInteriorProduct);
             LOGGER.info("Successfully created HillInterior Product SKU {} and ProductName {}", insertedProduct.getSku(), insertedProduct.getProductName());
         }

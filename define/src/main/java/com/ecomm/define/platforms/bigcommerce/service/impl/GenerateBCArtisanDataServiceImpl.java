@@ -164,18 +164,20 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
 
         discontinuedList.parallelStream().forEach(artisanProduct -> bigCommerceApiService.processDiscontinuedCatalog(BcConstants.ARTISAN + artisanProduct.getSku()));
     }
+
     private void evaluatePrice(ArtisanProduct artisanProduct, BcProductData byProductSku) {
         BigDecimal originalPrice = artisanProduct.getSalePrice();
         if (originalPrice != null && originalPrice.compareTo(BigDecimal.ZERO) > 0) {
+            byProductSku.setPrice(originalPrice.intValue());
             if (originalPrice.compareTo(new BigDecimal(higherLimitHDPrice)) > 0) {
                 BigDecimal retailPrice = originalPrice.add(DefineUtils.percentage(originalPrice, new BigDecimal(percentageLow)));
-                byProductSku.setPrice(retailPrice.intValue());
+                byProductSku.setRetailPrice(retailPrice.intValue());
             }
         }
     }
 
     private void setPriceAndQuantity(ArtisanProduct artisanProduct, BcProductData byProductSku) {
-        LOGGER.info("Setting Price and Quantity for {} with date {}" , artisanProduct.getSku(),artisanProduct.getArrivalDate());
+        LOGGER.info("Setting Price and Quantity for {} with date {}", artisanProduct.getSku(), artisanProduct.getArrivalDate());
 
         if (artisanProduct.getPrice() != null) {
             evaluatePrice(artisanProduct, byProductSku);
@@ -196,7 +198,7 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                 GregorianCalendar calendar;
                 Calendar cal = Calendar.getInstance();
                 try {
-                    int monthOffSet = artisanProduct.getArrivalDate().trim().indexOf(" ")+1;
+                    int monthOffSet = artisanProduct.getArrivalDate().trim().indexOf(" ") + 1;
                     cal.setTime(new SimpleDateFormat("MMM").parse(artisanProduct.getArrivalDate().trim().substring(monthOffSet)));
                 } catch (ParseException exception) {
                     LOGGER.error("Error while processing Preorder release date" + exception.getMessage());

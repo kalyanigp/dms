@@ -48,9 +48,9 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
     private final MongoOperations mongoOperations;
     @Value("${bigcommerce.f2g.profit.limit.high}")
     private String higherLimitHDPrice;
-    @Value("${bigcommerce.artisan.profit.percentage.low}")
+    @Value("${bigcommerce.f2g.profit.percentage.low}")
     private String percentageLow;
-    @Value("${bigcommerce.artisan.profit.percentage.high}")
+    @Value("${bigcommerce.f2g.profit.percentage.high}")
     private String percentageHigh;
 
     @Autowired
@@ -242,12 +242,14 @@ public class GenerateBCFurniture2GoDataServiceImpl implements GenerateBCDataServ
         if (furniture2GoProduct.getAssemblyInstructions() != null && !furniture2GoProduct.getAssemblyInstructions().isEmpty()) {
             dimensionsDescription.append(" <br> Assembly Instructions - ").append(furniture2GoProduct.getAssemblyInstructions());
         }
-        dimensionsDescription.append(" <br> 1. " + furniture2GoProduct.getBp1());
-        dimensionsDescription.append(" <br> 2. " + furniture2GoProduct.getBp2());
-        dimensionsDescription.append(" <br> 3. " + furniture2GoProduct.getBp3());
-        dimensionsDescription.append(" <br> 4. " + furniture2GoProduct.getBp4());
-        dimensionsDescription.append(" <br> 5. " + furniture2GoProduct.getBp5());
-        dimensionsDescription.append(" <br> 6. " + furniture2GoProduct.getBp6());
+        dimensionsDescription.append ("<br> <br> Features: <br>");
+        dimensionsDescription.append(furniture2GoProduct.getBp1() == null ? "":" <br> 1. " +furniture2GoProduct.getBp1());
+        dimensionsDescription.append(furniture2GoProduct.getBp2() == null ? "":" <br> 2. " +furniture2GoProduct.getBp2());
+        dimensionsDescription.append(furniture2GoProduct.getBp3() == null ? "":" <br> 3. " +furniture2GoProduct.getBp3());
+        dimensionsDescription.append(furniture2GoProduct.getBp4() == null ? "":" <br> 4. " +furniture2GoProduct.getBp4());
+        dimensionsDescription.append(furniture2GoProduct.getBp5() == null ? "":" <br> 5. " +furniture2GoProduct.getBp5());
+        dimensionsDescription.append(furniture2GoProduct.getBp6() == null ? "":" <br> 6. " +furniture2GoProduct.getBp6());
+
         byProductSku.setDescription(furniture2GoProduct.getDescription() + " " + dimensionsDescription.toString());
     }
 }
