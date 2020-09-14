@@ -256,6 +256,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                         byProductSku.setWidth(Double.valueOf(width).intValue());
                     } else if (nextString.contains("D") || nextString.contains("L")) {
                         depth = nextString.replaceAll("D", "");
+                        depth = depth.replaceAll("D.", "");
                         depth = depth.replaceAll("L", "");
                         depth = depth.replaceAll(" ", "");
                         depth = depth.replaceAll("[^\\d.]", "");
@@ -279,6 +280,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                         if (depth.contains("-")) {
                             depth = depth.substring(0, depth.indexOf("-"));
                         }
+                        System.out.println("depth    "+depth);
                         byProductSku.setDepth(Double.valueOf(depth).intValue());
                     }
                 }

@@ -142,6 +142,9 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
+                byProductSku.setDescription(byProductSku.getDescription());
+
+                byProductSku.setName(artisanProduct.getProductName());
                 byProductSku.setImageList(artisanProduct.getImages());
                 if (!artisanProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
                     byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName());
@@ -191,21 +194,21 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
             } else {
                 byProductSku.setAvailabilityDescription(BcConstants.ARTISAN_ARRIVALS_SOON + " " + artisanProduct.getArrivalDate());
             }
-            if (!StringUtils.isEmpty(artisanProduct.getArrivalDate()) && !artisanProduct.getArrivalDate().contains("End")
-                    && !artisanProduct.getArrivalDate().contains("Mid") && !artisanProduct.getArrivalDate().contains("Early")
-                    && !artisanProduct.getArrivalDate().contains("Sold")) {
+            if (!StringUtils.isEmpty(artisanProduct.getArrivalDate()) && !artisanProduct.getArrivalDate().contains("Sold")) {
+                String arrivalDate = artisanProduct.getArrivalDate().replaceAll("End","28th").replaceAll("Mid","18th").replaceAll("Early","7th").trim();
+
                 SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
                 GregorianCalendar calendar;
                 Calendar cal = Calendar.getInstance();
                 try {
-                    int monthOffSet = artisanProduct.getArrivalDate().trim().indexOf(" ") + 1;
-                    cal.setTime(new SimpleDateFormat("MMM").parse(artisanProduct.getArrivalDate().trim().substring(monthOffSet)));
+                    int monthOffSet = arrivalDate.trim().indexOf(" ") + 1;
+                    cal.setTime(new SimpleDateFormat("MMM").parse(arrivalDate.substring(monthOffSet)));
                 } catch (ParseException exception) {
                     LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
                     exception.printStackTrace();
                 }
                 int month = cal.get(Calendar.MONTH);
-                int day = Integer.parseInt(artisanProduct.getArrivalDate().trim().replaceAll("[^\\d.]", ""));
+                int day = Integer.parseInt(arrivalDate.replaceAll("[^\\d.]", ""));
                 calendar = new GregorianCalendar(BcConstants.CURRENT_YEAR, month, day, 00, 00, 00);
                 Date date = calendar.getTime();
                 try {

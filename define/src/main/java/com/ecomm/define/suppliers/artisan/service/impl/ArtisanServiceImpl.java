@@ -280,12 +280,5 @@ public class ArtisanServiceImpl implements ArtisanService {
         DeleteResult deleteResult = mongoOperations.remove(deleteDiscontinuedCatalogQuery, ArtisanProduct.class);
         LOGGER.info("Discontinued Catalog has been deleted from the ArtisanProduct Table, total records been deleted is {}", deleteResult.getDeletedCount());
 
-        //Update modified to false.
-        Query updateModifiedCatalogQuery = new Query();
-        updateModifiedCatalogQuery.addCriteria(Criteria.where("updated").is(true));
-        Update update = new Update();
-        update.set("updated", false);
-        UpdateResult updateResult = mongoOperations.updateMulti(updateModifiedCatalogQuery, update, ArtisanProduct.class);
-        LOGGER.info("Total number of products modified Updated flag to false is, {}", updateResult.getModifiedCount());
     }
 }

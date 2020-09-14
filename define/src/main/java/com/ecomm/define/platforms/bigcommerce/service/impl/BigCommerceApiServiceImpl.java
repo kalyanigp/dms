@@ -8,7 +8,7 @@ import com.ecomm.define.platforms.bigcommerce.domain.BigCommerceApiProduct;
 import com.ecomm.define.platforms.bigcommerce.repository.BigcDataApiRepository;
 import com.ecomm.define.platforms.bigcommerce.repository.BigcImageDataApiRepository;
 import com.ecomm.define.platforms.bigcommerce.service.BigCommerceApiService;
-import com.mongodb.client.result.UpdateResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.bson.types.ObjectId;
 import org.slf4j.Logger;
@@ -22,6 +22,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -43,7 +44,7 @@ import static com.ecomm.define.platforms.bigcommerce.constants.BcConstants.PRODU
 @Service
 public class BigCommerceApiServiceImpl implements BigCommerceApiService {
 
-    public static final int BATCH_SIZE = 1;
+    public static final int BATCH_SIZE = 10;
     private final Logger LOGGER = LoggerFactory.getLogger(BigCommerceApiServiceImpl.class);
     private final RestTemplate restTemplate;
     @Autowired
@@ -153,12 +154,12 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
             List<BcProductData> updateBatchRequest = new ArrayList<>();
             productDataList.stream().forEach(product -> {
                 String productSku = product.getSku().replaceAll(supplierCode, "");
+                product.setDescription(StringUtils.stripAccents(product.getDescription()).replaceAll("\\u0092", " "));
                 try {
                     HttpEntity<BcProductData> request = new HttpEntity<>(product, getHttpHeaders());
                     if (product.getId() == null) {
                         LOGGER.info("Processing the sku {}, and name {}", product.getSku(), product.getName());
                         BigCommerceApiProduct result = restTemplate.postForObject(uri, request, BigCommerceApiProduct.class);
-                        //   sleep(Long.valueOf(30000));
 
                         BcProductData resultData = Objects.requireNonNull(result).getData();
                         resultData.set_id(product.get_id());
@@ -186,8 +187,8 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                         update.set("productName", product.getName() + " " + productSku);
                     }
                     update.set("updated", true);
-                    UpdateResult updateResult = mongoOperations.updateFirst(updateModifiedCatalogQuery, update, ((Class) clazz));
-                    LOGGER.info("Sku has been updated {} , getMatchedCount {}, getModifiedCount {}", productSku, updateResult.getMatchedCount(), updateResult.getModifiedCount());
+                    mongoOperations.findAndModify(updateModifiedCatalogQuery, update, ((Class) clazz));
+                    LOGGER.info("Sku has been updated {} ", productSku);
                 } catch (Exception exception) {
                     exception.printStackTrace();
                     LOGGER.error("Exception while uploading to Big Commerce " + exception.toString());
@@ -213,8 +214,16 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
 
     private int processBatchUpdate(List<BcProductData> updateBatchRequest, URI uri, String supplierCode, Class clazz) {
         try {
-            HttpEntity<List<BcProductData>> batchRequest = new HttpEntity<>(updateBatchRequest, getHttpHeaders());
-            ResponseEntity<String> responseEntity = restTemplate.exchange(uri, HttpMethod.PUT, batchRequest, String.class);
+            HttpHeaders httpsHeaders = getHttpHeaders();
+            httpsHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writeValueAsString(updateBatchRequest);
+            LOGGER.info("Batch Json Request , {}", json);
+
+            HttpEntity<String> stringHttpEntity = new HttpEntity<>(json, httpsHeaders);
+
+            ResponseEntity<String> responseEntity = restTemplate.exchange(uri, HttpMethod.PUT, stringHttpEntity, String.class);
             //update the flag to false
             updateBatchRequest.parallelStream().forEach(
                     product -> {

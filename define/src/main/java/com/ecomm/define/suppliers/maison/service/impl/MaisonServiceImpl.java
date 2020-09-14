@@ -7,7 +7,6 @@ import com.ecomm.define.suppliers.maison.domain.MaisonProduct;
 import com.ecomm.define.suppliers.maison.repository.MaisonProductRepository;
 import com.ecomm.define.suppliers.maison.service.MaisonService;
 import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.bson.types.ObjectId;
@@ -19,7 +18,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -107,6 +105,7 @@ public class MaisonServiceImpl implements MaisonService {
             if(maisonProduct != null) {
                 if(maisonProduct.compareTo(catalog) != 0) {
                     maisonProduct.setDiscontinued(Boolean.FALSE);
+                    maisonProduct.setUpdated(Boolean.TRUE);
                     mongoOperations.save(maisonProduct);
                     LOGGER.info("Updated Maison Product "+catalog.getSku());
                 }
@@ -189,13 +188,6 @@ public class MaisonServiceImpl implements MaisonService {
         DeleteResult deleteResult = mongoOperations.remove(deleteDiscontinuedCatalogQuery, MaisonProduct.class);
         LOGGER.info("Discontinued Catalog has been deleted from the MaisonProduct Table, total records been deleted is {}", deleteResult.getDeletedCount());
 
-        //Update modified to false.
-        Query updateModifiedCatalogQuery = new Query();
-        updateModifiedCatalogQuery.addCriteria(Criteria.where("updated").is(true));
-        Update update = new Update();
-        update.set("updated", false);
-        UpdateResult updateResult = mongoOperations.updateMulti(updateModifiedCatalogQuery, update, MaisonProduct.class);
-        LOGGER.info("Total number of products modified Updated flag to false is, {}", updateResult.getModifiedCount());
     }
 
 }
