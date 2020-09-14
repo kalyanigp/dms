@@ -156,6 +156,7 @@ public class LpdProduct {
     private boolean isDiscontinued;
 
     public List<String> getImages() {
+        images.clear();
         images.add(getImage1());
         images.add(getImage2());
         images.add(getImage3());

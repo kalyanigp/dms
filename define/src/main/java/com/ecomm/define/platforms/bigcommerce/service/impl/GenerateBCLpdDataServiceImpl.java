@@ -9,6 +9,7 @@ import com.ecomm.define.platforms.bigcommerce.service.GenerateBCDataService;
 import com.ecomm.define.platforms.commons.BCUtils;
 import com.ecomm.define.suppliers.commons.Supplier;
 import com.ecomm.define.suppliers.lpdfurniture.domain.LpdProduct;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,13 +75,15 @@ public class GenerateBCLpdDataServiceImpl implements GenerateBCDataService<LpdPr
                 Query query = new Query();
                 query.addCriteria(Criteria.where("sku").is(BcConstants.LPD_FURNITURE + lpdProduct.getSku()));
                 BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
+                List<String> images = lpdProduct.getImages();
+                List<String> newImages = images.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
 
                 if (byProductSku == null) {
                     LOGGER.info("Product not available in BcProductData, creating one for the sku {} & productName {}", BcConstants.LPD_FURNITURE + lpdProduct.getSku(), lpdProduct.getProductName());
                     byProductSku = new BcProductData();
                     setPriceAndQuantity(lpdProduct, byProductSku);
                     byProductSku.setCategories(BCUtils.assignCategories(lpdProduct.getProductName()));
-                    byProductSku.setImageList(lpdProduct.getImages());
+                    byProductSku.setImageList(newImages);
 
                     byProductSku.setSku(BcConstants.LPD_FURNITURE + lpdProduct.getSku());
                     if (!lpdProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
@@ -106,7 +109,7 @@ public class GenerateBCLpdDataServiceImpl implements GenerateBCDataService<LpdPr
                     }
                     setPriceAndQuantity(lpdProduct, byProductSku);
                     byProductSku.setCategories(BCUtils.assignCategories(lpdProduct.getProductName()));
-                    byProductSku.setImageList(lpdProduct.getImages());
+                    byProductSku.setImageList(newImages);
                     evaluateDescription(lpdProduct, byProductSku);
                     BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                     updatedBcProductDataList.add(bcProductData);
@@ -170,7 +173,7 @@ public class GenerateBCLpdDataServiceImpl implements GenerateBCDataService<LpdPr
 
     private void setPriceAndQuantity(LpdProduct lpdProduct, BcProductData byProductSku) {
         evaluatePrice(lpdProduct, byProductSku);
-        int stockLevel = lpdProduct.getStockLevel() == null? 0 : lpdProduct.getStockLevel();
+        int stockLevel = lpdProduct.getStockLevel() == null ? 0 : lpdProduct.getStockLevel();
         byProductSku.setInventoryLevel(Math.max(stockLevel, 0));
         if (stockLevel <= 0) {
             SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);

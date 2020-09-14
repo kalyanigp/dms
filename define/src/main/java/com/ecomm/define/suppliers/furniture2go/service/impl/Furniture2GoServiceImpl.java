@@ -11,7 +11,6 @@ import com.ecomm.define.suppliers.furniture2go.feedgenerator.Furniture2GoMasterF
 import com.ecomm.define.suppliers.furniture2go.repository.Furniture2GoProductRepository;
 import com.ecomm.define.suppliers.furniture2go.service.Furniture2GoService;
 import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.bson.types.ObjectId;
@@ -24,7 +23,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.mongodb.core.MongoOperations;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -298,14 +296,6 @@ public class Furniture2GoServiceImpl implements Furniture2GoService {
         deleteDiscontinuedCatalogQuery.addCriteria(Criteria.where("isDiscontinued").is(true));
         DeleteResult deleteResult = mongoOperations.remove(deleteDiscontinuedCatalogQuery, Furniture2GoProduct.class);
         LOGGER.info("Discontinued Catalog has been deleted from the Furniture2Go Table, total records been deleted is {}", deleteResult.getDeletedCount());
-
-        //Update modified to false.
-        Query updateModifiedCatalogQuery = new Query();
-        updateModifiedCatalogQuery.addCriteria(Criteria.where("updated").is(true));
-        Update update = new Update();
-        update.set("updated", false);
-        UpdateResult updateResult = mongoOperations.updateMulti(updateModifiedCatalogQuery, update, Furniture2GoProduct.class);
-        LOGGER.info("Total number of products modified Updated flag to false is, {}", updateResult.getModifiedCount());
     }
 
 }
