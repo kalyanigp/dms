@@ -178,14 +178,14 @@ public class GenerateBCLpdDataServiceImpl implements GenerateBCDataService<LpdPr
         if (stockLevel <= 0) {
             SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
             GregorianCalendar calendar = new GregorianCalendar();
-            calendar.add(Calendar.DATE, 90);
+            calendar.add(Calendar.DATE, 100);
             Date date = calendar.getTime();
             try {
                 byProductSku.setPreorderReleaseDate(formatter.format(date));
             } catch (Exception exception) {
                 LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
             }
-            byProductSku.setAvailabilityDescription("Will be dispatched on or after " + date);
+            byProductSku.setAvailabilityDescription("Will be dispatched on or before " + date);
         } else {
             byProductSku.setAvailabilityDescription("Usually dispatches in 15 to 20 working days by our own 2 man delivery service.");
         }

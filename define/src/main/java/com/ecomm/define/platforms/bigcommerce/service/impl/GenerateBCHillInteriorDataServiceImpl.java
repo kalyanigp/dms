@@ -98,6 +98,8 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
             } else {
                 if(!hillInteriorProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
                     byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + hillInteriorProduct.getProductName());
+                } else {
+                    byProductSku.setName(hillInteriorProduct.getProductName());
                 }
                 setPriceAndQuantity(hillInteriorProduct, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(hillInteriorProduct.getProductName()));
@@ -164,13 +166,14 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
         if (hillInteriorProduct.getStockLevel() > 0) {
             byProductSku.setAvailabilityDescription("Usually dispatches in 5 to 7 working days.");
         } else {
-            byProductSku.setAvailabilityDescription("Usually dispatches on or after " + hillInteriorProduct.getStockExpectedOn());
-            if (!StringUtils.isEmpty(hillInteriorProduct.getStockExpectedOn() != null)) {
+            byProductSku.setAvailabilityDescription("Usually dispatches on or after " + hillInteriorProduct.getStockExpected());
+            byProductSku.setIsPreorderOnly(true);
+            if (!StringUtils.isEmpty(hillInteriorProduct.getStockExpected() != null)) {
                 SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
                 GregorianCalendar calendar;
-                int year = Integer.parseInt(hillInteriorProduct.getStockExpectedOn().substring(8, 10));
-                int month = Integer.parseInt(hillInteriorProduct.getStockExpectedOn().substring(3, 5));
-                int day = Integer.parseInt(hillInteriorProduct.getStockExpectedOn().substring(0, 2));
+                int year = Integer.parseInt(hillInteriorProduct.getStockExpected().substring(8, 10));
+                int month = Integer.parseInt(hillInteriorProduct.getStockExpected().substring(3, 5));
+                int day = Integer.parseInt(hillInteriorProduct.getStockExpected().substring(0, 2));
 
                 calendar = new GregorianCalendar(year, month, day, 00, 00, 00);
                 Date date = calendar.getTime();

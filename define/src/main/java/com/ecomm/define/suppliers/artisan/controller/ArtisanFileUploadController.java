@@ -64,7 +64,7 @@ public class ArtisanFileUploadController {
 
     @ApiOperation(value = "Uploads Artisan Price Deatils from CSV File to DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Artisan Products Images to DB"),
+            @ApiResponse(code = 200, message = "Successfully uploaded Artisan Products Prices to DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")
@@ -95,7 +95,7 @@ public class ArtisanFileUploadController {
 
     @ApiOperation(value = "Uploads Artisan Stock Feed  from CSV File to DB", response = Iterable.class)
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Successfully uploaded Artisan Products to DB"),
+            @ApiResponse(code = 200, message = "Successfully uploaded Artisan Stock feed to DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),
             @ApiResponse(code = 403, message = "Accessing the resource you were trying to reach is forbidden"),
             @ApiResponse(code = 404, message = "The resource you were trying to reach is not found")

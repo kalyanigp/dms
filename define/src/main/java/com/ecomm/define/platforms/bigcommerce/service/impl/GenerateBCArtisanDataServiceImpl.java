@@ -98,51 +98,16 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
                 if (!artisanProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
                     byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + artisanProduct.getProductName());
                 }
-                StringBuilder discriptionBuilder = new StringBuilder();
-                discriptionBuilder.append(artisanProduct.getDescription()).append("<br>");
-                discriptionBuilder.append(artisanProduct.getBp1()).append("<br>");
-                discriptionBuilder.append(artisanProduct.getBp2()).append("<br>");
-                discriptionBuilder.append(artisanProduct.getBp3()).append("<br>");
-                discriptionBuilder.append(artisanProduct.getBp4()).append("<br>");
-                discriptionBuilder.append(artisanProduct.getBp5()).append("<br>");
-                discriptionBuilder.append(artisanProduct.getBp6()).append("<br>");
+                byProductSku.setDescription(getDescription(artisanProduct, byProductSku).toString());
 
-                discriptionBuilder.append("<br>Dimensions: <br>");
-
-                byProductSku.setSupplier(Supplier.ARTISAN.getName());
-                byProductSku.setType(BcConstants.TYPE);
-                if (artisanProduct.getWeight() != null) {
-                    int weight = artisanProduct.getWeight().intValue();
-                    byProductSku.setWeight(weight);
-                    discriptionBuilder.append(" Weight : ").append(weight).append("kg").append("<br>");
-                }
-                if (artisanProduct.getHeight() != null) {
-                    int height = artisanProduct.getHeight().intValue();
-                    byProductSku.setHeight(height);
-                    discriptionBuilder.append(" Height : ").append(height).append("mm").append("<br>");
-                }
-                if (artisanProduct.getWidth() != null) {
-                    int width = artisanProduct.getWidth().intValue();
-                    byProductSku.setWidth(width);
-                    discriptionBuilder.append(" Width : ").append(width).append("mm").append("<br>");
-                }
-                if (artisanProduct.getDepth() != null) {
-                    int depth = artisanProduct.getDepth().intValue();
-                    byProductSku.setDepth(depth);
-                    discriptionBuilder.append(" Depth : ").append(depth).append("mm").append("<br>");
-                }
-                discriptionBuilder.append(artisanProduct.getAvailablityMessage());
-
-                byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                 Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
                 if (byName.isPresent()) {
                     byProductSku.setBrandId(byName.get().getId());
                 }
-                byProductSku.setDescription(discriptionBuilder.toString());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
             } else {
-                byProductSku.setDescription(byProductSku.getDescription());
+                byProductSku.setDescription(getDescription(artisanProduct, byProductSku).toString());
 
                 byProductSku.setName(artisanProduct.getProductName());
                 byProductSku.setImageList(artisanProduct.getImages());
@@ -156,6 +121,43 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
             }
         }
         bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList, BcConstants.ARTISAN, ArtisanProduct.class);
+    }
+
+    private StringBuilder getDescription(ArtisanProduct artisanProduct, BcProductData byProductSku) {
+        StringBuilder discriptionBuilder = new StringBuilder();
+        discriptionBuilder.append(artisanProduct.getDescription()).append("<br>");
+        discriptionBuilder.append(artisanProduct.getBp1()).append("<br>");
+        discriptionBuilder.append(artisanProduct.getBp2()).append("<br>");
+        discriptionBuilder.append(artisanProduct.getBp3()).append("<br>");
+        discriptionBuilder.append(artisanProduct.getBp4()).append("<br>");
+        discriptionBuilder.append(artisanProduct.getBp5()).append("<br>");
+        discriptionBuilder.append(artisanProduct.getBp6()).append("<br>");
+
+        discriptionBuilder.append("<br>Dimensions: <br>");
+
+        byProductSku.setSupplier(Supplier.ARTISAN.getName());
+        byProductSku.setType(BcConstants.TYPE);
+        if (artisanProduct.getWeight() != null) {
+            int weight = artisanProduct.getWeight().intValue();
+            byProductSku.setWeight(weight);
+            discriptionBuilder.append(" Weight : ").append(weight).append("kg").append("<br>");
+        }
+        if (artisanProduct.getHeight() != null) {
+            int height = artisanProduct.getHeight().intValue();
+            byProductSku.setHeight(height);
+            discriptionBuilder.append(" Height : ").append(height).append("mm").append("<br>");
+        }
+        if (artisanProduct.getWidth() != null) {
+            int width = artisanProduct.getWidth().intValue();
+            byProductSku.setWidth(width);
+            discriptionBuilder.append(" Width : ").append(width).append("mm").append("<br>");
+        }
+        if (artisanProduct.getDepth() != null) {
+            int depth = artisanProduct.getDepth().intValue();
+            byProductSku.setDepth(depth);
+            discriptionBuilder.append(" Depth : ").append(depth).append("mm").append("<br>");
+        }
+        return discriptionBuilder;
     }
 
 
@@ -181,6 +183,8 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
 
     private void setPriceAndQuantity(ArtisanProduct artisanProduct, BcProductData byProductSku) {
         LOGGER.info("Setting Price and Quantity for {} with date {}", artisanProduct.getSku(), artisanProduct.getArrivalDate());
+        SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
+        GregorianCalendar calendar = new GregorianCalendar();
 
         if (artisanProduct.getPrice() != null) {
             evaluatePrice(artisanProduct, byProductSku);
@@ -191,14 +195,23 @@ public class GenerateBCArtisanDataServiceImpl implements GenerateBCDataService<A
         } else {
             if (StringUtils.isEmpty(artisanProduct.getArrivalDate())) {
                 byProductSku.setAvailabilityDescription(BcConstants.ARTISAN_AVAILABLE_ONDEMAND);
+                calendar.add(Calendar.DATE, 90);
+                Date date = calendar.getTime();
+                try {
+                    byProductSku.setPreorderReleaseDate(formatter.format(date));
+                } catch (Exception exception) {
+                    LOGGER.error("Error while processing Preorder release date for on demand product" + exception.getMessage());
+                }
             } else {
                 byProductSku.setAvailabilityDescription(BcConstants.ARTISAN_ARRIVALS_SOON + " " + artisanProduct.getArrivalDate());
             }
             if (!StringUtils.isEmpty(artisanProduct.getArrivalDate()) && !artisanProduct.getArrivalDate().contains("Sold")) {
                 String arrivalDate = artisanProduct.getArrivalDate().replaceAll("End","28th").replaceAll("Mid","18th").replaceAll("Early","7th").trim();
 
-                SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
-                GregorianCalendar calendar;
+                if (arrivalDate.contains("-")){
+                    arrivalDate = arrivalDate.substring(arrivalDate.indexOf("-")+1);
+                }
+
                 Calendar cal = Calendar.getInstance();
                 try {
                     int monthOffSet = arrivalDate.trim().indexOf(" ") + 1;

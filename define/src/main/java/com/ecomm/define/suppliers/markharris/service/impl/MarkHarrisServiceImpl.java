@@ -220,8 +220,8 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
         Query query = new Query();
         query.addCriteria(Criteria.where("sku").is(stock.getSku()));
         Update update = new Update().inc("matches", 1).set("stockLevel", stock.getStockQuantity()).set("stockStatus", stock.getStatus()).set("nextArrival", stock.getArrivalDate());
-        if (stock.getStockQuantity() == 0 && stock.getStatus().equals("Discontinued")) {
-            update.set("discontinued", Boolean.TRUE).set("isDiscontinued", Boolean.TRUE).set("updated", Boolean.TRUE);
+        if (stock.getStatus().equals("Discontinued")) {
+            update.set("isDiscontinued", Boolean.TRUE).set("updated", Boolean.TRUE);
         }
         MarkHarrisProduct andModify = mongoOperations.findAndModify(query, update, new FindAndModifyOptions().returnNew(false).upsert(false), MarkHarrisProduct.class);
         if(andModify != null) {
