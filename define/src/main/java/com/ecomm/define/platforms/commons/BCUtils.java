@@ -91,6 +91,9 @@ public class BCUtils {
         } else if (title.contains("table lamp")) {
             category = Category.LAMP_SHADE.getCategoryCode();
 
+        } else if (title.contains("door knocker")) {
+            category = Category.HF_DECORATIONS_DOOR_KNOCKERS.getCategoryCode();
+
         }
 
         return category;

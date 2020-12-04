@@ -72,10 +72,10 @@ public class ArtisanMasterFeedMaker {
                                 artisanProduct.setProductName(productTitle);
                                 productDesc = ArtisanURLReader.findProductDescription(doc).concat("<br>");
 
-                                height = ArtisanURLReader.findHeight(doc).replace("cm", "").replace("CM", "").replace(" ", "").replace(".", "");
-                                width = ArtisanURLReader.findWidth(doc).replace("cm", "").replace("CM", "").replace(" ", "").replace(".", "");
-                                depth = ArtisanURLReader.findDepth(doc).replace("cm", "").replace("CM", "").replace(" ", "").replace(".", "");
-                                weight = ArtisanURLReader.findWeight(doc).replace("kg", "").replace("KG", "").replace("Kg", "").replace(" ", "").replace(".", "");
+                                height = ArtisanURLReader.findHeight(doc).replaceAll("[^\\d.]", "").trim();
+                                width = ArtisanURLReader.findWidth(doc).replaceAll("[^\\d.]", "").trim();
+                                depth = ArtisanURLReader.findDepth(doc).replaceAll("[^\\d.]", "").trim();
+                                weight = ArtisanURLReader.findWeight(doc).replaceAll("[^\\d.]", "").trim();
                                 if (height != null && height.length() > 0) {
                                     artisanProduct.setHeight(new BigDecimal(height));
                                 }

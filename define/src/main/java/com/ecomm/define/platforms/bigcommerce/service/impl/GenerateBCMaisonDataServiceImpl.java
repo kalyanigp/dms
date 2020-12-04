@@ -21,6 +21,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -185,6 +186,7 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
             }
         } else {
             salePrice = new BigDecimal(maisonProd.getMspPrice());
+            salePrice = salePrice.setScale(0, RoundingMode.UP);
         }
         if (maisonProd.getTitle().toLowerCase().contains(CLOCK)) {
             salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(30)));
@@ -280,7 +282,6 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
                         if (depth.contains("-")) {
                             depth = depth.substring(0, depth.indexOf("-"));
                         }
-                        System.out.println("depth    "+depth);
                         byProductSku.setDepth(Double.valueOf(depth).intValue());
                     }
                 }

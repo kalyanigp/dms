@@ -154,7 +154,10 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
             List<BcProductData> updateBatchRequest = new ArrayList<>();
             productDataList.stream().forEach(product -> {
                 String productSku = product.getSku().replaceAll(supplierCode, "");
-                product.setDescription(StringUtils.stripAccents(product.getDescription()).replaceAll("\\u0092", " "));
+                product.setName(StringUtils.stripAccents(product.getName()).replaceAll("\\u0092", " ").replaceAll("'", " ").replaceAll("\\p{P}","").replaceAll("[^\\u0000-\\uFFFF]", ""));
+                if (product.getDescription() != null) {
+                    product.setDescription(StringUtils.stripAccents(product.getDescription()).replaceAll("\\u0092", " ").replaceAll("'", " ").replaceAll("[^\\u0000-\\uFFFF]", ""));
+                }
                 try {
                     HttpEntity<BcProductData> request = new HttpEntity<>(product, getHttpHeaders());
                     if (product.getId() == null) {
@@ -194,6 +197,7 @@ public class BigCommerceApiServiceImpl implements BigCommerceApiService {
                     LOGGER.error("Exception while uploading to Big Commerce " + exception.toString());
                 }
             });
+            LOGGER.info("Calling Batch ");
             Observable.from(updateBatchRequest).buffer(BATCH_SIZE).forEach((batch) -> processedProducts.addAndGet(processBatchUpdate(batch, uri, supplierCode, (Class) clazz)));
         } catch (URISyntaxException uriException) {
             uriException.printStackTrace();

@@ -153,6 +153,8 @@ public class HillInteriorServiceImpl implements HillInteriorService {
             if (product.compareTo(hillInteriorProduct) != 0) {
                 Update update = new Update();
                 update.set("discontinued", Boolean.FALSE);
+                update.set("stockLevel", hillInteriorProduct.getStockLevel());
+                update.set("stockExpected",hillInteriorProduct.getStockExpectedOn());
                 update.set("updated", Boolean.TRUE);
                 update.set("salePrice", evaluatePrice(product));
                 UpdateResult updatedProduct = mongoOperations.updateFirst(query, update, HillInteriorProduct.class);

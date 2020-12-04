@@ -28,7 +28,7 @@ public class Furniture2GoMasterFeedMaker {
         } catch (Exception e) {
             LOGGER.error("Error while processing Hill Interior Data from Hill Interior website");
         }
-        LOGGER.info("Finished processing Hill Interior Image URLs for sku {} , images {}", product.getSku(), images);
+        LOGGER.info("Finished processing Furniture2Go Image URLs for sku {} , images {}", product.getSku(), images);
         return images;
     }
 }
