@@ -62,7 +62,7 @@ public class ArtisanFileUploadController {
     }
 
 
-    @ApiOperation(value = "Uploads Artisan Price Deatils from CSV File to DB", response = Iterable.class)
+    @ApiOperation(value = "Uploads Artisan Price Details from CSV File to DB", response = Iterable.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully uploaded Artisan Products Prices to DB"),
             @ApiResponse(code = 401, message = "You are not authorized to view the resource"),

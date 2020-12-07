@@ -87,6 +87,16 @@ public class SpringFoxConfig {
                 .apiInfo(apiEndPointsInfo());
     }
 
+    @Bean
+    public Docket swaggerCoreProductApi() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("CORE")
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.ecomm.define.suppliers.coreproducts.controller"))
+                .build()
+                .apiInfo(apiEndPointsInfo());
+    }
+
     private ApiInfo apiEndPointsInfo() {
         return new ApiInfoBuilder().title("Spring Boot REST API")
                 .description("Define Furniture Product Management System REST API")
