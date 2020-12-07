@@ -5,6 +5,7 @@ public class BcConstants {
     public static String FURNITURE_2_GO = "ROYAL";
     public static String ARTISAN = "IND";
     public static String MARK_HARRIS = "PRI";
+    public static String CORE_PRODUCT = "CP";
     public static String HILL_INTERIOR = "INT";
     public static String LPD_FURNITURE = "DPL";
     public static final String INVENTORY_TRACKING = "product";

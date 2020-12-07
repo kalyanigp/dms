@@ -11,6 +11,7 @@ public enum Supplier {
     MAR_HARRIS("Mark Harris"),
     LPD("LPD"),
     GEKO("Geko"),
+    CORE_PRODUCT("Core Products"),
     SELLER_BRAND("Define");
 
 
