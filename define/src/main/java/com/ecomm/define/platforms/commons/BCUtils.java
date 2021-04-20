@@ -3,6 +3,7 @@ package com.ecomm.define.platforms.commons;
 import com.ecomm.define.platforms.bigcommerce.constants.BcConstants;
 import com.ecomm.define.platforms.bigcommerce.domain.BcProductData;
 import com.ecomm.define.platforms.bigcommerce.ennum.Category;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -15,25 +16,30 @@ import java.util.stream.Collectors;
 public class BCUtils {
     public static List<Integer> assignCategories(String title) {
         Set<Integer> categories = new HashSet<>();
-        int dualCat = getDualWordCategory(title.toLowerCase());
-        if (dualCat == BigDecimal.ZERO.intValue()) {
-            for (Category category : Category.values()) {
-                if (category.getCategoryWord().contains(" ")) {
-                    for (String token : getTokensinWord(category.getCategoryWord())) {
-                        if (title.contains(token)) {
+
+        if(!StringUtils.isEmpty(title)) {
+            int dualCat = getDualWordCategory(title.toLowerCase());
+            if (dualCat == BigDecimal.ZERO.intValue()) {
+                for (Category category : Category.values()) {
+                    if (category.getCategoryWord().contains(" ")) {
+                        for (String token : getTokensinWord(category.getCategoryWord())) {
+                            if (title.contains(token)) {
+                                categories.add(category.getCategoryCode());
+                            }
+                        }
+                    }
+                    for (String token : getTokensinWord(title)) {
+                        if (category.getCategoryWord().equalsIgnoreCase(token)) {
                             categories.add(category.getCategoryCode());
                         }
                     }
                 }
-                for (String token : getTokensinWord(title)) {
-                    if (category.getCategoryWord().equalsIgnoreCase(token)) {
-                        categories.add(category.getCategoryCode());
-                    }
-                }
+
+            } else {
+                categories.add(dualCat);
             }
-        } else {
-            categories.add(dualCat);
         }
+
         if (categories.isEmpty())
         {
             categories.add(Category.INTERIOR.getCategoryCode());

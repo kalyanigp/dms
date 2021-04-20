@@ -1,6 +1,6 @@
 package com.ecomm.define.suppliers.markharris.domain;
 
-import com.opencsv.bean.CsvBindByName;
+import com.opencsv.bean.CsvBindByPosition;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,13 +18,13 @@ public class MarkHarrisPrice {
     @Id
     public ObjectId _id;
 
-    @CsvBindByName(column = "PRODUCT CODE")
+    @CsvBindByPosition(position = 0)
     private String sku;
 
-    @CsvBindByName(column = "NEW TRADE PRICE EXCL. VAT")
+    @CsvBindByPosition(position = 3)
     private String price;
 
-    @CsvBindByName(column = "RANGE")
+   /* @CsvBindByName(column = "RANGE")
     private String range;
 
     @CsvBindByName(column = "LENGTH")
@@ -38,6 +38,6 @@ public class MarkHarrisPrice {
 
 
     @CsvBindByName(column = "ASSEMBLED")
-    private String assembled;
+    private String assembled; */
 
 }

@@ -94,7 +94,7 @@ public class GenerateBCMarkHarrisDataServiceImpl implements GenerateBCDataServic
                         byProductSku.setWeight(Objects.requireNonNull(new BigDecimal(markHarrisProduct.getWeight()).setScale(0, BigDecimal.ROUND_HALF_UP)).intValue());
                     }
 
-                    byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
+                  //  byProductSku.setInventoryTracking(BcConstants.INVENTORY_TRACKING);
                     Optional<BcBrandData> byName = brandApiRepository.findByName(Supplier.SELLER_BRAND.getName());
                     if (byName.isPresent()) {
                         byProductSku.setBrandId(byName.get().getId());

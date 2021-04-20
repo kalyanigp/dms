@@ -191,6 +191,8 @@ public class GenerateBCMaisonDataServiceImpl implements GenerateBCDataService<Ma
         if (maisonProd.getTitle().toLowerCase().contains(CLOCK)) {
             salePrice.add(DefineUtils.percentage(salePrice, new BigDecimal(30)));
         }
+        BigDecimal b1 = new BigDecimal("1.12");
+        salePrice = salePrice.multiply(b1);
         return salePrice.intValue();
     }
 

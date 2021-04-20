@@ -20,10 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -71,8 +71,11 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
             Query query = new Query();
             query.addCriteria(Criteria.where("sku").is(BcConstants.HILL_INTERIOR + hillInteriorProduct.getSku()));
             BcProductData byProductSku = mongoOperations.findOne(query, BcProductData.class);
+            LOGGER.info(" Started prod " +hillInteriorProduct.getSku());
 
             if (byProductSku == null) {
+                LOGGER.info(" New product " +hillInteriorProduct.getSku());
+
                 byProductSku = new BcProductData();
                 setPriceAndQuantity(hillInteriorProduct, byProductSku);
                 byProductSku.setCategories(BCUtils.assignCategories(hillInteriorProduct.getProductName()));
@@ -95,6 +98,8 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
                 byProductSku.setUpc(hillInteriorProduct.getEan());
                 BcProductData bcProductData = bigCommerceApiService.create(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
+                LOGGER.info(" New product added " +hillInteriorProduct.getSku());
+
             } else {
                 if(!hillInteriorProduct.getProductName().contains(Supplier.SELLER_BRAND.getName())) {
                     byProductSku.setName(Supplier.SELLER_BRAND.getName() + " " + hillInteriorProduct.getProductName());
@@ -107,8 +112,12 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
                 byProductSku = evaluateDescription(hillInteriorProduct, byProductSku);
                 BcProductData bcProductData = bigCommerceApiService.update(byProductSku);
                 updatedBcProductDataList.add(bcProductData);
+                LOGGER.info(" Added to List" +bcProductData.getSku());
+
             }
         });
+        LOGGER.info(" Calling populateBigCommerceProduct" +updatedBcProductDataList.size());
+
         bigCommerceApiService.populateBigCommerceProduct(updatedBcProductDataList, BcConstants.HILL_INTERIOR, HillInteriorProduct.class);
     }
 
@@ -160,33 +169,43 @@ public class GenerateBCHillInteriorDataServiceImpl implements GenerateBCDataServ
     }
 
     private void setPriceAndQuantity(HillInteriorProduct hillInteriorProduct, BcProductData byProductSku) {
+        LOGGER.info("Evaulating Price " + hillInteriorProduct.getSku());
         evaluatePrice(hillInteriorProduct, byProductSku);
         byProductSku.setInventoryLevel(Math.max(hillInteriorProduct.getStockLevel(), 0));
 
-        if (hillInteriorProduct.getStockLevel() > 0) {
-            byProductSku.setAvailabilityDescription("Usually dispatches in 5 to 7 working days.");
-        } else {
-            byProductSku.setAvailabilityDescription("Usually dispatches on or after " + hillInteriorProduct.getStockExpected());
-            byProductSku.setIsPreorderOnly(true);
-            if (!StringUtils.isEmpty(hillInteriorProduct.getStockExpected() != null)) {
-                SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
-                GregorianCalendar calendar;
-                int year = Integer.parseInt(hillInteriorProduct.getStockExpected().substring(8, 10));
-                int month = Integer.parseInt(hillInteriorProduct.getStockExpected().substring(3, 5));
-                int day = Integer.parseInt(hillInteriorProduct.getStockExpected().substring(0, 2));
 
-                calendar = new GregorianCalendar(year, month, day, 00, 00, 00);
-                Date date = calendar.getTime();
-                try {
-                    byProductSku.setPreorderReleaseDate(formatter.format(date));
-                } catch (Exception exception) {
-                    LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
-                }
+        if(!StringUtils.isEmpty(hillInteriorProduct.getStockExpectedOn())) {
+
+            String expectedDate = hillInteriorProduct.getStockExpectedOn().replaceAll("/", "-");
+
+            if (hillInteriorProduct.getStockLevel() > 0) {
+                byProductSku.setAvailabilityDescription("Usually dispatches in 5 to 7 working days.");
             } else {
-                byProductSku.setPreorderReleaseDate(null);
+                byProductSku.setAvailabilityDescription("Usually dispatches on or after " + expectedDate);
+
+                if (!StringUtils.isEmpty(hillInteriorProduct.getStockExpectedOn())) {
+                    SimpleDateFormat formatter = new SimpleDateFormat(BcConstants.RELEASE_DATE_FORMAT);
+
+                    try {
+                        Date date1 = new SimpleDateFormat("dd-MM-yyyy").parse(expectedDate);
+                        byProductSku.setPreorderReleaseDate(formatter.format(date1));
+                        LOGGER.info("Preorder Release Date " + byProductSku.getPreorderReleaseDate());
+
+                    } catch (ParseException exception) {
+                        LOGGER.error("Parsing Error while processing Preorder release date" + exception.getMessage());
+                    }
+                    catch (Exception exception) {
+                        LOGGER.error("Error while processing Preorder release date" + exception.getMessage());
+                    }
+                } else {
+                    byProductSku.setPreorderReleaseDate(null);
+                }
             }
         }
+        LOGGER.info("setting params " + hillInteriorProduct.getSku());
+
         setInventoryParameters(hillInteriorProduct.getStockLevel(), byProductSku);
+        LOGGER.info("setting finished " + hillInteriorProduct.getSku());
 
     }
 

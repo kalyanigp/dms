@@ -190,12 +190,12 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
                 } else {
                     LOGGER.info("Non Numeric Price Value : {} ", priceValue);
                 }
-                if (product.getPrice() != null && !product.getPrice().equals(hdPrice)) {
+             //   if (product.getPrice() != null && !product.getPrice().equals(hdPrice)) {
                     product.setUpdated(true);
-                    if (hdPrice != null) {
-                        product.setPrice(hdPrice);
-                    }
-                }
+                   // if (hdPrice != null) {
+                   //     product.setPrice(hdPrice);
+                   // }
+             //   }
 
                 BigDecimal salePrice = hdPrice;
                 if (salePrice != null && salePrice.intValue() > 0) {
@@ -209,6 +209,7 @@ public class MarkHarrisServiceImpl implements MarkHarrisService {
                     }
                 }
 
+                product.setPrice(salePrice);
                 product.setSalePrice(salePrice);
                 update(product);
             }
